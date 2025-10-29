@@ -1,8 +1,21 @@
+import { CamelCasePlugin } from 'kysely';
 import { DatabaseService } from '../../storage/database.service';
 import { Adapter, AdapterPayload } from 'oidc-provider';
 
 export class KyselyAdapter implements Adapter {
+  private camelCasePlugin = new CamelCasePlugin({
+    maintainNestedObjectKeys: true,
+  });
+
   constructor(public modelName: string, public db: DatabaseService) {}
+
+  private get writer() {
+    return this.db.rawWriter.withPlugin(this.camelCasePlugin);
+  }
+
+  private get reader() {
+    return this.db.rawReader.withPlugin(this.camelCasePlugin);
+  }
 
   async upsert(
     id: string,
@@ -14,7 +27,7 @@ export class KyselyAdapter implements Adapter {
       : null;
     const grantId = payload.grantId || null;
 
-    await this.db.writer
+    await this.writer
       .insertInto('oidcProvider')
       .values({
         id,
@@ -36,7 +49,7 @@ export class KyselyAdapter implements Adapter {
   }
 
   async find(id: string): Promise<void | AdapterPayload> {
-    const row = await this.db.reader
+    const row = await this.reader
       .selectFrom('oidcProvider')
       .select(['payload', 'expiresAt'])
       .where('id', '=', id)
@@ -50,7 +63,7 @@ export class KyselyAdapter implements Adapter {
   }
 
   async findByUserCode(userCode: string): Promise<void | AdapterPayload> {
-    const row = await this.db.reader
+    const row = await this.reader
       .selectFrom('oidcProvider')
       .select(['payload', 'expiresAt', 'id'])
       .where('userCode', '=', userCode)
@@ -65,7 +78,7 @@ export class KyselyAdapter implements Adapter {
   }
 
   async findByUid(uid: string): Promise<void | AdapterPayload> {
-    const row = await this.db.reader
+    const row = await this.reader
       .selectFrom('oidcProvider')
       .select(['payload', 'expiresAt', 'id'])
       .where('uid', '=', uid)
@@ -80,7 +93,7 @@ export class KyselyAdapter implements Adapter {
   }
 
   async consume(id: string): Promise<void> {
-    await this.db.writer
+    await this.writer
       .updateTable('oidcProvider')
       .set({ consumed: true })
       .where('id', '=', id)
@@ -88,14 +101,14 @@ export class KyselyAdapter implements Adapter {
   }
 
   async destroy(id: string): Promise<void> {
-    await this.db.writer
+    await this.writer
       .deleteFrom('oidcProvider')
       .where('id', '=', id)
       .execute();
   }
 
   async revokeByGrantId(grantId: string): Promise<void> {
-    await this.db.writer
+    await this.writer
       .deleteFrom('oidcProvider')
       .where('grantId', '=', grantId)
       .execute();

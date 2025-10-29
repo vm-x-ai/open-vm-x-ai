@@ -8,10 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { PinoLogger } from 'nestjs-pino';
 import * as oidcClient from 'openid-client';
 import { FastifyRequest } from 'fastify';
-import { ErrorCode } from '../../types';
 import { throwServiceError } from '../../error';
 import { UsersService } from '../../users/users.service';
-import { UserEntity } from '../../users/user.entity';
+import { UserEntity } from '../../users/entities/user.entity';
+import { ErrorCode } from '../../error-code';
 
 @Injectable()
 export class FederatedLoginService implements OnModuleInit {
@@ -23,7 +23,9 @@ export class FederatedLoginService implements OnModuleInit {
     private readonly logger: PinoLogger,
     private readonly usersService: UsersService
   ) {
-    this.redirectUri = `${this.configService.getOrThrow<string>('BASE_URL')}/interaction/federated/callback`;
+    this.redirectUri = `${this.configService.getOrThrow<string>(
+      'BASE_URL'
+    )}/interaction/federated/callback`;
   }
 
   async onModuleInit() {
@@ -47,11 +49,7 @@ export class FederatedLoginService implements OnModuleInit {
 
   async getAuthorizationUrl(interactionId: string) {
     if (!this.issuer) {
-      throwServiceError(
-        HttpStatus.BAD_REQUEST,
-        ErrorCode.OIDC_NOT_CONFIGURED,
-        'OIDC is not configured'
-      );
+      throwServiceError(HttpStatus.BAD_REQUEST, ErrorCode.OIDC_NOT_CONFIGURED);
     }
     const codeVerifier = await oidcClient.randomPKCECodeVerifier();
     const codeChallenge = await oidcClient.calculatePKCECodeChallenge(
@@ -106,8 +104,7 @@ export class FederatedLoginService implements OnModuleInit {
       if (!claims) {
         throwServiceError(
           HttpStatus.BAD_REQUEST,
-          ErrorCode.OIDC_RESPONSE_ERROR,
-          'OIDC claims are not available'
+          ErrorCode.OIDC_CLAIMS_NOT_AVAILABLE
         );
       }
 
@@ -117,7 +114,7 @@ export class FederatedLoginService implements OnModuleInit {
         throwServiceError(
           HttpStatus.BAD_REQUEST,
           ErrorCode.OIDC_RESPONSE_ERROR,
-          `OIDC response error: ${error.error}`
+          { error: error.error }
         );
       }
       throw error;

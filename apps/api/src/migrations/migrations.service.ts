@@ -14,6 +14,8 @@ import { SERVICE_NAME } from '../consts';
 import { Logger } from 'nestjs-pino';
 import { migration as migration01 } from './1-create-users';
 import { migration as migration02 } from './2-create-oidc-provider';
+import { migration as migration03 } from './3-workspace-table';
+import { migration as migration04 } from './4-workspace-user-table';
 import { PasswordService } from '../auth/password.service';
 import { DB } from '../storage/entities.generated';
 
@@ -55,6 +57,8 @@ export class MigrationsService implements OnModuleInit {
       provider: new ListMigrationProvider({
         '01': migration01(this.passwordService),
         '02': migration02,
+        '03': migration03,
+        '04': migration04,
       }),
     });
   }

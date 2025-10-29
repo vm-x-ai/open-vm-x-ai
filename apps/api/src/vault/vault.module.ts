@@ -3,13 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { PinoLogger } from 'nestjs-pino';
 import vault from 'node-vault';
 import { EncryptionService } from './encryption.service';
-import { EncryptionController } from './encryption.controller';
 import { SecretService } from './secrets.service';
 
 @Global()
 @Module({
   imports: [],
-  controllers: [EncryptionController],
   providers: [
     {
       provide: 'VAULT_CLIENT',

@@ -1,11 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { $enum } from 'ts-enum-util';
-
-export enum ErrorCode {
-  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
-  OIDC_NOT_CONFIGURED = 'OIDC_NOT_CONFIGURED',
-  OIDC_RESPONSE_ERROR = 'OIDC_RESPONSE_ERROR',
-}
+import { ErrorCode } from './error-code';
 
 export const errorCode = $enum(ErrorCode).getKeys();
 

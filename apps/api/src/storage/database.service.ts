@@ -14,6 +14,8 @@ import { DB } from './entities.generated';
 export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
   private writerInstance: Kysely<DB>;
   private readerInstance: Kysely<DB>;
+  private rawWriterInstance: Kysely<DB>;
+  private rawReaderInstance: Kysely<DB>;
 
   constructor(
     private readonly configService: ConfigService,
@@ -27,25 +29,32 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
       }),
     });
 
-    const camelCasePlugin = new CamelCasePlugin({
-      maintainNestedObjectKeys: true,
-    });
+    const camelCasePlugin = new CamelCasePlugin();
 
     this.writerInstance = new Kysely<DB>({
       dialect: writerDialect,
       plugins: [camelCasePlugin],
     }).withSchema(SERVICE_NAME.toLowerCase());
 
-    const dialect = new PostgresDialect({
+    this.rawWriterInstance = new Kysely<DB>({
+      dialect: writerDialect,
+    }).withSchema(SERVICE_NAME.toLowerCase());
+
+    const readerDialect = new PostgresDialect({
       pool: new Pool({
         connectionString: this.configService.getOrThrow('DATABASE_RO_URL'),
         connectionTimeoutMillis: 10_000,
         max: this.configService.get('DATABASE_READER_POOL_MAX'),
       }),
     });
+
     this.readerInstance = new Kysely<DB>({
-      dialect,
+      dialect: readerDialect,
       plugins: [camelCasePlugin],
+    }).withSchema(SERVICE_NAME.toLowerCase());
+
+    this.rawReaderInstance = new Kysely<DB>({
+      dialect: readerDialect,
     }).withSchema(SERVICE_NAME.toLowerCase());
   }
 
@@ -55,6 +64,14 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
 
   get reader() {
     return this.readerInstance;
+  }
+
+  get rawWriter() {
+    return this.rawWriterInstance;
+  }
+
+  get rawReader() {
+    return this.rawReaderInstance;
   }
 
   async onApplicationShutdown() {

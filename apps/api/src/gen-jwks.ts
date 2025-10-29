@@ -23,17 +23,3 @@ export async function generateJWKS(): Promise<JWKS> {
 
   return keystore.toJSON(true) as JWKS;
 }
-
-// Usage
-generateJWKS().then((jwks) => {
-  console.log(
-    `OIDC_PROVIDER_JWKS=${Buffer.from(JSON.stringify(jwks, null, 2)).toString(
-      'base64'
-    )}`
-  );
-  console.log(
-    `OIDC_PROVIDER_COOKIE_KEYS=${Buffer.from(
-      JSON.stringify(generateCookieKeys(3), null, 2)
-    ).toString('base64')}`
-  );
-});

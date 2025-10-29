@@ -10,6 +10,11 @@ export enum PublicProviderType {
   OIDC = "OIDC",
 }
 
+export enum PublicWorkspaceUserRole {
+  MEMBER = "MEMBER",
+  OWNER = "OWNER",
+}
+
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
@@ -27,13 +32,6 @@ export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
-
-export interface AuthOidcState {
-  codeVerifier: string;
-  createdAt: Generated<Timestamp>;
-  redirectUri: string;
-  state: string;
-}
 
 export interface OidcProvider {
   consumed: Generated<boolean>;
@@ -62,8 +60,27 @@ export interface User {
   username: string;
 }
 
+export interface Workspace {
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  description: string | null;
+  name: string;
+  updatedAt: Generated<Timestamp>;
+  updatedBy: string;
+  workspaceId: Generated<string>;
+}
+
+export interface WorkspaceUser {
+  addedAt: Generated<Timestamp>;
+  addedBy: string;
+  role: PublicWorkspaceUserRole;
+  userId: string;
+  workspaceId: string;
+}
+
 export interface DB {
-  authOidcState: AuthOidcState;
   oidcProvider: OidcProvider;
   users: User;
+  workspaces: Workspace;
+  workspaceUsers: WorkspaceUser;
 }

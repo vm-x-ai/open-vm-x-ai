@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AppLoggerModule } from './logger/logger.module';
 import { AuthModule } from './auth/auth.module';
 import { VaultModule } from './vault/vault.module';
+import { WorkspaceModule } from './workspace/workspace.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { VaultModule } from './vault/vault.module';
     UsersModule,
     AuthModule,
     VaultModule,
+    WorkspaceModule,
   ],
   controllers: [],
   providers: [],

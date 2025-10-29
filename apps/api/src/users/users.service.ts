@@ -1,11 +1,11 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../storage/database.service';
-import { FullUserEntity, UserEntity } from './user.entity';
+import { FullUserEntity, UserEntity } from './entities/user.entity';
 import * as oidcClient from 'openid-client';
 import { OperandExpression, SqlBool } from 'kysely';
-import { ErrorCode } from '../types';
 import { throwServiceError } from '../error';
 import { PublicProviderType } from '../storage/entities.generated';
+import { ErrorCode } from '../error-code';
 
 @Injectable()
 export class UsersService {
@@ -53,8 +53,7 @@ export class UsersService {
       if (!email) {
         throwServiceError(
           HttpStatus.BAD_REQUEST,
-          ErrorCode.OIDC_RESPONSE_ERROR,
-          'Email not available in the ID token'
+          ErrorCode.OIDC_EMAIL_NOT_AVAILABLE
         );
       }
 
@@ -104,8 +103,7 @@ export class UsersService {
       } else if (user.email !== email) {
         throwServiceError(
           HttpStatus.BAD_REQUEST,
-          ErrorCode.OIDC_RESPONSE_ERROR,
-          'Email mismatch between the ID token and the user'
+          ErrorCode.OIDC_EMAIL_MISMATCH
         );
       } else if (!user.providerId) {
         return await tx
@@ -122,8 +120,7 @@ export class UsersService {
       } else if (user.providerId !== providerId) {
         throwServiceError(
           HttpStatus.BAD_REQUEST,
-          ErrorCode.OIDC_RESPONSE_ERROR,
-          'Provider ID mismatch between the ID token and the user'
+          ErrorCode.OIDC_PROVIDER_ID_MISMATCH
         );
       } else if (!user.providerMetadata) {
         return await tx

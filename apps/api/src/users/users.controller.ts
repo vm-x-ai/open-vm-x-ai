@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserEntity } from './user.entity';
+import { UserEntity } from './entities/user.entity';
 import { ApiOkResponse } from '@nestjs/swagger';
 
 @Controller('users')

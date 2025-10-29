@@ -7,9 +7,10 @@ import {
 } from '@nestjs/common';
 import _ from 'lodash';
 import { PinoLogger } from 'nestjs-pino';
-import { ErrorCode, ServiceError } from './types';
+import { ServiceError } from './types';
 import { AbstractHttpAdapter } from '@nestjs/core';
 import { $enum } from 'ts-enum-util';
+import { ERROR_MESSAGES, ErrorCode } from './error-code';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -81,9 +82,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 export function throwServiceError(
   statusCode: HttpStatus,
   errorCode: ErrorCode,
-  errorMessage: string,
+  errorArgs: Record<string, unknown> = {},
   error?: Error
 ): never {
+  const errorMessage = _.template(ERROR_MESSAGES[errorCode])(errorArgs);
   throw new HttpException(
     new ServiceError({ errorCode, errorMessage, details: { cause: error } }),
     statusCode
