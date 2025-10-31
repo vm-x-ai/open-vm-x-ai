@@ -10,7 +10,7 @@ export const migration: Migration = {
     await db.schema
       .createTable('workspace_users')
       .addColumn('workspace_id', 'uuid', (col) =>
-        col.notNull().references('workspaces.workspace_id')
+        col.notNull().references('workspaces.workspace_id').onDelete('cascade')
       )
       .addColumn('user_id', 'uuid', (col) =>
         col.notNull().references('users.id')

@@ -9,6 +9,11 @@ import { AppLoggerModule } from './logger/logger.module';
 import { AuthModule } from './auth/auth.module';
 import { VaultModule } from './vault/vault.module';
 import { WorkspaceModule } from './workspace/workspace.module';
+import { AppCacheModule } from './cache/cache.module';
+import { EnvironmentModule } from './environment/environment.module';
+import { AIConnectionModule } from './ai-connection/ai-connection.module';
+import { AIResourceModule } from './ai-resource/ai-resource.module';
+import { PoolDefinitionModule } from './pool-definition/pool-definition.module';
 
 @Module({
   imports: [
@@ -17,6 +22,7 @@ import { WorkspaceModule } from './workspace/workspace.module';
       validationSchema: configSchema,
     }),
     AppLoggerModule,
+    AppCacheModule,
     MigrationsModule,
     DatabaseModule,
     HealthcheckModule,
@@ -24,6 +30,10 @@ import { WorkspaceModule } from './workspace/workspace.module';
     AuthModule,
     VaultModule,
     WorkspaceModule,
+    EnvironmentModule,
+    AIConnectionModule,
+    AIResourceModule,
+    PoolDefinitionModule,
   ],
   controllers: [],
   providers: [],

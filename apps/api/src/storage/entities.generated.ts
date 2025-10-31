@@ -33,6 +33,52 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface AiConnection {
+  allowedModels: ColumnType<string[] | null, string | null, string | null>;
+  capacity: ColumnType<any[] | null, string | null, string | null>;
+  config: ColumnType<any | null, string | null, string | null>;
+  connectionId: Generated<string>;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  description: string | null;
+  discoveredCapacity: ColumnType<any | null, string | null, string | null>;
+  environmentId: string;
+  name: string;
+  provider: string;
+  updatedAt: Generated<Timestamp>;
+  updatedBy: string;
+  workspaceId: string;
+}
+
+export interface AiResource {
+  capacity: ColumnType<any[] | null, string | null, string | null>;
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  description: string | null;
+  enforceCapacity: Generated<boolean>;
+  environmentId: string;
+  fallbackModels: ColumnType<any[] | null, string | null, string | null>;
+  model: ColumnType<any, string, string | null>;
+  resource: string;
+  routing: ColumnType<any | null, string | null, string | null>;
+  secondaryModels: ColumnType<any[] | null, string | null, string | null>;
+  updatedAt: Generated<Timestamp>;
+  updatedBy: string;
+  useFallback: Generated<boolean>;
+  workspaceId: string;
+}
+
+export interface Environment {
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  description: string | null;
+  environmentId: Generated<string>;
+  name: string;
+  updatedAt: Generated<Timestamp>;
+  updatedBy: string;
+  workspaceId: string;
+}
+
 export interface OidcProvider {
   consumed: Generated<boolean>;
   expiresAt: Timestamp | null;
@@ -41,6 +87,16 @@ export interface OidcProvider {
   payload: Json;
   uid: string | null;
   userCode: string | null;
+}
+
+export interface PoolDefinition {
+  createdAt: Generated<Timestamp>;
+  createdBy: string;
+  definition: ColumnType<any[], string, string | null>;
+  environmentId: string;
+  updatedAt: Generated<Timestamp>;
+  updatedBy: string;
+  workspaceId: string;
 }
 
 export interface User {
@@ -79,7 +135,11 @@ export interface WorkspaceUser {
 }
 
 export interface DB {
+  aiConnections: AiConnection;
+  aiResources: AiResource;
+  environments: Environment;
   oidcProvider: OidcProvider;
+  poolDefinitions: PoolDefinition;
   users: User;
   workspaces: Workspace;
   workspaceUsers: WorkspaceUser;

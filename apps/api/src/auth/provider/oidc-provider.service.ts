@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { DatabaseService } from '../../storage/database.service';
 import { KyselyAdapter } from './oidc.adapter';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +13,7 @@ import {
 import { SecretService } from '../../vault/secrets.service';
 import { PinoLogger } from 'nestjs-pino';
 import { generateCookieKeys, generateJWKS } from '../../gen-jwks';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class OidcProviderService implements OnModuleInit {
@@ -24,7 +25,8 @@ export class OidcProviderService implements OnModuleInit {
     private readonly db: DatabaseService,
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
-    private readonly secretService: SecretService
+    private readonly secretService: SecretService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
   async onModuleInit() {
@@ -177,6 +179,7 @@ export class OidcProviderService implements OnModuleInit {
   }
 
   private createAdapterFactory(): AdapterFactory {
-    return (modelName: string) => new KyselyAdapter(modelName, this.db);
+    return (modelName: string) =>
+      new KyselyAdapter(modelName, this.db, this.cache);
   }
 }

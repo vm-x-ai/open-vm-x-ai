@@ -1,3 +1,5 @@
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { NestFactory } from '@nestjs/core';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -22,12 +24,21 @@ async function runMigration() {
   const app = await NestFactory.createApplicationContext(MigrationModule);
   const migrationsService = app.get(MigrationsService);
 
-  const args = process.argv.slice(2);
+  const argv = await yargs(hideBin(process.argv))
+    .option('reset', {
+      type: 'boolean',
+      description: 'Reset the database migrations',
+    })
+    .option('target', {
+      type: 'string',
+      description: 'Target migration to reset to (e.g. 01, 02, 03, etc.)',
+    })
+    .parse();
 
   try {
-    if (args.includes('--reset')) {
+    if (argv.reset) {
       console.log('Resetting database migrations...');
-      await migrationsService.resetMigrations();
+      await migrationsService.resetMigrations(argv.target);
       console.log('Migration reset completed successfully');
     } else {
       console.log('Running database migrations...');

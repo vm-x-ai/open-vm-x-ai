@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../storage/database.service';
 import { FullUserEntity, UserEntity } from './entities/user.entity';
 import * as oidcClient from 'openid-client';
@@ -6,10 +6,14 @@ import { OperandExpression, SqlBool } from 'kysely';
 import { throwServiceError } from '../error';
 import { PublicProviderType } from '../storage/entities.generated';
 import { ErrorCode } from '../error-code';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache
+  ) {}
 
   public async getAll(): Promise<UserEntity[]> {
     const users = await this.db.reader
@@ -22,27 +26,37 @@ export class UsersService {
   }
 
   public async get(id: string): Promise<FullUserEntity | undefined> {
-    const user = await this.db.reader
-      .selectFrom('users')
-      .selectAll()
-      .where('id', '=', id)
-      .executeTakeFirst();
+    const user = await this.cache.wrap(this.getUserCacheKey(id), () =>
+      this.db.reader
+        .selectFrom('users')
+        .selectAll()
+        .where('id', '=', id)
+        .executeTakeFirst()
+    );
     return user;
   }
 
   public async getByUsername(
     usernameOrEmail: string
   ): Promise<FullUserEntity | undefined> {
-    const user = await this.db.reader
-      .selectFrom('users')
-      .selectAll()
-      .where((eb) =>
-        eb.or([
-          eb(eb.fn('lower', ['username']), '=', usernameOrEmail.toLowerCase()),
-          eb(eb.fn('lower', ['email']), '=', usernameOrEmail.toLowerCase()),
-        ])
-      )
-      .executeTakeFirst();
+    const user = await this.cache.wrap(
+      this.getUserCacheKey(usernameOrEmail),
+      () =>
+        this.db.reader
+          .selectFrom('users')
+          .selectAll()
+          .where((eb) =>
+            eb.or([
+              eb(
+                eb.fn('lower', ['username']),
+                '=',
+                usernameOrEmail.toLowerCase()
+              ),
+              eb(eb.fn('lower', ['email']), '=', usernameOrEmail.toLowerCase()),
+            ])
+          )
+          .executeTakeFirst()
+    );
 
     return user;
   }
@@ -135,5 +149,9 @@ export class UsersService {
 
       return user;
     });
+  }
+
+  private getUserCacheKey(id: string) {
+    return `user:${id}`;
   }
 }

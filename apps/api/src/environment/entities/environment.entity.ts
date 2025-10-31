@@ -9,9 +9,17 @@ import {
 import { UserRelationDto } from '../../users/dto/user.dto';
 import { Type } from 'class-transformer';
 
-export class WorkspaceEntity {
+export class EnvironmentEntity {
   @ApiProperty({
-    description: 'The unique identifier for the workspace (UUID)',
+    description: 'The unique identifier for the environment (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID('4')
+  @IsNotEmpty()
+  environmentId: string;
+
+  @ApiProperty({
+    description: 'The workspace that the environment is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID('4')
@@ -19,16 +27,16 @@ export class WorkspaceEntity {
   workspaceId: string;
 
   @ApiProperty({
-    description: 'The name of the workspace',
-    example: 'My Workspace',
+    description: 'The name of the environment',
+    example: 'production',
   })
   @IsString()
   @IsNotEmpty()
   name: string;
 
   @ApiProperty({
-    description: 'The description of the workspace',
-    example: 'This is my workspace',
+    description: 'The description of the environment',
+    example: 'This is my production environment',
   })
   @IsString()
   @IsOptional()

@@ -16,6 +16,10 @@ import { migration as migration01 } from './1-create-users';
 import { migration as migration02 } from './2-create-oidc-provider';
 import { migration as migration03 } from './3-workspace-table';
 import { migration as migration04 } from './4-workspace-user-table';
+import { migration as migration05 } from './5-environment-table';
+import { migration as migration06 } from './6-ai-connection-table';
+import { migration as migration07 } from './7-ai-resource-table';
+import { migration as migration08 } from './8-pool-definition-table';
 import { PasswordService } from '../auth/password.service';
 import { DB } from '../storage/entities.generated';
 
@@ -59,6 +63,10 @@ export class MigrationsService implements OnModuleInit {
         '02': migration02,
         '03': migration03,
         '04': migration04,
+        '05': migration05,
+        '06': migration06,
+        '07': migration07,
+        '08': migration08,
       }),
     });
   }
@@ -128,7 +136,7 @@ export class MigrationsService implements OnModuleInit {
     return results;
   }
 
-  async resetMigrations() {
+  async resetMigrations(targetMigration?: string) {
     const isLocalOrTest =
       this.configService.getOrThrow<string>('NODE_ENV') === 'local' ||
       this.configService.getOrThrow<string>('NODE_ENV') === 'test';
@@ -144,7 +152,7 @@ export class MigrationsService implements OnModuleInit {
     }
 
     this.logger.debug('Starting database rollback');
-    await this.migrator.migrateTo(NO_MIGRATIONS);
+    await this.migrator.migrateTo(targetMigration ?? NO_MIGRATIONS);
     this.logger.log('Rollback completed successfully');
   }
 }

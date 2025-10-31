@@ -4,11 +4,18 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CamelCasePlugin, Kysely, PostgresDialect } from 'kysely';
+import {
+  CamelCasePlugin,
+  Expression,
+  Kysely,
+  PostgresDialect,
+  SelectQueryBuilder,
+} from 'kysely';
 import { SERVICE_NAME } from '../consts';
 import { Pool } from 'pg';
 import { MigrationsService } from '../migrations/migrations.service';
 import { DB } from './entities.generated';
+import { jsonObjectFrom } from 'kysely/helpers/postgres';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
@@ -81,5 +88,56 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
 
   async onModuleInit() {
     await this.migrationsService.migrate();
+  }
+
+  public includeEntityControlUsers<
+    D extends DB,
+    T extends keyof D,
+    O extends {
+      createdBy: string;
+      updatedBy: string;
+    }
+  >(table: T) {
+    return (qb: SelectQueryBuilder<D, T, O>) =>
+      qb.select(
+        (eb) =>
+          [
+            this.withUser(
+              eb.ref(`${table as string}.createdBy` as never),
+              'createdBy'
+            )
+              .$notNull()
+              .as('createdByUser'),
+            this.withUser(
+              eb.ref(`${table as string}.updatedBy` as never),
+              'updatedBy'
+            )
+              .$notNull()
+              .as('updatedByUser'),
+          ] as const
+      );
+  }
+
+  public withUser(userId: Expression<string>, alias: string) {
+    return jsonObjectFrom(
+      this.reader
+        .selectFrom(`users as ${alias}`)
+        .select([
+          'id',
+          'name',
+          'firstName',
+          'lastName',
+          'username',
+          'email',
+          'emailVerified',
+          'pictureUrl',
+          'providerType',
+          'providerId',
+          'providerMetadata',
+          'createdAt',
+          'updatedAt',
+        ])
+        .where(`${alias}.id`, '=', userId)
+    );
   }
 }

@@ -1,63 +1,17 @@
-import {
-  applyDecorators,
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Delete,
-  Get,
-  Param,
-  ParseBoolPipe,
-  ParseUUIDPipe,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
 import { WorkspaceService } from './workspace.service';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { WorkspaceEntity } from './entities/workspace.entity';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { AuthenticatedUser } from '../auth/auth.guard';
 import { UserEntity } from '../users/entities/user.entity';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
-
-function ApiIncludesUsersQuery() {
-  return applyDecorators(
-    ApiQuery({
-      name: 'includesUsers',
-      type: Boolean,
-      required: false,
-      description: 'Whether to include users in the response',
-    })
-  );
-}
-
-function ApiWorkspaceIdParam() {
-  return applyDecorators(
-    ApiParam({
-      name: 'workspaceId',
-      type: String,
-      required: true,
-      description: 'The ID of the workspace',
-    })
-  );
-}
-
-function IncludesUsersQuery() {
-  return Query(
-    'includesUsers',
-    new DefaultValuePipe(true),
-    new ParseBoolPipe({ optional: true })
-  );
-}
-
-function WorkspaceIdParam() {
-  return Param('workspaceId', new ParseUUIDPipe({ version: '4' }));
-}
+import {
+  ApiIncludesUsersQuery,
+  ApiWorkspaceIdParam,
+  IncludesUsersQuery,
+  WorkspaceIdParam,
+} from '../common/api.decorators';
 
 @Controller('workspaces')
 export class WorkspaceController {
@@ -115,7 +69,8 @@ export class WorkspaceController {
   })
   @ApiOperation({
     summary: 'Create a new workspace',
-    description: 'Creates a new workspace. The authenticated user is automatically added as the owner of the workspace.',
+    description:
+      'Creates a new workspace. The authenticated user is automatically added as the owner of the workspace.',
   })
   public async create(
     @Body() payload: CreateWorkspaceDto,
@@ -132,7 +87,8 @@ export class WorkspaceController {
   })
   @ApiOperation({
     summary: 'Update a workspace',
-    description: 'Updates a workspace by its ID. The authenticated user must be a member of the workspace and have the owner role.',
+    description:
+      'Updates a workspace by its ID. The authenticated user must be a member of the workspace and have the owner role.',
   })
   public async update(
     @WorkspaceIdParam() workspaceId: string,
@@ -149,9 +105,13 @@ export class WorkspaceController {
   })
   @ApiOperation({
     summary: 'Delete a workspace',
-    description: 'Deletes a workspace by its ID. The authenticated user must be a member of the workspace and have the owner role.',
+    description:
+      'Deletes a workspace by its ID. The authenticated user must be a member of the workspace and have the owner role.',
   })
-  public async delete(@WorkspaceIdParam() workspaceId: string): Promise<void> {
-    await this.workspaceService.delete(workspaceId);
+  public async delete(
+    @WorkspaceIdParam() workspaceId: string,
+    @AuthenticatedUser() user: UserEntity
+  ): Promise<void> {
+    await this.workspaceService.delete(workspaceId, user);
   }
 }
