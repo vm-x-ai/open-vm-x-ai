@@ -164,6 +164,11 @@ export class OpenAIProvider implements CompletionProvider {
       const response = await client.chat.completions
         .create({
           ...request,
+          stream_options: request.stream
+            ? {
+                include_usage: true,
+              }
+            : undefined,
           model: model.model,
         })
         .withResponse();

@@ -1,11 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { CapacityEntity, CapacityPeriod } from './capacity.entity';
+import {
+  CapacityDimension,
+  CapacityEntity,
+  CapacityPeriod,
+} from './capacity.entity';
 import { PinoLogger } from 'nestjs-pino';
 import { RedisClient } from '../cache/redis-client';
-import { WorkspaceEntity } from '../workspace/entities/workspace.entity';
 import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.entity';
 import { AIResourceEntity } from '../ai-resource/entities/ai-resource.entity';
 import type { FastifyRequest } from 'fastify';
+import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
+import { getSourceIpFromRequest } from '../utils/http';
+import { endOfWeek, endOfMonth } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 type PrefixedCapacity = {
   capacity: CapacityEntity;
@@ -90,24 +97,28 @@ export class CapacityService {
   }
 
   resolve(
-    workspace: WorkspaceEntity,
+    workspaceId: string,
     environmentId: string,
     aiConnection: AIConnectionEntity,
     resource: AIResourceEntity,
-    req: FastifyRequest,
-    apiKey?: APIKey,
+    request: FastifyRequest,
+    apiKey?: ApiKeyEntity
   ) {
     const resourceKeyPrefix = this.getResourceKeyPrefix(
-      workspace.workspaceId,
+      workspaceId,
       environmentId,
       resource.resource,
       aiConnection.connectionId
     );
-    const connectionCapacities = aiConnection.capacity.filter((u) => u.enabled);
+    const connectionCapacities =
+      aiConnection.capacity?.filter((u) => u.enabled) ?? [];
     if (connectionCapacities.length === 0) {
-      this.logger.log('No resource limit for the resource', {
-        resource: resource.resource,
-      });
+      this.logger.info(
+        {
+          resource: resource.resource,
+        },
+        'No resource limit for the resource'
+      );
     }
 
     const enabledCapacities = [
@@ -115,7 +126,7 @@ export class CapacityService {
         const keyPrefixAttributes = this.resolveCapacityKeyPrefix(
           capacity,
           `${resourceKeyPrefix}:resource-usage:`,
-          grpcMetadata
+          request
         );
 
         return {
@@ -131,7 +142,7 @@ export class CapacityService {
         const keyPrefixAttributes = this.resolveCapacityKeyPrefix(
           capacity,
           `${resourceKeyPrefix}:resource-usage:`,
-          grpcMetadata
+          request
         );
 
         return {
@@ -147,7 +158,7 @@ export class CapacityService {
         const keyPrefixAttributes = this.resolveCapacityKeyPrefix(
           capacity,
           `${resourceKeyPrefix}:resource-usage:`,
-          grpcMetadata
+          request
         );
 
         return {
@@ -156,39 +167,24 @@ export class CapacityService {
           source: 'API Key',
         };
       }),
-      ...(workspace.plan?.quota ?? []).map((capacity) => {
-        const keyPrefixAttributes = this.resolveCapacityKeyPrefix(
-          capacity,
-          `workspace:{${workspace.workspaceId}}:usage:`,
-          grpcMetadata
-        );
-
-        return {
-          ...keyPrefixAttributes,
-          capacity,
-          source: 'Quota',
-        };
-      }),
     ].filter(({ capacity }) => capacity.enabled);
 
     return { enabledCapacities, connectionCapacities };
   }
 
   private resolveCapacityKeyPrefix(
-    capacity: Capacity,
+    capacity: CapacityEntity,
     baseKeyPrefix: string,
-    grpcMetadata?: Metadata
+    request: FastifyRequest
   ): { keyPrefix: string; dimensionValue?: string } {
     if (!baseKeyPrefix.endsWith(':')) {
       throw new Error('Base key prefix should end with a colon');
     }
 
-    if (capacity.dimension === 'source-ip') {
-      const sourceIp = getSourceIpFromGrcpMetadata(grpcMetadata);
+    if (capacity.dimension === CapacityDimension.SOURCE_IP) {
+      const sourceIp = getSourceIpFromRequest(request);
       return {
-        keyPrefix: `${baseKeyPrefix}source-ip:${getSourceIpFromGrcpMetadata(
-          grpcMetadata
-        )}:`,
+        keyPrefix: `${baseKeyPrefix}source-ip:${sourceIp}:`,
         dimensionValue: sourceIp,
       };
     }

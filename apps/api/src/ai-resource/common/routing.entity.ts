@@ -1,6 +1,10 @@
 import { $enum } from 'ts-enum-util';
 import { AIResourceModelConfigEntity } from './model.entity';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -124,7 +128,8 @@ export class AIResourceRoutingCondition {
 
 export class AIResourceRoutingModelConfig extends AIResourceModelConfigEntity {
   @ApiPropertyOptional({
-    description: 'Traffic percentage sent to this model config, empty means all traffic',
+    description:
+      'Traffic percentage sent to this model config, empty means all traffic',
     example: 60,
   })
   @IsNumber()
@@ -159,13 +164,24 @@ export class AIRoutingConditionGroup {
   operator: RoutingOperator;
 
   @ApiProperty({
-    type: [AIResourceRoutingCondition],
+    type: 'array',
+    items: {
+      oneOf: [
+        { $ref: getSchemaPath(AIResourceRoutingCondition) },
+        { $ref: getSchemaPath(AIRoutingConditionGroup) },
+      ],
+    },
     description: 'List of routing conditions',
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => AIResourceRoutingCondition)
-  conditions: AIResourceRoutingCondition[];
+  @Type((options) => {
+    if (options && 'conditions' in options.object) {
+      return AIRoutingConditionGroup;
+    }
+    return AIResourceRoutingCondition;
+  })
+  conditions: Array<AIResourceRoutingCondition | AIRoutingConditionGroup>;
 
   @ApiProperty({
     enumName: 'RoutingAction',
@@ -199,8 +215,7 @@ export class AIRoutingConditionGroup {
   })
   @ValidateNested()
   @Type(() => AIResourceRoutingModelConfig)
-  @IsOptional()
-  then?: AIResourceRoutingModelConfig;
+  then: AIResourceRoutingModelConfig;
 
   @ApiPropertyOptional({
     description: 'Whether this group is enabled',

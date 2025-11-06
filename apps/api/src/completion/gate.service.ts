@@ -1,8 +1,23 @@
-import { Injectable } from "@nestjs/common";
-import { PinoLogger } from "nestjs-pino";
-import { RedisClient } from "../cache/redis-client";
-import { PoolDefinitionService } from "../pool-definition/pool-definition.service";
-import { AIConnectionService } from "../ai-connection/ai-connection.service";
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { PinoLogger } from 'nestjs-pino';
+import { RedisClient } from '../cache/redis-client';
+import { PoolDefinitionService } from '../pool-definition/pool-definition.service';
+import { CapacityService } from '../capacity/capacity.service';
+import { PrioritizationService } from '../prioritization/prioritization.service';
+import {
+  CapacityDimension,
+  CapacityEntity,
+  CapacityPeriod,
+} from '../capacity/capacity.entity';
+import { FastifyRequest } from 'fastify';
+import { AIResourceEntity } from '../ai-resource/entities/ai-resource.entity';
+import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity';
+import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.entity';
+import { CompletionObservableData, CompletionProvider } from '../ai-provider/ai-provider.types';
+import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
+import { ChatCompletionCreateParams } from 'openai/resources/index.js';
+import { TokenService } from '../token/token.service';
+import { CompletionError } from './completion.types';
 
 export type EvaluatedCapacity = {
   period: CapacityPeriod;
@@ -11,58 +26,60 @@ export type EvaluatedCapacity = {
 
 @Injectable()
 export class GateService {
-  private prioritizationMetricsRepository: PrioritizationMetricsRepository = new RedisPrioritizationMetricsRepository(
-    this.redisClient.client,
-  );
-  private prioritizationAllocationRepository: PrioritizationAllocationRepository =
-    new RedisPrioritizationAllocationRepository(this.redisClient.client);
-
   constructor(
     private readonly logger: PinoLogger,
     private readonly redisClient: RedisClient,
     private readonly poolDefinitionService: PoolDefinitionService,
-    private readonly aiConnectionService: AIConnectionService,
     private readonly capacityService: CapacityService,
+    private readonly prioritizationService: PrioritizationService,
+    private readonly tokenService: TokenService
   ) {}
 
-  @Span('requestGate')
   public async requestGate(
-    grpcMetadata: Metadata,
-    workspace: Workspace,
+    request: FastifyRequest,
+    workspaceId: string,
     environmentId: string,
-    request: CompletionRequest,
-    resource: Resource,
-    model: ResourceModelConfig,
-    aiConnection: AIConnection,
-    provider: ICompletionProvider,
-    apiKey?: APIKey,
+    payload: ChatCompletionCreateParams,
+    resource: AIResourceEntity,
+    model: AIResourceModelConfigEntity,
+    aiConnection: AIConnectionEntity,
+    provider: CompletionProvider,
+    apiKey?: ApiKeyEntity
   ): Promise<EvaluatedCapacity[]> {
-    const requestTokens =
-      (await provider.getRequestTokens(request, model)) + provider.getMaxReplyTokens(request, model);
-    const now = new Date();
+    const requestTokens = await this.tokenService.getRequestTokens(payload);
+    const requestTime = new Date();
 
     this.logger.debug('Resource config', {
       resource,
       model,
     });
 
-    const { enabledCapacities, connectionCapacities } = this.capacityService.resolve(
-      workspace,
-      environmentId,
-      aiConnection,
-      resource,
-      apiKey,
-      grpcMetadata,
-    );
+    const { enabledCapacities, connectionCapacities } =
+      this.capacityService.resolve(
+        workspaceId,
+        environmentId,
+        aiConnection,
+        resource,
+        request,
+        apiKey
+      );
 
     const startCheckCapacity = Date.now();
     const [poolDefinition, usageMetricsMap] = await Promise.all([
-      this.poolDefinitionService.get(workspace.workspaceId, environmentId),
-      this.capacityService.getUsage(now, enabledCapacities),
+      this.poolDefinitionService.getById(
+        workspaceId,
+        environmentId,
+        false
+      ),
+      this.capacityService.getUsage(requestTime, enabledCapacities),
     ]);
 
     const uniqPeriods = [
-      ...new Set(enabledCapacities.map(({ capacity, keyPrefix }) => `${capacity.period}##${keyPrefix}`)),
+      ...new Set(
+        enabledCapacities.map(
+          ({ capacity, keyPrefix }) => `${capacity.period}##${keyPrefix}`
+        )
+      ),
     ].map((key) => ({
       period: key.split('##')[0] as CapacityPeriod,
       keyPrefix: key.split('##')[1],
@@ -76,64 +93,75 @@ export class GateService {
         usageMetricsMap[capacity.period].usedTokens,
         requestTokens,
         usageMetricsMap[capacity.period].remainingSeconds,
-        dimensionValue,
-      ),
+        dimensionValue
+      )
     );
-    this.logger.log('Check capacity duration', {
-      duration: Date.now() - startCheckCapacity,
-    });
+    this.logger.info(
+      {
+        duration: Date.now() - startCheckCapacity,
+      },
+      'Check capacity duration'
+    );
 
-    const pool = poolDefinition?.definition?.find((pool) => pool.resources.includes(request.resource));
+    const pool = poolDefinition?.definition?.find((pool) =>
+      pool.resources.includes(resource.resource)
+    );
     const connectionMinuteCapacity = connectionCapacities.find(
-      (capacity) => capacity.period === CapacityPeriod.MINUTE && capacity.enabled,
+      (capacity) =>
+        capacity.period === CapacityPeriod.MINUTE && capacity.enabled
     );
 
     if (pool && connectionMinuteCapacity) {
       const prioritizationStartAt = Date.now();
-      this.logger.log('Checking prioritization gate', {
-        request,
-        prioritizationAlgorithm: 'adaptive-token-scaling',
-      });
-      const prioritizationProvider = new prioritizationAlgorithmMap['adaptive-token-scaling'](
-        poolDefinition,
-        this.prioritizationMetricsRepository,
-        this.prioritizationAllocationRepository,
+      this.logger.info(
+        {
+          request,
+          prioritizationAlgorithm: 'adaptive-token-scaling',
+        },
+        'Checking prioritization gate'
       );
 
-      const { allowed, reason } = await prioritizationProvider.gate(
-        {
-          ...request,
-          requestTime: now,
-          tokens: requestTokens,
-        },
-        aiConnection,
-        {},
+      const { allowed, reason } = await this.prioritizationService.gate(
+        poolDefinition,
+        requestTime,
+        requestTokens,
+        resource.resource,
+        aiConnection
       );
-      this.logger.log('Prioritization gate duration', {
-        duration: Date.now() - prioritizationStartAt,
-      });
+      this.logger.info(
+        {
+          duration: Date.now() - prioritizationStartAt,
+        },
+        'Prioritization gate duration'
+      );
 
       if (!allowed) {
-        throw new LLMRpcException({
+        throw new CompletionError({
           rate: true,
           message: reason,
-          code: status.RESOURCE_EXHAUSTED,
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
           retryable: true,
           failureReason: 'Denied by prioritization gate',
+          openAICompatibleError: {
+            code: 'prioritization_gate_denied',
+          },
         });
       }
     } else {
-      this.logger.log('No prioritization gate for the request', {
-        request,
-        pool,
-        connectionMinuteCapacity,
-      });
+      this.logger.info(
+        {
+          request,
+          pool,
+          connectionMinuteCapacity,
+        },
+        'No prioritization gate for the request'
+      );
     }
 
     const increaseRpmTpmCountersStartAt = Date.now();
 
-    const discoveredCapacity = aiConnection.discoveredCapacity?.models[model.model];
+    const discoveredCapacity =
+      aiConnection.discoveredCapacity?.models[model.model];
 
     const capacities = [
       ...uniqPeriods,
@@ -141,10 +169,10 @@ export class GateService {
         period: capacity.period,
         source: 'discovered',
         keyPrefix: this.capacityService.getResourceKeyPrefix(
-          workspace.workspaceId,
+          workspaceId,
           environmentId,
           resource.resource,
-          aiConnection.connectionId,
+          aiConnection.connectionId
         ),
       })) ?? []),
     ];
@@ -152,39 +180,45 @@ export class GateService {
     await Promise.all([
       capacities.map(async ({ period, keyPrefix }) => {
         const key = `${keyPrefix}${period}`;
-        await this.increaseRpmTpmCounters(key, usageMetricsMap[period].remainingSeconds, requestTokens);
+        await this.increaseRpmTpmCounters(
+          key,
+          usageMetricsMap[period].remainingSeconds,
+          requestTokens
+        );
       }),
     ]);
 
-    this.logger.log('Increase RPM TPM counters duration', {
-      duration: Date.now() - increaseRpmTpmCountersStartAt,
-    });
+    this.logger.info(
+      {
+        duration: Date.now() - increaseRpmTpmCountersStartAt,
+      },
+      'Increase RPM TPM counters duration'
+    );
 
     return capacities;
   }
 
-  @Span('decreaseTokenAllocation')
-  public async decreaseTokenAllocation(
+  public async increaseTokenResponseUsage(
     evaluatedCapacities: EvaluatedCapacity[],
-    request: CompletionRequest,
-    response: CompletionResponse,
-    model: ResourceModelConfig,
-    provider: ICompletionProvider,
+    response: CompletionObservableData,
   ) {
-    const maxTokens = provider.getMaxReplyTokens(request, model);
-
     await Promise.all(
       evaluatedCapacities.map(async ({ keyPrefix, period }) => {
         const key = `${keyPrefix}${period}`;
-        const decreaseBy = maxTokens - response.usage.completion;
-        console.log('decreaseBy', decreaseBy);
-        await this.redisClient.client.decrby(`${key}:tokens`, decreaseBy);
-      }),
+        const completionTokens = response.data.usage?.completion_tokens ?? 0;
+        if (completionTokens === 0) {
+          return;
+        }
+        await this.redisClient.client.incrby(`${key}:tokens`, completionTokens);
+      })
     );
   }
 
-  @Span('increaseRpmTpmCounters')
-  private async increaseRpmTpmCounters(keyPrefix: string, remainingSeconds: number, tokens: number) {
+  private async increaseRpmTpmCounters(
+    keyPrefix: string,
+    remainingSeconds: number,
+    tokens: number
+  ) {
     // TODO: add local counter to avoid write throughput issue
     const operation = this.redisClient.client
       .multi()
@@ -202,15 +236,14 @@ export class GateService {
     await operation.exec();
   }
 
-  @Span('checkRequestCapacity')
   private checkRequestCapacity(
-    capacity: Capacity,
+    capacity: CapacityEntity,
     capacityResource: string,
     totalRequests: number,
     usedTokens: number,
     requestTokens: number,
     remainingSeconds: number,
-    capacityDimensionValue?: string,
+    capacityDimensionValue?: string
   ) {
     let prefixMessage = 'Resource';
     if (capacity.dimension && capacityDimensionValue) {
@@ -221,34 +254,43 @@ export class GateService {
       }
     }
 
-    if (capacity.requests > 0 && totalRequests > capacity.requests) {
-      throw new LLMRpcException({
+    const capacityRequests = capacity.requests ?? 0;
+    if (capacityRequests > 0 && totalRequests > capacityRequests) {
+      throw new CompletionError({
         rate: true,
         message: `${prefixMessage} has reached the limit of requests, limit: ${capacity.requests} at ${capacityResource} level by ${capacity.period}`,
-        code: status.RESOURCE_EXHAUSTED,
         statusCode: HttpStatus.TOO_MANY_REQUESTS,
         retryable: true,
         retryDelay: remainingSeconds > 0 ? remainingSeconds * 1000 : undefined,
         failureReason: `${capacityResource}: Resource has reached the limit of requests`,
+        openAICompatibleError: {
+          code: 'resource_exhausted',
+        },
       });
     }
 
     const totalTokens = usedTokens + requestTokens;
-    if (capacity.tokens > 0 && totalTokens > capacity.tokens) {
-      throw new LLMRpcException({
+    const capacityTokens = capacity.tokens ?? 0;
+    if (capacityTokens > 0 && totalTokens > capacityTokens) {
+      throw new CompletionError({
         rate: true,
         message: `${prefixMessage} has reached the limit of tokens, limit: ${capacity.tokens} at ${capacityResource} level by ${capacity.period}`,
-        code: status.RESOURCE_EXHAUSTED,
         statusCode: HttpStatus.TOO_MANY_REQUESTS,
         retryable: true,
         retryDelay: remainingSeconds > 0 ? remainingSeconds * 1000 : undefined,
         failureReason: `${capacityResource}: Resource has reached the limit of tokens`,
+        openAICompatibleError: {
+          code: 'resource_exhausted',
+        },
       });
     }
 
-    this.logger.log('Resource usage', {
-      totalRequests,
-      totalTokens,
-    });
+    this.logger.info(
+      {
+        totalRequests,
+        totalTokens,
+      },
+      'Resource usage'
+    );
   }
 }

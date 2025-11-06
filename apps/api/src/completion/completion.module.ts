@@ -6,6 +6,13 @@ import { AIResourceModule } from '../ai-resource/ai-resource.module';
 import { AIConnectionModule } from '../ai-connection/ai-connection.module';
 import { CompletionController } from './completion.controller';
 import { ApiKeyModule } from '../api-key/api-key.module';
+import { CapacityModule } from '../capacity/capacity.module';
+import { PrioritizationModule } from '../prioritization/prioritization.module';
+import { TokenModule } from '../token/token.module';
+import { ResourceRoutingService } from './routing.service';
+import { GateService } from './gate.service';
+import { PoolDefinitionModule } from '../pool-definition/pool-definition.module';
+import { MetricsModule } from '../metrics/metrics.module';
 
 @Module({
   imports: [
@@ -14,9 +21,14 @@ import { ApiKeyModule } from '../api-key/api-key.module';
     AIConnectionModule,
     AIResourceModule,
     ApiKeyModule,
+    CapacityModule,
+    PoolDefinitionModule,
+    PrioritizationModule,
+    TokenModule,
+    MetricsModule,
   ],
   controllers: [CompletionController],
-  providers: [CompletionService],
+  providers: [CompletionService, GateService, ResourceRoutingService],
   exports: [CompletionService],
 })
 export class CompletionModule {}

@@ -16,7 +16,7 @@ export class CompletionService {
     private readonly workspaceService: WorkspaceService,
     private readonly aiProviderService: AIProviderService,
     private readonly aiConnectionService: AIConnectionService,
-    private readonly aiResourceService: AIResourceService
+    private readonly aiResourceService: AIResourceService,
   ) {}
 
   public completion(

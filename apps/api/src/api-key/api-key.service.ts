@@ -234,6 +234,7 @@ export class ApiKeyService {
     await this.cache.mdel([
       this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, true),
       this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, false),
+      this.getApiKeyHashCacheKey(workspaceId, environmentId, apiKey.hash),
     ]);
 
     const { hash, ...rest } = apiKey;
@@ -246,6 +247,20 @@ export class ApiKeyService {
     apiKeyId: string,
     user: UserEntity
   ): Promise<void> {
+    const apiKey = await this.db.reader
+      .selectFrom('apiKeys')
+      .selectAll('apiKeys')
+      .where('workspaceId', '=', workspaceId)
+      .where('environmentId', '=', environmentId)
+      .where('apiKeyId', '=', apiKeyId)
+      .executeTakeFirst();
+
+    if (!apiKey) {
+      throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.API_KEY_NOT_FOUND, {
+        apiKeyId,
+      });
+    }
+
     await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     await this.db.writer
       .deleteFrom('apiKeys')
@@ -257,6 +272,7 @@ export class ApiKeyService {
     await this.cache.mdel([
       this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, true),
       this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, false),
+      this.getApiKeyHashCacheKey(workspaceId, environmentId, apiKey.hash),
     ]);
   }
 
@@ -266,14 +282,19 @@ export class ApiKeyService {
     environmentId: string,
     resource: string
   ): Promise<ApiKeyEntity | undefined> {
-    const entity = await this.db.reader
-      .selectFrom('apiKeys')
-      .selectAll('apiKeys')
-      .where('hash', '=', await this.computeHash(apiKey))
-      .where('workspaceId', '=', workspaceId)
-      .where('environmentId', '=', environmentId)
-      .where('enabled', '=', true)
-      .executeTakeFirst();
+    const computedHash = await this.computeHash(apiKey);
+    const entity = await this.cache.wrap(
+      this.getApiKeyHashCacheKey(workspaceId, environmentId, computedHash),
+      () =>
+        this.db.reader
+          .selectFrom('apiKeys')
+          .selectAll('apiKeys')
+          .where('hash', '=', computedHash)
+          .where('workspaceId', '=', workspaceId)
+          .where('environmentId', '=', environmentId)
+          .where('enabled', '=', true)
+          .executeTakeFirst()
+    );
 
     if (!entity) return undefined;
 
@@ -309,6 +330,14 @@ export class ApiKeyService {
     return `${generatedKey.slice(0, 6)}${'*'.repeat(20)}${generatedKey.slice(
       -4
     )}`;
+  }
+
+  private getApiKeyHashCacheKey(
+    workspaceId: string,
+    environmentId: string,
+    hash: string
+  ) {
+    return `api-key:hash:${workspaceId}:${environmentId}:${hash}`;
   }
 
   private getApiKeyCacheKey(

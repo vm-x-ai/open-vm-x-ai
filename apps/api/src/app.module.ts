@@ -19,9 +19,12 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { CompletionModule } from './completion/completion.module';
 import { ApiKeyModule } from './api-key/api-key.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'assets'),
       serveRoot: '/assets',
@@ -49,6 +52,7 @@ import { ApiKeyModule } from './api-key/api-key.module';
     AIProviderModule,
     ApiKeyModule,
     CompletionModule,
+    MetricsModule,
   ],
   controllers: [],
   providers: [],
