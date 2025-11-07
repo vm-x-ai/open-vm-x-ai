@@ -21,13 +21,16 @@ export class WorkspaceService {
     userId: string,
     role?: PublicWorkspaceUserRole
   ): Promise<void | never> {
-    const workspaceUser = await this.db.reader
-      .selectFrom('workspaceUsers')
-      .select('role')
-      .where('workspaceId', '=', workspaceId)
-      .where('userId', '=', userId)
-      .executeTakeFirst();
-
+    const workspaceUser = await this.cache.wrap(
+      this.getWorkspaceMemberCacheKey(workspaceId, userId),
+      () =>
+        this.db.reader
+          .selectFrom('workspaceUsers')
+          .select('role')
+          .where('workspaceId', '=', workspaceId)
+          .where('userId', '=', userId)
+          .executeTakeFirst()
+    );
     if (!workspaceUser) {
       throwServiceError(HttpStatus.BAD_REQUEST, ErrorCode.WORKSPACE_NOT_MEMBER);
     }
@@ -189,7 +192,6 @@ export class WorkspaceService {
     payload: UpdateWorkspaceDto,
     user: UserEntity
   ): Promise<WorkspaceEntity> {
-    await this.throwIfNotWorkspaceMember(workspaceId, user.id);
     const workspace = await this.db.writer
       .updateTable('workspaces')
       .set({
@@ -209,12 +211,7 @@ export class WorkspaceService {
     return workspace;
   }
 
-  public async delete(workspaceId: string, user: UserEntity): Promise<void> {
-    await this.throwIfNotWorkspaceMember(
-      workspaceId,
-      user.id,
-      PublicWorkspaceUserRole.OWNER
-    );
+  public async delete(workspaceId: string): Promise<void> {
     await this.db.writer
       .deleteFrom('workspaces')
       .where('workspaceId', '=', workspaceId)
@@ -228,5 +225,9 @@ export class WorkspaceService {
 
   private getWorkspaceCacheKey(workspaceId: string, includesUser: boolean) {
     return `workspace:${workspaceId}${includesUser ? ':includesUser' : ''}`;
+  }
+
+  private getWorkspaceMemberCacheKey(workspaceId: string, userId: string) {
+    return `workspace-member:${workspaceId}:${userId}`;
   }
 }

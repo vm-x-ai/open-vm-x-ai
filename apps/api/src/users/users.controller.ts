@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { UserEntity } from './entities/user.entity';
 import { ApiOkResponse } from '@nestjs/swagger';
 
-@Controller('users')
+@Controller('user')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

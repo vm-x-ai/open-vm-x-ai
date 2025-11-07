@@ -89,6 +89,16 @@ services:
         echo yes | redis-cli --cluster create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 --cluster-replicas 0"
     network_mode: host
 
+  timeseriesdb:
+    image: questdb/questdb:9.1.1
+    environment:
+      QDB_PG_USER: admin
+      QDB_PG_PASSWORD: password
+      QDB_PG_DATABASE: vmxai
+    ports:
+      - '9000:9000'
+      - '8812:8812'
+
 networks:
   redisnet:
     driver: bridge

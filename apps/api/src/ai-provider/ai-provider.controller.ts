@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiExtraModels, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AIProviderService } from './ai-provider.service';
 import {
   AIProviderConnectionAccordionComponentDto,
@@ -15,7 +15,8 @@ import {
   AIProviderConnectionTypographyComponentDto,
   AIProviderConnectionEditorComponentDto
 )
-@Controller('ai-providers')
+@Controller('ai-provider')
+@ApiTags('AI Provider')
 export class AIProviderController {
   constructor(private readonly aiProviderService: AIProviderService) {}
 
@@ -26,6 +27,7 @@ export class AIProviderController {
     description: 'List all AI providers',
   })
   @ApiOperation({
+    operationId: 'getAIProviders',
     summary: 'List all AI providers',
     description: 'Returns a list of all AI providers.',
   })

@@ -1,6 +1,5 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../storage/database.service';
-import { WorkspaceService } from '../workspace/workspace.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { AIResourceEntity } from './entities/ai-resource.entity';
 import { throwServiceError } from '../error';
@@ -14,7 +13,6 @@ import { DatabaseError } from 'pg';
 export class AIResourceService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly workspaceService: WorkspaceService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
@@ -49,6 +47,14 @@ export class AIResourceService {
     includesUser: boolean,
     throwOnNotFound: T
   ): Promise<AIResourceEntity>;
+
+  public async getById(
+    workspaceId: string,
+    environmentId: string,
+    resource: string,
+    includesUser: boolean,
+    throwOnNotFound: boolean
+  ): Promise<AIResourceEntity | undefined>;
 
   public async getById(
     workspaceId: string,
@@ -169,8 +175,6 @@ export class AIResourceService {
     payload: CreateAIResourceDto,
     user: UserEntity
   ): Promise<AIResourceEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
-
     try {
       return await this.db.writer
         .insertInto('aiResources')
@@ -214,8 +218,6 @@ export class AIResourceService {
     payload: UpdateAIResourceDto,
     user: UserEntity
   ): Promise<AIResourceEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
-
     const aiResource = await this.db.writer
       .updateTable('aiResources')
       .set({
@@ -251,10 +253,8 @@ export class AIResourceService {
   public async delete(
     workspaceId: string,
     environmentId: string,
-    resource: string,
-    user: UserEntity
+    resource: string
   ): Promise<void> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     await this.db.writer
       .deleteFrom('aiResources')
       .where('workspaceId', '=', workspaceId)

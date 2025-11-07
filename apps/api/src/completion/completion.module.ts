@@ -12,7 +12,9 @@ import { TokenModule } from '../token/token.module';
 import { ResourceRoutingService } from './routing.service';
 import { GateService } from './gate.service';
 import { PoolDefinitionModule } from '../pool-definition/pool-definition.module';
-import { MetricsModule } from '../metrics/metrics.module';
+import { CompletionMetricsModule } from './metrics/metrics.module';
+import { CompletionAuditModule } from './audit/audit.module';
+import { CompletionUsageModule } from './usage/usage.module';
 
 @Module({
   imports: [
@@ -25,7 +27,9 @@ import { MetricsModule } from '../metrics/metrics.module';
     PoolDefinitionModule,
     PrioritizationModule,
     TokenModule,
-    MetricsModule,
+    CompletionMetricsModule,
+    CompletionAuditModule,
+    CompletionUsageModule,
   ],
   controllers: [CompletionController],
   providers: [CompletionService, GateService, ResourceRoutingService],

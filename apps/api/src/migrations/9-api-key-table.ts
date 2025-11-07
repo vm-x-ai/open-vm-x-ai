@@ -21,7 +21,6 @@ export const migration: Migration = {
       .addColumn('capacity', 'jsonb')
       .addColumn('hash', 'text', (col) => col.notNull())
       .addColumn('masked_key', 'text', (col) => col.notNull())
-      .addColumn('last_used_at', 'timestamp')
       .addColumn('created_at', 'timestamp', (col) =>
         col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
       )

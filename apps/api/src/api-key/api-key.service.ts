@@ -1,6 +1,5 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../storage/database.service';
-import { WorkspaceService } from '../workspace/workspace.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ApiKeyEntity } from './entities/api-key.entity';
 import { throwServiceError } from '../error';
@@ -16,7 +15,6 @@ import { createHash } from 'crypto';
 export class ApiKeyService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly workspaceService: WorkspaceService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
@@ -177,7 +175,6 @@ export class ApiKeyService {
     payload: CreateApiKeyDto,
     user: UserEntity
   ): Promise<CreatedApiKeyDto> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     const apiKeyValue = nanoid(64);
 
     const apiKey = await this.db.writer
@@ -209,8 +206,6 @@ export class ApiKeyService {
     payload: UpdateApiKeyDto,
     user: UserEntity
   ): Promise<ApiKeyEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
-
     const apiKey = await this.db.writer
       .updateTable('apiKeys')
       .set({
@@ -245,7 +240,6 @@ export class ApiKeyService {
     workspaceId: string,
     environmentId: string,
     apiKeyId: string,
-    user: UserEntity
   ): Promise<void> {
     const apiKey = await this.db.reader
       .selectFrom('apiKeys')
@@ -261,7 +255,6 @@ export class ApiKeyService {
       });
     }
 
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     await this.db.writer
       .deleteFrom('apiKeys')
       .where('workspaceId', '=', workspaceId)
@@ -307,16 +300,6 @@ export class ApiKeyService {
         }
       );
     }
-
-    await this.db.writer
-      .updateTable('apiKeys')
-      .set({
-        lastUsedAt: new Date(),
-      })
-      .where('workspaceId', '=', entity.workspaceId)
-      .where('environmentId', '=', entity.environmentId)
-      .where('apiKeyId', '=', entity.apiKeyId)
-      .execute();
 
     const { hash, ...rest } = entity;
     return rest;

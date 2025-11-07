@@ -1,21 +1,24 @@
 import { Controller, Get, ParseIntPipe, Query } from '@nestjs/common';
-import { MetricsService } from './metrics.service';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { CompletionMetricsService } from './metrics.service';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ApiEnvironmentIdParam,
   ApiWorkspaceIdParam,
   EnvironmentIdParam,
   WorkspaceIdParam,
-} from '../common/api.decorators';
+} from '../../common/api.decorators';
 import {
   AIResourceIdParam,
   ApiAIResourceIdParam,
-} from '../ai-resource/ai-resource.controller';
+} from '../../ai-resource/ai-resource.controller';
 import { MetricDto } from './dto/metric.dto';
 
-@Controller('metrics')
-export class MetricsController {
-  constructor(private readonly metricsService: MetricsService) {}
+@Controller('completion-metric')
+@ApiTags('Completion Metric')
+export class CompletionMetricsController {
+  constructor(
+    private readonly completionMetricsService: CompletionMetricsService
+  ) {}
 
   @Get('/:workspaceId/:environmentId/:resource/error-rate')
   @ApiOkResponse({
@@ -26,6 +29,7 @@ export class MetricsController {
   @ApiEnvironmentIdParam()
   @ApiAIResourceIdParam()
   @ApiOperation({
+    operationId: 'getCompletionErrorRate',
     summary: 'Get the error rate for an AI resource',
     description:
       'Returns the error rate for an AI resource in the requested window',
@@ -39,7 +43,7 @@ export class MetricsController {
     @Query('window', ParseIntPipe) window = 10,
     @Query('statusCode') statusCode: 'any' | number = 'any'
   ) {
-    return await this.metricsService.getErrorRate(
+    return await this.completionMetricsService.getErrorRate(
       workspaceId,
       environmentId,
       resource,

@@ -35,6 +35,9 @@ export enum ErrorCode {
   // API Key errors
   API_KEY_NOT_FOUND = 'API_KEY_NOT_FOUND',
   API_KEY_RESOURCE_NOT_AUTHORIZED = 'API_KEY_RESOURCE_NOT_AUTHORIZED',
+
+  // Completion errors
+  COMPLETION_SECONDARY_MODEL_NOT_FOUND = 'COMPLETION_SECONDARY_MODEL_NOT_FOUND',
 }
 
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
@@ -77,4 +80,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   // API Key errors
   [ErrorCode.API_KEY_NOT_FOUND]: 'API Key ${apiKeyId} not found',
   [ErrorCode.API_KEY_RESOURCE_NOT_AUTHORIZED]: 'API Key is not authorized to access resource ${resource}',
+
+  // Completion errors
+  [ErrorCode.COMPLETION_SECONDARY_MODEL_NOT_FOUND]: 'Secondary model index ${secondaryModelIndex} not found',
 };

@@ -3,7 +3,10 @@ import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity'
 import { AIProviderRateLimitDto } from './dto/rate-limit.dto';
 import { Observable } from 'rxjs';
 import { AIProviderDto } from './dto/ai-provider.dto';
-import { ChatCompletionCreateParams } from 'openai/resources/index.js';
+import {
+  ChatCompletionCreateParams,
+  CompletionUsage,
+} from 'openai/resources/index.js';
 import OpenAI from 'openai';
 
 export type CompletionHeaders = {
@@ -36,5 +39,5 @@ export interface CompletionProvider {
     connection: AIConnectionEntity,
     model: AIResourceModelConfigEntity,
     observable: Observable<CompletionObservableData>
-  ): Promise<void>;
+  ): Promise<CompletionUsage | undefined>;
 }

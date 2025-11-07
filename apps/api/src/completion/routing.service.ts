@@ -16,13 +16,13 @@ import {
 } from '../ai-resource/common/routing.entity';
 import { PinoLogger } from 'nestjs-pino';
 import { CompletionError } from './completion.types';
-import { MetricsService } from '../metrics/metrics.service';
+import { CompletionMetricsService } from './metrics/metrics.service';
 
 @Injectable()
 export class ResourceRoutingService {
   constructor(
-    private logger: PinoLogger,
-    private metricsService: MetricsService
+    private readonly logger: PinoLogger,
+    private readonly completionMetricsService: CompletionMetricsService
   ) {}
 
   public async evaluateRoutingConditions(
@@ -67,15 +67,16 @@ export class ResourceRoutingService {
           aiConnectionId?: string,
           model?: string
         ) => {
-          const { errorRate } = await this.metricsService.getErrorRate(
-            workspaceId,
-            environmentId,
-            resourceConfig.resource,
-            aiConnectionId || resourceConfig.model.connectionId,
-            model || resourceConfig.model.model,
-            window,
-            statusCode
-          );
+          const { errorRate } =
+            await this.completionMetricsService.getErrorRate(
+              workspaceId,
+              environmentId,
+              resourceConfig.resource,
+              aiConnectionId || resourceConfig.model.connectionId,
+              model || resourceConfig.model.model,
+              window,
+              statusCode
+            );
 
           return errorRate;
         },

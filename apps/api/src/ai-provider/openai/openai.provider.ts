@@ -1,4 +1,7 @@
-import { ChatCompletionCreateParams } from 'openai/resources/index.js';
+import {
+  ChatCompletionCreateParams,
+  CompletionUsage,
+} from 'openai/resources/index.js';
 import { Subject } from 'rxjs';
 import { AIConnectionEntity } from '../../ai-connection/entities/ai-connection.entity';
 import { AIResourceModelConfigEntity } from '../../ai-resource/common/model.entity';
@@ -156,7 +159,7 @@ export class OpenAIProvider implements CompletionProvider {
     connection: AIConnectionEntity<OpenAIConnectionConfig>,
     model: AIResourceModelConfigEntity,
     observable: Subject<CompletionObservableData>
-  ) {
+  ): Promise<CompletionUsage | undefined> {
     const client = await this.createClient(connection);
     const startTime = Date.now();
     let timeToFirstToken: number | null = null;
@@ -176,6 +179,7 @@ export class OpenAIProvider implements CompletionProvider {
       const headers = this.filterRelevantHeaders(response.response.headers);
 
       if (response.data instanceof Stream) {
+        let completionUsage: CompletionUsage | undefined = undefined;
         for await (const chunk of response.data) {
           if (timeToFirstToken === null) {
             timeToFirstToken = Date.now() - startTime;
@@ -184,12 +188,20 @@ export class OpenAIProvider implements CompletionProvider {
             data: chunk,
             headers,
           });
+
+          if (chunk.usage && !completionUsage) {
+            completionUsage = chunk.usage;
+          }
         }
+
+        return completionUsage;
       } else {
         observable.next({
           data: response.data,
           headers,
         });
+
+        return response.data.usage;
       }
     } catch (error) {
       this.logger.error({ error }, 'Failed to complete the request');

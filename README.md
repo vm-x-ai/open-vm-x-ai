@@ -100,3 +100,19 @@ And join the Nx community:
 - [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
 - [Our Youtube channel](https://www.youtube.com/@nxdevtools)
 - [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+
+
+## Linux NTP Issue
+
+When running the load test on a linux machine, you may encounter an issue where the `Date.now()` function returns the wrong time, like future dates, which can cause the load test to generate misleading results. To fix this issue, you need to stop the `ntp` service by running the following command:
+
+```bash
+sudo systemctl stop systemd-timesyncd
+sudo timedatectl set-ntp off
+```
+
+**IMPORTANT**: Don't forget to start the `ntp` service after running the load test by running the following command:
+
+```bash
+sudo timedatectl set-ntp on
+sudo syst

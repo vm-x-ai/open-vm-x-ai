@@ -1,11 +1,15 @@
 import {
+  ArgumentMetadata,
   Body,
   Controller,
   HttpException,
   HttpStatus,
+  PipeTransform,
   Post,
+  Req,
   Res,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CompletionService } from './completion.service';
 import {
@@ -24,27 +28,38 @@ import {
   AIResourceIdParam,
   ApiAIResourceIdParam,
 } from '../ai-resource/ai-resource.controller';
-import type { FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { firstValueFrom } from 'rxjs';
 import { ApiOperation } from '@nestjs/swagger';
-import * as resources from 'openai/resources/index.js';
 import { CompletionError } from './completion.types';
 import { ServiceError } from '../types';
 import { CompletionHeaders } from '../ai-provider/ai-provider.types';
-import { ApiKeyGuard } from '../api-key/api-key.guard';
+import { ApiKey, ApiKeyGuard } from '../api-key/api-key.guard';
 import { OrGuard } from '@nest-lab/or-guard';
+import {
+  CompletionRequestPayloadDto,
+  type CompletionRequestDto,
+} from './dto/completion-request.dto';
+import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
+import { WorkspaceMemberGuard } from '../workspace/workspace.guard';
 
-@Controller('completions')
+const transformPipe = new ValidationPipe({
+  transform: true,
+});
+
+@Controller('completion')
 @IgnoreGlobalGuard()
 @UseGuards(
   OrGuard([AppGuard, ApiKeyGuard], {
     throwLastError: true,
-  })
+  }),
+  WorkspaceMemberGuard()
 )
 export class CompletionController {
   constructor(private readonly completionService: CompletionService) {}
 
   @ApiOperation({
+    operationId: 'completion',
     summary: 'LLM Completion',
     description: 'Performs a completion request to the LLM API.',
     requestBody: {
@@ -81,16 +96,31 @@ export class CompletionController {
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
     @AIResourceIdParam() resource: string,
-    @Body() payload: resources.ChatCompletionCreateParams,
+    @Body(
+      new (class implements PipeTransform {
+        async transform(value: unknown, metadata: ArgumentMetadata) {
+          await transformPipe.transform(value, {
+            ...metadata,
+            metatype: CompletionRequestPayloadDto,
+          });
+          return value;
+        }
+      })()
+    )
+    payload: CompletionRequestDto,
+    @Req() request: FastifyRequest,
     @Res() res: FastifyReply,
-    @AuthenticatedUser() user?: UserEntity
+    @AuthenticatedUser() user?: UserEntity,
+    @ApiKey() apiKey?: ApiKeyEntity
   ) {
     const observable = this.completionService.completion(
+      request,
       workspaceId,
       environmentId,
       resource,
       payload,
-      user
+      user,
+      apiKey
     );
 
     let index = 0;
@@ -116,7 +146,7 @@ export class CompletionController {
           res.raw.end();
         },
         error: (err) => {
-          this.handleError(err, sseStarted, res);
+          return this.handleError(err, sseStarted, res);
         },
       });
     } else {
@@ -124,7 +154,7 @@ export class CompletionController {
         const result = await firstValueFrom(observable);
         res.status(200).headers(result.headers).send(result.data);
       } catch (err) {
-        this.handleError(err, sseStarted, res);
+        return this.handleError(err, sseStarted, res);
       }
     }
   }

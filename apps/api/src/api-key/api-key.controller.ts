@@ -8,9 +8,10 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiKeyService } from './api-key.service';
-import { ApiOkResponse, ApiParam } from '@nestjs/swagger';
+import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 import {
   ApiEnvironmentIdParam,
   ApiWorkspaceIdParam,
@@ -26,6 +27,7 @@ import { ApiKeyEntity } from './entities/api-key.entity';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { UpdateApiKeyDto } from './dto/update-api-key.dto';
 import { CreatedApiKeyDto } from './dto/created-api-key.dto';
+import { WorkspaceMemberGuard } from '../workspace/workspace.guard';
 
 export function ApiApiKeyIdParam() {
   return applyDecorators(
@@ -42,7 +44,9 @@ export function ApiKeyIdParam() {
   return Param('apiKeyId', new ParseUUIDPipe({ version: '4' }));
 }
 
-@Controller('api-keys')
+@UseGuards(WorkspaceMemberGuard())
+@Controller('api-key')
+@ApiTags('API Key')
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 
@@ -56,6 +60,7 @@ export class ApiKeyController {
   @ApiEnvironmentIdParam()
   @ApiIncludesUsersQuery()
   @ApiOperation({
+    operationId: 'getAPIKeys',
     summary: 'List all API keys associated with an environment',
     description:
       'Returns a list of all API keys associated with an environment. Optionally includes user details in each API key if `includesUsers` is set to true (default).',
@@ -81,6 +86,7 @@ export class ApiKeyController {
     description: 'Get an API key by ID',
   })
   @ApiOperation({
+    operationId: 'getAPIKeyById',
     summary: 'Get an API key by ID',
     description:
       'Returns an API key by its ID. Optionally includes user details in the API key if `includesUsers` is set to true (default).',
@@ -114,6 +120,7 @@ export class ApiKeyController {
   @ApiWorkspaceIdParam()
   @ApiEnvironmentIdParam()
   @ApiOperation({
+    operationId: 'createAPIKey',
     summary: 'Create a new API key',
     description:
       'Creates a new API key. You must be a member of the workspace to create an API key.',
@@ -135,6 +142,7 @@ export class ApiKeyController {
     description: 'Update an API key',
   })
   @ApiOperation({
+    operationId: 'updateAPIKey',
     summary: 'Update an API key',
     description:
       'Updates an API key by its ID. You must be a member of the workspace to update an API key.',
@@ -161,6 +169,7 @@ export class ApiKeyController {
     description: 'Delete an API key',
   })
   @ApiOperation({
+    operationId: 'deleteAPIKey',
     summary: 'Delete an API key',
     description:
       'Deletes an API key by its ID. You must be a member of the workspace to delete an API key.',
@@ -168,9 +177,8 @@ export class ApiKeyController {
   public async delete(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @ApiKeyIdParam() apiKeyId: string,
-    @AuthenticatedUser() user: UserEntity
+    @ApiKeyIdParam() apiKeyId: string
   ): Promise<void> {
-    await this.apiKeyService.delete(workspaceId, environmentId, apiKeyId, user);
+    await this.apiKeyService.delete(workspaceId, environmentId, apiKeyId);
   }
 }

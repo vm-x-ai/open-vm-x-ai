@@ -34,6 +34,10 @@ export default {
       'api_keys.resources': 'ColumnType<any[], string, string | null>',
       'api_keys.labels': 'ColumnType<any[] | null, string | null, string | null>',
       'api_keys.capacity': 'ColumnType<any[] | null, string | null, string | null>',
+
+      // Completion Audit
+      'completion_audit.events': 'ColumnType<any[] | null, string | null, string | null>',
+      'completion_audit.data': 'ColumnType<any | null, string | null, string | null>',
     },
   },
 } satisfies Config;

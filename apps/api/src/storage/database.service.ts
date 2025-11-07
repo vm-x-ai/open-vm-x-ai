@@ -11,7 +11,6 @@ import {
   PostgresDialect,
   SelectQueryBuilder,
 } from 'kysely';
-import { SERVICE_NAME } from '../consts';
 import { Pool } from 'pg';
 import { MigrationsService } from '../migrations/migrations.service';
 import { DB } from './entities.generated';
@@ -37,15 +36,16 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
     });
 
     const camelCasePlugin = new CamelCasePlugin();
+    const schema = this.configService.getOrThrow('DATABASE_SCHEMA');
 
     this.writerInstance = new Kysely<DB>({
       dialect: writerDialect,
       plugins: [camelCasePlugin],
-    }).withSchema(SERVICE_NAME.toLowerCase());
+    }).withSchema(schema);
 
     this.rawWriterInstance = new Kysely<DB>({
       dialect: writerDialect,
-    }).withSchema(SERVICE_NAME.toLowerCase());
+    }).withSchema(schema);
 
     const readerDialect = new PostgresDialect({
       pool: new Pool({
@@ -58,11 +58,11 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
     this.readerInstance = new Kysely<DB>({
       dialect: readerDialect,
       plugins: [camelCasePlugin],
-    }).withSchema(SERVICE_NAME.toLowerCase());
+    }).withSchema(schema);
 
     this.rawReaderInstance = new Kysely<DB>({
       dialect: readerDialect,
-    }).withSchema(SERVICE_NAME.toLowerCase());
+    }).withSchema(schema);
   }
 
   get writer() {
@@ -84,6 +84,8 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
   async onApplicationShutdown() {
     await this.writerInstance.destroy();
     await this.readerInstance.destroy();
+    await this.rawWriterInstance.destroy();
+    await this.rawReaderInstance.destroy();
   }
 
   async onModuleInit() {

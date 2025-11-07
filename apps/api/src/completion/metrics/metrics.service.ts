@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { addMinutes, format, subMinutes } from 'date-fns';
-import { RedisClient } from '../cache/redis-client';
+import { RedisClient } from '../../cache/redis-client';
 import { MetricDto } from './dto/metric.dto';
-import { CompletionPayloadMetricDto } from './dto/completion-response-payload.dto';
+import { CompletionPayloadMetricDto } from './dto/payload.dto';
+import { PinoLogger } from 'nestjs-pino';
 
 type BufferItem = {
   payload: CompletionPayloadMetricDto;
@@ -11,12 +12,12 @@ type BufferItem = {
 };
 
 @Injectable()
-export class MetricsService {
+export class CompletionMetricsService {
   private buffer: BufferItem[] = [];
   private flushing = false;
 
   constructor(
-    private readonly logger: Logger,
+    private readonly logger: PinoLogger,
     private readonly redisClient: RedisClient
   ) {}
 
@@ -35,7 +36,7 @@ export class MetricsService {
     timestamp = new Date()
   ): Promise<MetricDto> {
     const startTime = performance.now();
-    this.logger.log(
+    this.logger.info(
       `Getting error rate for ${workspaceId}:${environmentId}:${resource} from ${timestamp.toISOString()} with window ${window} and status code ${statusCode}`
     );
     let totalSuccess = 0;
@@ -71,7 +72,7 @@ export class MetricsService {
 
     const totalRequests = totalSuccess + totalFailed;
     const endTime = performance.now();
-    this.logger.log(
+    this.logger.info(
       {
         totalSuccess,
         totalFailed,
@@ -105,12 +106,12 @@ export class MetricsService {
     const bufferLength = this.buffer.length;
 
     const groupedBuffer = this.buffer.reduce((acc, { payload }, index) => {
-      const minuteBucket = format(payload.requestTimestamp, 'yyyy-MM-dd-HH-mm');
+      const minuteBucket = format(payload.timestamp, 'yyyy-MM-dd-HH-mm');
       const key = `${this.getKeyPrefix(
         payload.workspaceId,
         payload.environmentId,
         payload.resource,
-        payload.aiConnectionId,
+        payload.connectionId,
         payload.model
       )}:${minuteBucket}`;
       if (!acc[key]) {
@@ -191,7 +192,7 @@ export class MetricsService {
         );
       }
     }
-    this.logger.log(
+    this.logger.info(
       `Flushed ${bufferLength - failed.length} events, ${failed.length} failed`
     );
 

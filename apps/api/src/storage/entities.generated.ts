@@ -5,6 +5,11 @@
 
 import type { ColumnType } from "kysely";
 
+export enum PublicCompletionAuditType {
+  COMPLETION = "COMPLETION",
+  COMPLETION_BATCH = "COMPLETION_BATCH",
+}
+
 export enum PublicProviderType {
   LOCAL = "LOCAL",
   OIDC = "OIDC",
@@ -79,12 +84,33 @@ export interface ApiKey {
   environmentId: string;
   hash: string;
   labels: ColumnType<any[] | null, string | null, string | null>;
-  lastUsedAt: Timestamp | null;
   maskedKey: string;
   name: string;
   resources: ColumnType<any[], string, string | null>;
   updatedAt: Generated<Timestamp>;
   updatedBy: string;
+  workspaceId: string;
+}
+
+export interface CompletionAudit {
+  apiKeyId: string | null;
+  batchId: string | null;
+  connectionId: string | null;
+  correlationId: string | null;
+  data: ColumnType<any | null, string | null, string | null>;
+  duration: number;
+  environmentId: string;
+  errorMessage: string | null;
+  events: ColumnType<any[] | null, string | null, string | null>;
+  failureReason: string | null;
+  id: Generated<string>;
+  model: string | null;
+  requestId: string;
+  resource: string | null;
+  sourceIp: string | null;
+  statusCode: number;
+  timestamp: Timestamp;
+  type: PublicCompletionAuditType;
   workspaceId: string;
 }
 
@@ -158,6 +184,7 @@ export interface DB {
   aiConnections: AiConnection;
   aiResources: AiResource;
   apiKeys: ApiKey;
+  completionAudit: CompletionAudit;
   environments: Environment;
   oidcProvider: OidcProvider;
   poolDefinitions: PoolDefinition;

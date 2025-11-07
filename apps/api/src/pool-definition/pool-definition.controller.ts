@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
 import { PoolDefinitionService } from './pool-definition.service';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PoolDefinitionEntity } from './entities/pool-definition.entity';
 import { UpsertPoolDefinitionDto } from './dto/upsert-pool-definition.dto';
 import { AuthenticatedUser } from '../auth/auth.guard';
@@ -13,8 +13,11 @@ import {
   IncludesUsersQuery,
   WorkspaceIdParam,
 } from '../common/api.decorators';
+import { WorkspaceMemberGuard } from '../workspace/workspace.guard';
 
-@Controller('pool-definitions')
+@UseGuards(WorkspaceMemberGuard())
+@Controller('pool-definition')
+@ApiTags('Pool Definition')
 export class PoolDefinitionController {
   constructor(private readonly poolDefinitionService: PoolDefinitionService) {}
 
@@ -24,6 +27,7 @@ export class PoolDefinitionController {
     description: 'Get a pool definition by workspace and environment',
   })
   @ApiOperation({
+    operationId: 'getPoolDefinition',
     summary: 'Get a pool definition by workspace and environment',
     description:
       'Returns a pool definition by its workspace and environment. Optionally includes user details in the pool definition if `includesUsers` is set to true (default).',
@@ -54,6 +58,7 @@ export class PoolDefinitionController {
   @ApiWorkspaceIdParam()
   @ApiEnvironmentIdParam()
   @ApiOperation({
+    operationId: 'updatePoolDefinition',
     summary: 'Created/updated a pool definition',
     description:
       'Created/updated a pool definition. You must be a member of the workspace to create/update a pool definition.',
@@ -78,6 +83,7 @@ export class PoolDefinitionController {
     description: 'Delete a pool definition',
   })
   @ApiOperation({
+    operationId: 'deletePoolDefinition',
     summary: 'Delete a pool definition',
     description:
       'Deletes a pool definition by its workspace and environment. You must be a member of the workspace to delete a pool definition.',
@@ -85,8 +91,7 @@ export class PoolDefinitionController {
   public async delete(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<void> {
-    await this.poolDefinitionService.delete(workspaceId, environmentId, user);
+    await this.poolDefinitionService.delete(workspaceId, environmentId);
   }
 }

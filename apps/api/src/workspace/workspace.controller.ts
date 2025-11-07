@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { WorkspaceService } from './workspace.service';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { WorkspaceEntity } from './entities/workspace.entity';
@@ -12,8 +20,10 @@ import {
   IncludesUsersQuery,
   WorkspaceIdParam,
 } from '../common/api.decorators';
+import { WorkspaceMemberGuard } from './workspace.guard';
+import { PublicWorkspaceUserRole } from '../storage/entities.generated';
 
-@Controller('workspaces')
+@Controller('workspace')
 export class WorkspaceController {
   constructor(private readonly workspaceService: WorkspaceService) {}
 
@@ -25,6 +35,7 @@ export class WorkspaceController {
   })
   @ApiIncludesUsersQuery()
   @ApiOperation({
+    operationId: 'getWorkspaces',
     summary: 'List all user workspaces',
     description:
       'Returns a list of all workspaces that the authenticated user is a member of. Optionally includes user details in each workspace if `includesUsers` is set to true (default).',
@@ -43,6 +54,7 @@ export class WorkspaceController {
     description: 'Get a workspace by ID',
   })
   @ApiOperation({
+    operationId: 'getWorkspaceById',
     summary: 'Get a workspace by ID',
     description:
       'Returns a workspace by its ID. Optionally includes user details in the workspace if `includesUsers` is set to true (default).',
@@ -68,6 +80,7 @@ export class WorkspaceController {
     description: 'Create a new workspace',
   })
   @ApiOperation({
+    operationId: 'createWorkspace',
     summary: 'Create a new workspace',
     description:
       'Creates a new workspace. The authenticated user is automatically added as the owner of the workspace.',
@@ -80,12 +93,14 @@ export class WorkspaceController {
   }
 
   @Put(':workspaceId')
+  @UseGuards(WorkspaceMemberGuard())
   @ApiWorkspaceIdParam()
   @ApiOkResponse({
     type: WorkspaceEntity,
     description: 'Update a workspace',
   })
   @ApiOperation({
+    operationId: 'updateWorkspace',
     summary: 'Update a workspace',
     description:
       'Updates a workspace by its ID. The authenticated user must be a member of the workspace and have the owner role.',
@@ -99,19 +114,18 @@ export class WorkspaceController {
   }
 
   @Delete(':workspaceId')
+  @UseGuards(WorkspaceMemberGuard(PublicWorkspaceUserRole.OWNER))
   @ApiWorkspaceIdParam()
   @ApiOkResponse({
     description: 'Delete a workspace',
   })
   @ApiOperation({
+    operationId: 'deleteWorkspace',
     summary: 'Delete a workspace',
     description:
       'Deletes a workspace by its ID. The authenticated user must be a member of the workspace and have the owner role.',
   })
-  public async delete(
-    @WorkspaceIdParam() workspaceId: string,
-    @AuthenticatedUser() user: UserEntity
-  ): Promise<void> {
-    await this.workspaceService.delete(workspaceId, user);
+  public async delete(@WorkspaceIdParam() workspaceId: string): Promise<void> {
+    await this.workspaceService.delete(workspaceId);
   }
 }

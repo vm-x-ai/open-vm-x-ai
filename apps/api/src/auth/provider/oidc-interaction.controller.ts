@@ -22,9 +22,10 @@ import { LoginDto } from './dto/login.dto';
 import { ConsentDto } from './dto/consent.dto';
 import { Public } from '../auth.guard';
 import { RESOURCE_INDICATOR } from './consts';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 @Public()
+@ApiTags('OIDC Interaction')
 @Controller({ path: 'interaction', version: VERSION_NEUTRAL })
 export class OidcInteractionController {
   constructor(

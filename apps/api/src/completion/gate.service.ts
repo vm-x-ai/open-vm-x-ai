@@ -13,11 +13,9 @@ import { FastifyRequest } from 'fastify';
 import { AIResourceEntity } from '../ai-resource/entities/ai-resource.entity';
 import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity';
 import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.entity';
-import { CompletionObservableData, CompletionProvider } from '../ai-provider/ai-provider.types';
 import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
-import { ChatCompletionCreateParams } from 'openai/resources/index.js';
-import { TokenService } from '../token/token.service';
 import { CompletionError } from './completion.types';
+import { CompletionUsage } from 'openai/resources/completions.js';
 
 export type EvaluatedCapacity = {
   period: CapacityPeriod;
@@ -31,24 +29,20 @@ export class GateService {
     private readonly redisClient: RedisClient,
     private readonly poolDefinitionService: PoolDefinitionService,
     private readonly capacityService: CapacityService,
-    private readonly prioritizationService: PrioritizationService,
-    private readonly tokenService: TokenService
+    private readonly prioritizationService: PrioritizationService
   ) {}
 
   public async requestGate(
     request: FastifyRequest,
+    requestTime: Date,
+    requestTokens: number,
     workspaceId: string,
     environmentId: string,
-    payload: ChatCompletionCreateParams,
     resource: AIResourceEntity,
     model: AIResourceModelConfigEntity,
     aiConnection: AIConnectionEntity,
-    provider: CompletionProvider,
     apiKey?: ApiKeyEntity
   ): Promise<EvaluatedCapacity[]> {
-    const requestTokens = await this.tokenService.getRequestTokens(payload);
-    const requestTime = new Date();
-
     this.logger.debug('Resource config', {
       resource,
       model,
@@ -66,11 +60,7 @@ export class GateService {
 
     const startCheckCapacity = Date.now();
     const [poolDefinition, usageMetricsMap] = await Promise.all([
-      this.poolDefinitionService.getById(
-        workspaceId,
-        environmentId,
-        false
-      ),
+      this.poolDefinitionService.getById(workspaceId, environmentId, false),
       this.capacityService.getUsage(requestTime, enabledCapacities),
     ]);
 
@@ -85,8 +75,8 @@ export class GateService {
       keyPrefix: key.split('##')[1],
     }));
 
-    enabledCapacities.forEach(({ capacity, source, dimensionValue }) =>
-      this.checkRequestCapacity(
+    for (const { capacity, source, dimensionValue } of enabledCapacities) {
+      await this.checkRequestCapacity(
         capacity,
         source,
         usageMetricsMap[capacity.period].totalRequests,
@@ -94,8 +84,9 @@ export class GateService {
         requestTokens,
         usageMetricsMap[capacity.period].remainingSeconds,
         dimensionValue
-      )
-    );
+      );
+    }
+
     this.logger.info(
       {
         duration: Date.now() - startCheckCapacity,
@@ -150,7 +141,6 @@ export class GateService {
     } else {
       this.logger.info(
         {
-          request,
           pool,
           connectionMinuteCapacity,
         },
@@ -200,12 +190,12 @@ export class GateService {
 
   public async increaseTokenResponseUsage(
     evaluatedCapacities: EvaluatedCapacity[],
-    response: CompletionObservableData,
+    usage: CompletionUsage
   ) {
     await Promise.all(
       evaluatedCapacities.map(async ({ keyPrefix, period }) => {
         const key = `${keyPrefix}${period}`;
-        const completionTokens = response.data.usage?.completion_tokens ?? 0;
+        const completionTokens = usage.completion_tokens ?? 0;
         if (completionTokens === 0) {
           return;
         }
@@ -231,12 +221,10 @@ export class GateService {
         .expire(`${keyPrefix}:tokens`, remainingSeconds - 1);
     }
 
-    console.log('operation', keyPrefix, tokens);
-
     await operation.exec();
   }
 
-  private checkRequestCapacity(
+  private async checkRequestCapacity(
     capacity: CapacityEntity,
     capacityResource: string,
     totalRequests: number,

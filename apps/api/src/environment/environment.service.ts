@@ -7,13 +7,11 @@ import { ErrorCode } from '../error-code';
 import { CreateEnvironmentDto } from './dto/create-environment.dto';
 import { UserEntity } from '../users/entities/user.entity';
 import { UpdateEnvironmentDto } from './dto/update-environment.dto';
-import { WorkspaceService } from '../workspace/workspace.service';
 
 @Injectable()
 export class EnvironmentService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly workspaceService: WorkspaceService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
@@ -150,8 +148,6 @@ export class EnvironmentService {
     payload: CreateEnvironmentDto,
     user: UserEntity
   ): Promise<EnvironmentEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
-
     return await this.db.writer
       .insertInto('environments')
       .values({
@@ -170,8 +166,6 @@ export class EnvironmentService {
     payload: UpdateEnvironmentDto,
     user: UserEntity
   ): Promise<EnvironmentEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
-
     const environment = await this.db.writer
       .updateTable('environments')
       .set({
@@ -194,10 +188,8 @@ export class EnvironmentService {
 
   public async delete(
     workspaceId: string,
-    environmentId: string,
-    user: UserEntity
+    environmentId: string
   ): Promise<void> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     await this.db.writer
       .deleteFrom('environments')
       .where('workspaceId', '=', workspaceId)

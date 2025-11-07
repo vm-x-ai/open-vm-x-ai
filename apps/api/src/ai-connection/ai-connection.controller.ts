@@ -8,9 +8,15 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { AIConnectionService } from './ai-connection.service';
-import { ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AIConnectionEntity } from './entities/ai-connection.entity';
 import { CreateAIConnectionDto } from './dto/create-ai-connection.dto';
 import { AuthenticatedUser } from '../auth/auth.guard';
@@ -24,6 +30,7 @@ import {
   IncludesUsersQuery,
   WorkspaceIdParam,
 } from '../common/api.decorators';
+import { WorkspaceMemberGuard } from '../workspace/workspace.guard';
 
 export function ApiAIConnectionIdParam() {
   return applyDecorators(
@@ -40,7 +47,9 @@ export function AIConnectionIdParam() {
   return Param('connectionId', new ParseUUIDPipe({ version: '4' }));
 }
 
-@Controller('ai-connections')
+@UseGuards(WorkspaceMemberGuard())
+@Controller('ai-connection')
+@ApiTags('AI Connection')
 export class AIConnectionController {
   constructor(private readonly aiConnectionService: AIConnectionService) {}
 
@@ -54,6 +63,7 @@ export class AIConnectionController {
   @ApiEnvironmentIdParam()
   @ApiIncludesUsersQuery()
   @ApiOperation({
+    operationId: 'getAIConnections',
     summary: 'List all AI connections associated with an environment',
     description:
       'Returns a list of all AI connections associated with an environment. Optionally includes user details in each AI connection if `includesUsers` is set to true (default).',
@@ -79,6 +89,7 @@ export class AIConnectionController {
     description: 'Get an AI connection by ID',
   })
   @ApiOperation({
+    operationId: 'getAIConnectionById',
     summary: 'Get an AI connection by ID',
     description:
       'Returns an AI connection by its ID. Optionally includes user details in the AI connection if `includesUsers` is set to true (default).',
@@ -112,6 +123,7 @@ export class AIConnectionController {
   @ApiWorkspaceIdParam()
   @ApiEnvironmentIdParam()
   @ApiOperation({
+    operationId: 'createAIConnection',
     summary: 'Create a new AI connection',
     description:
       'Creates a new AI connection. You must be a member of the workspace to create an AI connection.',
@@ -138,6 +150,7 @@ export class AIConnectionController {
     description: 'Update an AI connection',
   })
   @ApiOperation({
+    operationId: 'updateAIConnection',
     summary: 'Update an AI connection',
     description:
       'Updates an AI connection by its ID. You must be a member of the workspace to update an AI connection.',
@@ -164,6 +177,7 @@ export class AIConnectionController {
     description: 'Delete an AI connection',
   })
   @ApiOperation({
+    operationId: 'deleteAIConnection',
     summary: 'Delete an AI connection',
     description:
       'Deletes an AI connection by its ID. You must be a member of the workspace to delete an AI connection.',
@@ -171,14 +185,12 @@ export class AIConnectionController {
   public async delete(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @AIConnectionIdParam() connectionId: string,
-    @AuthenticatedUser() user: UserEntity
+    @AIConnectionIdParam() connectionId: string
   ): Promise<void> {
     await this.aiConnectionService.delete(
       workspaceId,
       environmentId,
-      connectionId,
-      user
+      connectionId
     );
   }
 }

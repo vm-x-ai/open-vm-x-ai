@@ -1,6 +1,5 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../storage/database.service';
-import { WorkspaceService } from '../workspace/workspace.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PoolDefinitionEntity } from './entities/pool-definition.entity';
 import { ErrorCode } from '../error-code';
@@ -12,7 +11,6 @@ import { UpsertPoolDefinitionDto } from './dto/upsert-pool-definition.dto';
 export class PoolDefinitionService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly workspaceService: WorkspaceService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
@@ -144,8 +142,6 @@ export class PoolDefinitionService {
     payload: UpsertPoolDefinitionDto,
     user: UserEntity
   ): Promise<PoolDefinitionEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
-
     const poolDefinition = await this.db.writer
       .insertInto('poolDefinitions')
       .values({
@@ -179,10 +175,8 @@ export class PoolDefinitionService {
 
   public async delete(
     workspaceId: string,
-    environmentId: string,
-    user: UserEntity
+    environmentId: string
   ): Promise<void> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     await this.db.writer
       .deleteFrom('poolDefinitions')
       .where('workspaceId', '=', workspaceId)

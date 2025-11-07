@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, UseGuards } from '@nestjs/common';
 import { EnvironmentService } from './environment.service';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { EnvironmentEntity } from './entities/environment.entity';
@@ -14,8 +14,10 @@ import {
   IncludesUsersQuery,
   WorkspaceIdParam,
 } from '../common/api.decorators';
+import { WorkspaceMemberGuard } from '../workspace/workspace.guard';
 
-@Controller('environments')
+@UseGuards(WorkspaceMemberGuard())
+@Controller('environment')
 export class EnvironmentController {
   constructor(private readonly environmentService: EnvironmentService) {}
 
@@ -28,6 +30,7 @@ export class EnvironmentController {
   @ApiWorkspaceIdParam()
   @ApiIncludesUsersQuery()
   @ApiOperation({
+    operationId: 'getEnvironments',
     summary: 'List all user environments',
     description:
       'Returns a list of all environments that the authenticated user is a member of. Optionally includes user details in each environment if `includesUsers` is set to true (default).',
@@ -51,6 +54,7 @@ export class EnvironmentController {
     description: 'Get an environment by ID',
   })
   @ApiOperation({
+    operationId: 'getEnvironmentById',
     summary: 'Get an environment by ID',
     description:
       'Returns an environment by its ID. Optionally includes user details in the environment if `includesUsers` is set to true (default).',
@@ -80,6 +84,7 @@ export class EnvironmentController {
   })
   @ApiWorkspaceIdParam()
   @ApiOperation({
+    operationId: 'createEnvironment',
     summary: 'Create a new environment',
     description:
       'Creates a new environment. You must be a member of the workspace to create an environment.',
@@ -100,6 +105,7 @@ export class EnvironmentController {
     description: 'Update an environment',
   })
   @ApiOperation({
+    operationId: 'updateEnvironment',
     summary: 'Update an environment',
     description:
       'Updates an environment by its ID. You must be a member of the workspace to update an environment.',
@@ -124,15 +130,15 @@ export class EnvironmentController {
     description: 'Delete an environment',
   })
   @ApiOperation({
+    operationId: 'deleteEnvironment',
     summary: 'Delete an environment',
     description:
       'Deletes an environment by its ID. You must be a member of the workspace to delete an environment.',
   })
   public async delete(
     @WorkspaceIdParam() workspaceId: string,
-    @EnvironmentIdParam() environmentId: string,
-    @AuthenticatedUser() user: UserEntity
+    @EnvironmentIdParam() environmentId: string
   ): Promise<void> {
-    await this.environmentService.delete(workspaceId, environmentId, user);
+    await this.environmentService.delete(workspaceId, environmentId);
   }
 }

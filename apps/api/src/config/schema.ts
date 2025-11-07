@@ -22,6 +22,7 @@ export const configSchema = Joi.object({
   DATABASE_WRITER_USER: Joi.string().default(SERVICE_NAME.toLowerCase()),
   DATABASE_WRITER_POOL_MAX: Joi.number().default(25),
   DATABASE_READER_POOL_MAX: Joi.number().default(50),
+  DATABASE_SCHEMA: Joi.string().default(SERVICE_NAME.toLowerCase()),
 
   // Redis
   REDIS_HOST: Joi.string().required(),
@@ -44,4 +45,8 @@ export const configSchema = Joi.object({
   VAULT_ADDR: Joi.string().uri().required(),
   VAULT_APPROLE_ROLE_ID: Joi.string().required(),
   VAULT_APPROLE_SECRET_ID: Joi.string().required(),
+
+  // TimeseriesDB
+  QUESTDB_URL: Joi.string().uri().required(),
+  QUESTDB_MIGRATION_URL: Joi.string().uri().required(),
 });

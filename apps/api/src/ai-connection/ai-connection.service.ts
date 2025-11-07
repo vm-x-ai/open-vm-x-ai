@@ -1,6 +1,5 @@
 import { HttpStatus, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { DatabaseService } from '../storage/database.service';
-import { WorkspaceService } from '../workspace/workspace.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { AIConnectionEntity } from './entities/ai-connection.entity';
 import { throwServiceError } from '../error';
@@ -29,13 +28,11 @@ export class AIConnectionService implements OnModuleInit {
   constructor(
     private readonly logger: PinoLogger,
     private readonly db: DatabaseService,
-    private readonly workspaceService: WorkspaceService,
     private readonly aiProviderService: AIProviderService,
     private readonly encryptionService: EncryptionService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache
-  ) {
-  }
-  
+  ) {}
+
   async onModuleInit() {
     this.logger.info('Preloading AI connections');
     const connections = await this.getAll(false, true);
@@ -172,6 +169,8 @@ export class AIConnectionService implements OnModuleInit {
       };
     }
 
+    console.log('aiConnection', aiConnection?.config);
+
     return aiConnection;
   }
 
@@ -279,7 +278,6 @@ export class AIConnectionService implements OnModuleInit {
     payload: CreateAIConnectionDto,
     user: UserEntity
   ): Promise<AIConnectionEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     const provider = this.aiProviderService.get(payload.provider);
     if (!provider) {
       throwServiceError(
@@ -329,7 +327,6 @@ export class AIConnectionService implements OnModuleInit {
     payload: UpdateAIConnectionDto,
     user: UserEntity
   ): Promise<AIConnectionEntity> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     const existingConnection = await this.getById(
       workspaceId,
       environmentId,
@@ -409,10 +406,8 @@ export class AIConnectionService implements OnModuleInit {
   public async delete(
     workspaceId: string,
     environmentId: string,
-    connectionId: string,
-    user: UserEntity
+    connectionId: string
   ): Promise<void> {
-    await this.workspaceService.throwIfNotWorkspaceMember(workspaceId, user.id);
     await this.db.writer.transaction().execute(async (tx) => {
       const connectionIdPattern = `%${connectionId}%`;
       await tx

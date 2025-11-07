@@ -7,6 +7,8 @@ import { configSchema } from './config/schema';
 import { MigrationsModule } from './migrations/migrations.module';
 import { MigrationsService } from './migrations/migrations.service';
 import { AppLoggerModule } from './logger/logger.module';
+import { QuestDBMigrationsModule } from './completion/usage/questdb/migrations/migrations.module';
+import { QuestDBMigrationsService } from './completion/usage/questdb/migrations/migrations.service';
 
 @Module({
   imports: [
@@ -16,6 +18,7 @@ import { AppLoggerModule } from './logger/logger.module';
     }),
     AppLoggerModule,
     MigrationsModule,
+    QuestDBMigrationsModule,
   ],
 })
 class MigrationModule {}
@@ -23,11 +26,17 @@ class MigrationModule {}
 async function runMigration() {
   const app = await NestFactory.createApplicationContext(MigrationModule);
   const migrationsService = app.get(MigrationsService);
+  const questdbMigrationsService = app.get(QuestDBMigrationsService);
 
   const argv = await yargs(hideBin(process.argv))
     .option('reset', {
       type: 'boolean',
       description: 'Reset the database migrations',
+    })
+    .option('questdb', {
+      type: 'boolean',
+      description: 'Run QuestDB migrations',
+      default: false,
     })
     .option('target', {
       type: 'string',
@@ -35,14 +44,16 @@ async function runMigration() {
     })
     .parse();
 
+  const migrator = argv.questdb ? questdbMigrationsService : migrationsService;
+
   try {
     if (argv.reset) {
       console.log('Resetting database migrations...');
-      await migrationsService.resetMigrations(argv.target);
+      await migrator.resetMigrations(argv.target);
       console.log('Migration reset completed successfully');
     } else {
       console.log('Running database migrations...');
-      await migrationsService.migrate();
+      await migrator.migrate();
       console.log('Migration completed successfully');
     }
   } catch (error) {

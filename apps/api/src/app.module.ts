@@ -20,7 +20,7 @@ import { join } from 'path';
 import { CompletionModule } from './completion/completion.module';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { MetricsModule } from './metrics/metrics.module';
+import { CompletionAuditModule } from './completion/audit/audit.module';
 
 @Module({
   imports: [
@@ -52,7 +52,7 @@ import { MetricsModule } from './metrics/metrics.module';
     AIProviderModule,
     ApiKeyModule,
     CompletionModule,
-    MetricsModule,
+    CompletionAuditModule,
   ],
   controllers: [],
   providers: [],
