@@ -13,7 +13,6 @@ import {
 } from '../dto/completion-query.dto';
 import { sql } from 'kysely';
 import { CompletionUsageQueryResultDto } from '../dto/completion-query-result.dto';
-import { toZonedTime } from 'date-fns-tz';
 
 const OPERATOR_MAP = {
   [CompletionUsageDimensionOperator.EQ]: '=',
@@ -43,7 +42,7 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
       case GranularityUnit.SECOND_10:
       case GranularityUnit.SECOND_15:
       case GranularityUnit.SECOND_30: {
-        const secondInterval = parseInt(query.granularity.split('_')[1]);
+        const secondInterval = parseInt(query.granularity.split('_')[1]) || 1;
         timeExpression = sql`timestamp_floor('${sql.lit(
           secondInterval
         )}s', ts)`;
@@ -69,7 +68,10 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
         break;
     }
 
-    dbQuery = dbQuery.select([timeExpression.as('time'), ...query.dimensions]);
+    dbQuery = dbQuery.select([
+      sql`cast(${timeExpression} as string)`.as('time'),
+      ...query.dimensions,
+    ]);
 
     for (const [metric, agg] of Object.entries(query.agg)) {
       const approxPercentileMatch = /p(\d+)/g.exec(agg);
@@ -95,8 +97,8 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
     }
 
     dbQuery = dbQuery
-      .where('ts', '>=', toZonedTime(query.filter.dateRange.start, 'UTC'))
-      .where('ts', '<', toZonedTime(query.filter.dateRange.end, 'UTC'));
+      .where('ts', '>=', new Date(query.filter.dateRange.start))
+      .where('ts', '<', new Date(query.filter.dateRange.end));
 
     for (const [dimension, filter] of Object.entries(
       query.filter.dimensions ?? {}

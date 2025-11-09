@@ -15,14 +15,14 @@ import {
   endOfDay,
   endOfHour,
   endOfMinute,
-  endOfWeek,
+  endOfSecond,
   format,
-  getYear,
   startOfDay,
   startOfHour,
   startOfMinute,
+  startOfSecond,
 } from 'date-fns';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 
 type BufferItem = {
   payload: CompletionUsageDto;
@@ -56,6 +56,8 @@ export class CompletionUsageService {
       return this.normalizeResultByHour(query, providerResults);
     } else if (query.granularity === GranularityUnit.MINUTE) {
       return this.normalizeResultByMinute(query, providerResults);
+    } else if (query.granularity.startsWith('second')) {
+      return this.normalizeResultBySecond(query, providerResults);
     }
 
     return providerResults;
@@ -68,40 +70,35 @@ export class CompletionUsageService {
     const normalizedResult: CompletionUsageQueryResultDto[] = [];
 
     const dateMap = result.reduce((acc, row) => {
-      const date = fromZonedTime(row.time, 'UTC').getTime();
-      console.log(row.time, date);
-
-      if (!acc[date]) {
-        acc[date] = [];
+      const date = new Date(row.time);
+      const key = formatInTimeZone(date, 'UTC', 'yyyy-MM-dd');
+      if (!acc[key]) {
+        acc[key] = [];
       }
 
-      acc[date].push(row);
+      acc[key].push(row);
       return acc;
-    }, {} as Record<number, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<string, CompletionUsageQueryResultDto[]>);
     const startDate = startOfDay(
-      toZonedTime(query.filter.dateRange.start, 'UTC')
+      toZonedTime(new Date(query.filter.dateRange.start), 'UTC')
     ).getTime();
     const endDate = endOfDay(
-      toZonedTime(query.filter.dateRange.end, 'UTC')
+      toZonedTime(new Date(query.filter.dateRange.end), 'UTC')
     ).getTime();
-    console.log(
-      startOfDay(toZonedTime(query.filter.dateRange.start, 'UTC')),
-      endOfDay(toZonedTime(query.filter.dateRange.end, 'UTC'))
-    );
 
     const currentDate = new Date(startDate);
     while (currentDate.getTime() < endDate) {
-      const key = currentDate.getTime();
+      const key = formatInTimeZone(currentDate, 'UTC', 'yyyy-MM-dd');
       if (dateMap[key]) {
         normalizedResult.push(
           ...dateMap[key].map((item) => ({
             ...item,
-            time: format(currentDate, 'yyyy-MM-dd'),
+            time: key,
           }))
         );
       } else {
         const item: CompletionUsageQueryResultDto = {
-          time: currentDate.toISOString().split('T')[0],
+          time: key,
         };
 
         normalizedResult.push(item);
@@ -118,8 +115,8 @@ export class CompletionUsageService {
   ) {
     const normalizedResult: CompletionUsageQueryResultDto[] = [];
     const weekMap = result.reduce((acc, row) => {
-      const date = fromZonedTime(row.time, 'UTC');
-      const week = format(date, 'yyyy-ww');
+      const date = new Date(row.time);
+      const week = format(date, 'RRRR-ww');
       if (!acc[week]) {
         acc[week] = [];
       }
@@ -128,13 +125,10 @@ export class CompletionUsageService {
     }, {} as Record<string, CompletionUsageQueryResultDto[]>);
 
     const startWeek = parseInt(
-      format(toZonedTime(query.filter.dateRange.start, 'UTC'), 'yyyyww')
+      format(new Date(query.filter.dateRange.start), 'RRRRww')
     );
     const endWeek = parseInt(
-      format(
-        endOfWeek(toZonedTime(query.filter.dateRange.end, 'UTC')),
-        'yyyyww'
-      )
+      format(new Date(query.filter.dateRange.end), 'RRRRww')
     );
 
     let currentWeek = startWeek;
@@ -176,8 +170,7 @@ export class CompletionUsageService {
   ) {
     const normalizedResult: CompletionUsageQueryResultDto[] = [];
     const monthMap = result.reduce((acc, row) => {
-      const date = fromZonedTime(row.time, 'UTC');
-      const month = format(date, 'yyyy-MM');
+      const month = formatInTimeZone(row.time, 'UTC', 'yyyy-MM');
       if (!acc[month]) {
         acc[month] = [];
       }
@@ -186,10 +179,10 @@ export class CompletionUsageService {
     }, {} as Record<string, CompletionUsageQueryResultDto[]>);
 
     const startMonth = parseInt(
-      format(toZonedTime(query.filter.dateRange.start, 'UTC'), 'yyyyMM')
+      formatInTimeZone(new Date(query.filter.dateRange.start), 'UTC', 'yyyyMM')
     );
     const endMonth = parseInt(
-      format(toZonedTime(query.filter.dateRange.end, 'UTC'), 'yyyyMM')
+      formatInTimeZone(new Date(query.filter.dateRange.end), 'UTC', 'yyyyMM')
     );
 
     let currentMonth = startMonth;
@@ -199,6 +192,7 @@ export class CompletionUsageService {
       const yearMonthStr = monthStr
         .substring(monthStr.length - 2)
         .padStart(2, '0');
+
       const month = `${yearStr}-${yearMonthStr}`;
       if (monthMap[month]) {
         normalizedResult.push(
@@ -231,8 +225,8 @@ export class CompletionUsageService {
   ) {
     const normalizedResult: CompletionUsageQueryResultDto[] = [];
     const yearMap = result.reduce((acc, row) => {
-      const date = fromZonedTime(row.time, 'UTC');
-      const year = getYear(date);
+      const date = new Date(row.time);
+      const year = date.getUTCFullYear();
       if (!acc[year]) {
         acc[year] = [];
       }
@@ -240,8 +234,8 @@ export class CompletionUsageService {
       return acc;
     }, {} as Record<number, CompletionUsageQueryResultDto[]>);
 
-    const startYear = getYear(toZonedTime(query.filter.dateRange.start, 'UTC'));
-    const endYear = getYear(toZonedTime(query.filter.dateRange.end, 'UTC'));
+    const startYear = new Date(query.filter.dateRange.start).getUTCFullYear();
+    const endYear = new Date(query.filter.dateRange.end).getUTCFullYear();
 
     let currentYear = startYear;
     while (currentYear <= endYear) {
@@ -271,8 +265,7 @@ export class CompletionUsageService {
   ) {
     const normalizedResult: CompletionUsageQueryResultDto[] = [];
     const dateMap = result.reduce((acc, row) => {
-      const date = fromZonedTime(row.time, 'UTC').getTime();
-
+      const date = new Date(row.time).getTime();
       if (!acc[date]) {
         acc[date] = [];
       }
@@ -282,25 +275,28 @@ export class CompletionUsageService {
     }, {} as Record<number, CompletionUsageQueryResultDto[]>);
 
     const startDate = startOfHour(
-      toZonedTime(query.filter.dateRange.start, 'UTC')
+      new Date(query.filter.dateRange.start)
     ).getTime();
-    const endDate = endOfHour(
-      toZonedTime(query.filter.dateRange.end, 'UTC')
-    ).getTime();
+    const endDate = endOfHour(new Date(query.filter.dateRange.end)).getTime();
 
     const currentDate = new Date(startDate);
     while (currentDate.getTime() < endDate) {
       const key = currentDate.getTime();
+      const time = formatInTimeZone(
+        currentDate,
+        query.timeZone ?? 'UTC',
+        'yyyy-MM-dd HH:mm:ss'
+      );
       if (dateMap[key]) {
         normalizedResult.push(
           ...dateMap[key].map((item) => ({
             ...item,
-            time: format(currentDate, 'yyyy-MM-dd HH:mm:ss'),
+            time,
           }))
         );
       } else {
         const item: CompletionUsageQueryResultDto = {
-          time: format(currentDate, 'yyyy-MM-dd HH:mm:ss'),
+          time,
         };
 
         normalizedResult.push(item);
@@ -317,7 +313,7 @@ export class CompletionUsageService {
   ) {
     const normalizedResult: CompletionUsageQueryResultDto[] = [];
     const dateMap = result.reduce((acc, row) => {
-      const date = fromZonedTime(row.time, 'UTC').getTime();
+      const date = new Date(row.time).getTime();
       if (!acc[date]) {
         acc[date] = [];
       }
@@ -325,31 +321,94 @@ export class CompletionUsageService {
       acc[date].push(row);
       return acc;
     }, {} as Record<number, CompletionUsageQueryResultDto[]>);
-    const startDate = startOfMinute(
-      toZonedTime(query.filter.dateRange.start, 'UTC')
-    ).getTime();
-    const endDate = endOfMinute(
-      toZonedTime(query.filter.dateRange.end, 'UTC')
-    ).getTime();
+    const startDate = startOfMinute(new Date(query.filter.dateRange.start));
+    const endDate = endOfMinute(new Date(query.filter.dateRange.end)).getTime();
 
     const currentDate = new Date(startDate);
     while (currentDate.getTime() < endDate) {
       const key = currentDate.getTime();
+      const time = formatInTimeZone(
+        currentDate,
+        query.timeZone ?? 'UTC',
+        'yyyy-MM-dd HH:mm:ss'
+      );
       if (dateMap[key]) {
         normalizedResult.push(
           ...dateMap[key].map((item) => ({
             ...item,
-            time: format(currentDate, 'yyyy-MM-dd HH:mm:ss'),
+            time,
           }))
         );
       } else {
         const item: CompletionUsageQueryResultDto = {
-          time: format(currentDate, 'yyyy-MM-dd HH:mm:ss'),
+          time,
         };
 
         normalizedResult.push(item);
       }
       currentDate.setMinutes(currentDate.getMinutes() + 1);
+    }
+
+    return normalizedResult;
+  }
+
+  private normalizeResultBySecond(
+    query: CompletionUsageQueryDto,
+    result: CompletionUsageQueryResultDto[]
+  ) {
+    const secondInterval = query.granularity.startsWith('second_')
+      ? parseInt(query.granularity.split('_')[1])
+      : 1;
+
+    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const dateMap = result.reduce((acc, row) => {
+      const date = new Date(row.time).getTime();
+
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+
+      acc[date].push(row);
+      return acc;
+    }, {} as Record<number, CompletionUsageQueryResultDto[]>);
+
+    let startDate = startOfSecond(
+      new Date(query.filter.dateRange.start)
+    ).getTime();
+    let endDate = endOfSecond(new Date(query.filter.dateRange.end)).getTime();
+
+    if (secondInterval > 1) {
+      startDate =
+        startDate -
+        secondInterval * 1000 -
+        (startDate % (secondInterval * 1000));
+      endDate =
+        endDate + (secondInterval * 1000 - (endDate % (secondInterval * 1000)));
+    }
+
+    const currentDate = new Date(startDate);
+    while (currentDate.getTime() < endDate) {
+      const key = currentDate.getTime();
+      const time = formatInTimeZone(
+        currentDate,
+        query.timeZone ?? 'UTC',
+        'yyyy-MM-dd HH:mm:ss'
+      );
+      if (dateMap[key]) {
+        normalizedResult.push(
+          ...dateMap[key].map((item) => ({
+            ...item,
+            time,
+          }))
+        );
+      } else {
+        const item: CompletionUsageQueryResultDto = {
+          time,
+        };
+
+        normalizedResult.push(item);
+      }
+      currentDate.setSeconds(currentDate.getSeconds() + secondInterval);
     }
 
     return normalizedResult;

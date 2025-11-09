@@ -11,7 +11,9 @@ import {
   registerDecorator,
   ValidationArguments,
   validate,
-  IsDate,
+  IsDateString,
+  IsString,
+  IsTimeZone,
 } from 'class-validator';
 import { plainToInstance, Type } from 'class-transformer';
 import { SchemaObjectMetadata } from '@nestjs/swagger/dist/interfaces/schema-object-metadata.interface';
@@ -196,9 +198,8 @@ export class CompletionUsageQueryDateRangeDto {
     example: '2023-01-01T00:00:00.000Z',
   })
   @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
-  start: Date;
+  @IsDateString()
+  start: string;
 
   @ApiProperty({
     type: 'string',
@@ -207,9 +208,8 @@ export class CompletionUsageQueryDateRangeDto {
     example: '2023-01-02T00:00:00.000Z',
   })
   @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
-  end: Date;
+  @IsDateString()
+  end: string;
 }
 
 export enum CompletionUsageDimensionOperator {
@@ -283,6 +283,15 @@ export class CompletionUsageQueryDto {
   @IsEnum(GranularityUnit)
   @IsNotEmpty()
   granularity: GranularityUnit;
+
+  @ApiProperty({
+    description: 'Time zone to use for the query (defaults to UTC)',
+    example: 'UTC',
+  })
+  @IsString()
+  @IsOptional()
+  @IsTimeZone()
+  timeZone?: string;
 
   @ApiProperty({
     type: 'object',
