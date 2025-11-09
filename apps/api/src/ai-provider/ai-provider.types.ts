@@ -1,11 +1,11 @@
 import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.entity';
 import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity';
 import { AIProviderRateLimitDto } from './dto/rate-limit.dto';
-import { Observable } from 'rxjs';
 import { AIProviderDto } from './dto/ai-provider.dto';
 import {
   ChatCompletionCreateParams,
-  CompletionUsage,
+  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionCreateParamsStreaming,
 } from 'openai/resources/index.js';
 import OpenAI from 'openai';
 
@@ -19,10 +19,24 @@ export type CompletionHeaders = {
   'x-ratelimit-reset-tokens'?: string;
 };
 
-export type CompletionObservableData = {
+export type CompletionNonStreamingResponse = {
+  data: OpenAI.Chat.Completions.ChatCompletion;
+  headers: CompletionHeaders;
+};
+
+export type CompletionStreamingResponse = {
+  data: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
+  headers: CompletionHeaders;
+};
+
+export type CompletionResponseData =
+  | OpenAI.Chat.Completions.ChatCompletion
+  | OpenAI.Chat.Completions.ChatCompletionChunk;
+
+export type CompletionResponse = {
   data:
-    | OpenAI.Chat.Completions.ChatCompletion
-    | OpenAI.Chat.Completions.ChatCompletionChunk;
+    | CompletionStreamingResponse['data']
+    | CompletionNonStreamingResponse['data'];
   headers: CompletionHeaders;
 };
 
@@ -35,9 +49,20 @@ export interface CompletionProvider {
   ): Promise<AIProviderRateLimitDto[] | null>;
 
   completion(
+    request: ChatCompletionCreateParamsNonStreaming,
+    connection: AIConnectionEntity,
+    model: AIResourceModelConfigEntity
+  ): Promise<CompletionNonStreamingResponse>;
+
+  completion(
+    request: ChatCompletionCreateParamsStreaming,
+    connection: AIConnectionEntity,
+    model: AIResourceModelConfigEntity
+  ): Promise<CompletionStreamingResponse>;
+
+  completion(
     request: ChatCompletionCreateParams,
     connection: AIConnectionEntity,
-    model: AIResourceModelConfigEntity,
-    observable: Observable<CompletionObservableData>
-  ): Promise<CompletionUsage | undefined>;
+    model: AIResourceModelConfigEntity
+  ): Promise<CompletionResponse>;
 }

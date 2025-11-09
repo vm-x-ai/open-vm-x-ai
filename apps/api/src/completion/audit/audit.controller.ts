@@ -31,7 +31,7 @@ export class CompletionAuditController {
     operationId: 'getCompletionAudit',
     summary: 'List all completion audits associated with an environment',
     description:
-      'Returns a list of all completion audits associated with an environment. Optionally includes user details in each completion audit if `includesUsers` is set to true (default).',
+      'Returns a list of all completion audits associated with an environment.',
   })
   public async getAll(
     @WorkspaceIdParam() workspaceId: string,

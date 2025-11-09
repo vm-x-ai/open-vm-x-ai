@@ -29,7 +29,6 @@ import {
   ApiAIResourceIdParam,
 } from '../ai-resource/ai-resource.controller';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { firstValueFrom } from 'rxjs';
 import { ApiOperation } from '@nestjs/swagger';
 import { CompletionError } from './completion.types';
 import { ServiceError } from '../types';
@@ -42,6 +41,7 @@ import {
 } from './dto/completion-request.dto';
 import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
 import { WorkspaceMemberGuard } from '../workspace/workspace.guard';
+import { isAsyncIterable } from '../utils/async';
 
 const transformPipe = new ValidationPipe({
   transform: true,
@@ -113,49 +113,36 @@ export class CompletionController {
     @AuthenticatedUser() user?: UserEntity,
     @ApiKey() apiKey?: ApiKeyEntity
   ) {
-    const observable = this.completionService.completion(
+    const response = await this.completionService.completion(
       request,
       workspaceId,
       environmentId,
       resource,
       payload,
-      user,
       apiKey
     );
-
-    let index = 0;
     let sseStarted = false;
-    if (payload.stream) {
-      observable.subscribe({
-        next: ({ data: chunk, headers }) => {
-          if (index === 0) {
-            res.raw.writeHead(200, {
-              'Content-Type': 'text/event-stream',
-              'Cache-Control': 'no-cache',
-              Connection: 'keep-alive',
-              ...headers,
-            });
-            sseStarted = true;
-          }
 
-          index++;
+    try {
+      if (isAsyncIterable(response.data)) {
+        res.raw.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          ...response.headers,
+        });
+        sseStarted = true;
+        for await (const chunk of response.data) {
           res.raw.write(`data: ${JSON.stringify(chunk)}\n\n`);
-        },
-        complete: () => {
-          res.raw.write('data: [DONE]\n\n');
-          res.raw.end();
-        },
-        error: (err) => {
-          return this.handleError(err, sseStarted, res);
-        },
-      });
-    } else {
-      try {
-        const result = await firstValueFrom(observable);
-        res.status(200).headers(result.headers).send(result.data);
-      } catch (err) {
-        return this.handleError(err, sseStarted, res);
+        }
+
+        res.raw.write('data: [DONE]\n\n');
+        res.raw.end();
+      } else {
+        res.status(200).headers(response.headers).send(response.data);
       }
+    } catch (err) {
+      return this.handleError(err, sseStarted, res);
     }
   }
 

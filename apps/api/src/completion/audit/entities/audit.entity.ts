@@ -13,6 +13,10 @@ import {
 import { Type } from 'class-transformer';
 import { PublicCompletionAuditType } from '../../../storage/entities.generated';
 import { $enum } from 'ts-enum-util';
+import type {
+  CompletionHeaders,
+  CompletionResponseData,
+} from '../../../ai-provider/ai-provider.types';
 
 export const completionAuditTypes = $enum(PublicCompletionAuditType).getKeys();
 
@@ -21,7 +25,9 @@ export enum CompletionAuditEventType {
   ROUTING = 'routing',
 }
 
-export const completionAuditEventTypes = $enum(CompletionAuditEventType).getKeys();
+export const completionAuditEventTypes = $enum(
+  CompletionAuditEventType
+).getKeys();
 
 export class CompletionAuditEventEntity {
   @ApiProperty({
@@ -50,6 +56,20 @@ export class CompletionAuditEventEntity {
   data: unknown;
 }
 
+export class CompletionAuditDataEntity {
+  @ApiProperty({
+    description: 'The response of the completion audit data',
+  })
+  @IsArray()
+  response: CompletionResponseData[];
+
+  @ApiProperty({
+    description: 'The headers of the completion audit data',
+  })
+  @IsObject()
+  headers: CompletionHeaders;
+}
+
 export class CompletionAuditEntity {
   @ApiProperty({
     description: 'The unique identifier for the completion audit event (UUID)',
@@ -68,7 +88,8 @@ export class CompletionAuditEntity {
   timestamp: Date;
 
   @ApiProperty({
-    description: 'The workspace that the completion audit event is associated with',
+    description:
+      'The workspace that the completion audit event is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID('4')
@@ -76,7 +97,8 @@ export class CompletionAuditEntity {
   workspaceId: string;
 
   @ApiProperty({
-    description: 'The environment that the completion audit event is associated with',
+    description:
+      'The environment that the completion audit event is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID('4')
@@ -84,7 +106,8 @@ export class CompletionAuditEntity {
   environmentId: string;
 
   @ApiProperty({
-    description: 'The AI connection that the completion audit event is associated with',
+    description:
+      'The AI connection that the completion audit event is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID('4')
@@ -152,7 +175,8 @@ export class CompletionAuditEntity {
   correlationId?: string | null;
 
   @ApiProperty({
-    description: 'The associated resource of the completion audit event (if applicable)',
+    description:
+      'The associated resource of the completion audit event (if applicable)',
     example: 'resource-identifier',
   })
   @IsString()
@@ -160,7 +184,8 @@ export class CompletionAuditEntity {
   resource?: string | null;
 
   @ApiProperty({
-    description: 'The model involved in the completion audit event (if applicable)',
+    description:
+      'The model involved in the completion audit event (if applicable)',
     example: 'gpt-4o',
   })
   @IsString()
@@ -177,7 +202,8 @@ export class CompletionAuditEntity {
   sourceIp?: string | null;
 
   @ApiProperty({
-    description: 'The error message if the completion audit event resulted in an error',
+    description:
+      'The error message if the completion audit event resulted in an error',
     example: 'Rate limit exceeded',
   })
   @IsString()
@@ -193,7 +219,8 @@ export class CompletionAuditEntity {
   failureReason?: string | null;
 
   @ApiProperty({
-    description: 'API Key ID related to the completion audit event (if applicable)',
+    description:
+      'API Key ID related to the completion audit event (if applicable)',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID('4')
@@ -205,5 +232,5 @@ export class CompletionAuditEntity {
       'Additional data associated with the completion audit event (JSON object, if any)',
   })
   @IsOptional()
-  data?: unknown | null;
+  data?: CompletionAuditDataEntity | null;
 }

@@ -5,6 +5,7 @@ import { CompletionUsageProvider } from '../usage.types';
 import { QuestDBDatabaseService } from './storage/database.service';
 import { CompletionUsageDto } from '../dto/completion-usage.dto';
 import { plainToInstance } from 'class-transformer';
+import { replaceUndefinedWithNull } from '../../../utils/object';
 
 @Injectable()
 export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
@@ -12,7 +13,10 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
 
   async push(...usage: CompletionUsageDto[]): Promise<void> {
     const values = usage.map((item) => {
-      const value = plainToInstance(CompletionUsageDto, item);
+      const value = plainToInstance(
+        CompletionUsageDto,
+        replaceUndefinedWithNull(item)
+      );
       const { timestamp, error, ...rest } = value;
       return {
         ...rest,
@@ -22,7 +26,6 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
         successCount: item.error ? 0 : 1,
       };
     });
-    console.log('values', values);
     await this.db.instance.insertInto('completions').values(values).execute();
   }
 }

@@ -1,13 +1,15 @@
 import {
   ChatCompletionCreateParams,
-  CompletionUsage,
+  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionCreateParamsStreaming,
 } from 'openai/resources/index.js';
-import { Subject } from 'rxjs';
 import { AIConnectionEntity } from '../../ai-connection/entities/ai-connection.entity';
 import { AIResourceModelConfigEntity } from '../../ai-resource/common/model.entity';
 import {
-  CompletionObservableData,
+  CompletionNonStreamingResponse,
   CompletionProvider,
+  CompletionResponse,
+  CompletionStreamingResponse,
 } from '../ai-provider.types';
 import {
   AIProviderRateLimitDto,
@@ -18,7 +20,6 @@ import { throwServiceError } from '../../error';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ErrorCode } from '../../error-code';
 import { PinoLogger } from 'nestjs-pino';
-import { Stream } from 'openai/core/streaming.js';
 import { AIProviderDto } from '../dto/ai-provider.dto';
 import { CompletionError } from '../../completion/completion.types';
 
@@ -154,15 +155,30 @@ export class OpenAIProvider implements CompletionProvider {
     ];
   }
 
+  completion(
+    request: ChatCompletionCreateParamsNonStreaming,
+    connection: AIConnectionEntity<OpenAIConnectionConfig>,
+    model: AIResourceModelConfigEntity
+  ): Promise<CompletionNonStreamingResponse>;
+
+  completion(
+    request: ChatCompletionCreateParamsStreaming,
+    connection: AIConnectionEntity<OpenAIConnectionConfig>,
+    model: AIResourceModelConfigEntity
+  ): Promise<CompletionStreamingResponse>;
+
+  completion(
+    request: ChatCompletionCreateParams,
+    connection: AIConnectionEntity<OpenAIConnectionConfig>,
+    model: AIResourceModelConfigEntity
+  ): Promise<CompletionResponse>;
+
   async completion(
     request: ChatCompletionCreateParams,
     connection: AIConnectionEntity<OpenAIConnectionConfig>,
-    model: AIResourceModelConfigEntity,
-    observable: Subject<CompletionObservableData>
-  ): Promise<CompletionUsage | undefined> {
+    model: AIResourceModelConfigEntity
+  ): Promise<CompletionResponse> {
     const client = await this.createClient(connection);
-    const startTime = Date.now();
-    let timeToFirstToken: number | null = null;
     try {
       const response = await client.chat.completions
         .create({
@@ -177,32 +193,10 @@ export class OpenAIProvider implements CompletionProvider {
         .withResponse();
 
       const headers = this.filterRelevantHeaders(response.response.headers);
-
-      if (response.data instanceof Stream) {
-        let completionUsage: CompletionUsage | undefined = undefined;
-        for await (const chunk of response.data) {
-          if (timeToFirstToken === null) {
-            timeToFirstToken = Date.now() - startTime;
-          }
-          observable.next({
-            data: chunk,
-            headers,
-          });
-
-          if (chunk.usage && !completionUsage) {
-            completionUsage = chunk.usage;
-          }
-        }
-
-        return completionUsage;
-      } else {
-        observable.next({
-          data: response.data,
-          headers,
-        });
-
-        return response.data.usage;
-      }
+      return {
+        data: response.data,
+        headers,
+      };
     } catch (error) {
       this.logger.error({ error }, 'Failed to complete the request');
 

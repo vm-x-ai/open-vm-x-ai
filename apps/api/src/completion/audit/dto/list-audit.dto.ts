@@ -10,6 +10,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { completionAuditTypes } from '../entities/audit.entity';
+import { Type } from 'class-transformer';
 
 export class ListAuditQueryDto {
   @ApiProperty({
@@ -24,6 +25,8 @@ export class ListAuditQueryDto {
   type?: PublicCompletionAuditType | null;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
     description: 'The connection ID to list audits for',
     example: 'connection-identifier',
   })
@@ -32,6 +35,8 @@ export class ListAuditQueryDto {
   connectionId?: string | null;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
     description: 'The resource to list audits for',
     example: 'resource-identifier',
   })
@@ -40,6 +45,8 @@ export class ListAuditQueryDto {
   resource?: string | null;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
     description: 'The model to list audits for',
     example: 'gpt-4o',
   })
@@ -48,15 +55,21 @@ export class ListAuditQueryDto {
   model?: string | null;
 
   @ApiProperty({
+    type: 'number',
+    required: false,
     description: 'The status code to list audits for',
     example: 200,
   })
   @IsNumber()
   @IsOptional()
   @IsInt()
+  @Type(() => Number)
   statusCode?: number | null;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
+    format: 'date-time',
     description: 'The start date to list audits for',
     example: '2021-01-01',
   })
@@ -65,6 +78,9 @@ export class ListAuditQueryDto {
   startDate?: Date | null;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
+    format: 'date-time',
     description: 'The end date to list audits for',
     example: '2021-01-01',
   })

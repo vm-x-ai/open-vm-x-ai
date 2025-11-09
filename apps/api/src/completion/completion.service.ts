@@ -2,11 +2,8 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { AIConnectionService } from '../ai-connection/ai-connection.service';
 import { AIProviderService } from '../ai-provider/ai-provider.service';
 import { AIResourceService } from '../ai-resource/ai-resource.service';
-import { UserEntity } from '../users/entities/user.entity';
 import { throwServiceError } from '../error';
 import { ErrorCode } from '../error-code';
-import { defer, Observable, Subject } from 'rxjs';
-import { CompletionObservableData } from '../ai-provider/ai-provider.types';
 import { CompletionUsageService } from './usage/usage.service';
 import { CompletionMetricsService } from './metrics/metrics.service';
 import { CompletionAuditService } from './audit/audit.service';
@@ -23,11 +20,16 @@ import { getSourceIpFromRequest } from '../utils/http';
 import { v4 as uuidv4 } from 'uuid';
 import { PublicCompletionAuditType } from '../storage/entities.generated';
 import {
+  CompletionAuditDataEntity,
   CompletionAuditEventEntity,
   CompletionAuditEventType,
 } from './audit/entities/audit.entity';
 import { CompletionError } from './completion.types';
 import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity';
+import { CompletionUsage } from 'openai/resources/completions.js';
+import { CompletionResponse } from '../ai-provider/ai-provider.types';
+import { isAsyncIterable } from '../utils/async';
+import { ChatCompletionChunk } from 'openai/resources/index.js';
 
 @Injectable()
 export class CompletionService {
@@ -44,32 +46,32 @@ export class CompletionService {
     private readonly tokenService: TokenService
   ) {}
 
-  public completion(
+  public async completion(
     request: FastifyRequest,
     workspaceId: string,
     environmentId: string,
     resource: string,
     payload: CompletionRequestDto,
-    user?: UserEntity,
     apiKey?: ApiKeyEntity
-  ): Observable<CompletionObservableData> {
-    const subject = new Subject<CompletionObservableData>();
-    const observable = subject.asObservable();
+  ): Promise<CompletionResponse> {
     const sourceIp = getSourceIpFromRequest(request);
     let modelConfig: AIResourceModelConfigEntity | null = null;
     let requestAt: Date = new Date();
     let routingDuration: number | null = null;
     let gateDuration: number | null = null;
-    let providerDuration: number | null = null;
+    const providerDuration: number | null = null;
     let providerStartAt: number | null = null;
     let timeToFirstToken: number | null = null;
-    let tokensPerSecond: number | null = null;
+    const tokensPerSecond: number | null = null;
     let messageId: string | null = null;
     const auditEvents: CompletionAuditEventEntity[] = [];
-    const auditData: CompletionObservableData[] = [];
+    const auditData: CompletionAuditDataEntity = {
+      response: [],
+      headers: {},
+    };
     const requestId = uuidv4();
 
-    defer(async () => {
+    try {
       const aiResource = await this.getAIResource(
         workspaceId,
         environmentId,
@@ -127,15 +129,6 @@ export class CompletionService {
           routingDuration = Date.now() - routingStartAt;
         }
       }
-
-      subject.subscribe((item) => {
-        auditData.push(item);
-        messageId = item.data.id;
-
-        if (payload.stream && !timeToFirstToken && providerStartAt) {
-          timeToFirstToken = Date.now() - providerStartAt;
-        }
-      });
 
       const models = [modelConfig, ...(aiResource.fallbackModels ?? [])];
       for (let i = 0; i < models.length; i++) {
@@ -201,55 +194,83 @@ export class CompletionService {
 
           const { extra, ...rawPayload } = payload;
           providerStartAt = Date.now();
-          const completionUsage = await provider.completion(
+          let completionUsage: CompletionUsage | undefined = undefined;
+          const providerResponse = await provider.completion(
             rawPayload,
             aiConnection,
-            modelConfig,
-            subject
+            modelConfig
           );
-          const requestDuration = Date.now() - requestAt.getTime();
-          providerDuration = Date.now() - providerStartAt;
-          if (completionUsage) {
-            tokensPerSecond =
-              completionUsage.total_tokens /
-              ((Date.now() - providerStartAt) / 1000);
-          }
 
-          if (completionUsage) {
-            await this.gateService.increaseTokenResponseUsage(
+          auditData.headers = providerResponse.headers;
+
+          if (isAsyncIterable(providerResponse.data)) {
+            async function* createDataStream(
+              this: CompletionService,
+              data: AsyncIterable<ChatCompletionChunk>,
+              providerStartAt: number,
+              modelConfig: AIResourceModelConfigEntity
+            ) {
+              for await (const chunk of data) {
+                yield chunk;
+                auditData.response.push(chunk);
+                messageId = chunk.id;
+
+                if (payload.stream && !timeToFirstToken && providerStartAt) {
+                  timeToFirstToken = Date.now() - providerStartAt;
+                }
+
+                if (chunk.usage && !completionUsage) {
+                  completionUsage = chunk.usage;
+                }
+              }
+
+              await this.postCompletion(
+                requestAt,
+                providerStartAt,
+                baseProps,
+                evaluatedCapacities,
+                modelConfig,
+                messageId,
+                gateDuration,
+                routingDuration,
+                timeToFirstToken,
+                tokensPerSecond,
+                completionUsage,
+                auditEvents,
+                auditData
+              );
+            }
+
+            return {
+              data: createDataStream.bind(this)(
+                providerResponse.data,
+                providerStartAt,
+                modelConfig
+              ),
+              headers: providerResponse.headers,
+            };
+          } else {
+            completionUsage = providerResponse.data.usage;
+            auditData.response.push(providerResponse.data);
+
+            await this.postCompletion(
+              requestAt,
+              providerStartAt,
+              baseProps,
               evaluatedCapacities,
-              completionUsage
+              modelConfig,
+              messageId,
+              gateDuration,
+              routingDuration,
+              timeToFirstToken,
+              tokensPerSecond,
+              completionUsage,
+              auditEvents,
+              auditData
             );
           }
 
-          this.completionUsageService.push({
-            ...baseProps,
-            statusCode: HttpStatus.OK,
-            provider: modelConfig.provider,
-            messageId,
-            gateDuration,
-            providerDuration,
-            routingDuration,
-            timeToFirstToken,
-            tokensPerSecond,
-            requestDuration,
-            completionTokens: completionUsage?.completion_tokens,
-            promptTokens: completionUsage?.prompt_tokens,
-            totalTokens: completionUsage?.total_tokens,
-          });
-          this.completionMetricsService.push({
-            ...baseProps,
-            statusCode: HttpStatus.OK,
-          });
-          this.completionAuditService.push({
-            ...baseProps,
-            statusCode: HttpStatus.OK,
-            type: PublicCompletionAuditType.COMPLETION,
-            events: auditEvents,
-            data: auditData,
-            duration: requestDuration,
-          });
-          break;
+          return providerResponse;
         } catch (error) {
           this.logger.error(
             `Error execution completion for provider ${modelConfig.provider}`,
@@ -294,66 +315,139 @@ export class CompletionService {
           });
         }
       }
-    }).subscribe({
-      complete: () => {
-        subject.complete();
-      },
-      error: (err) => {
-        const { failureReason, statusCode, errorMessage } =
-          this.parseProviderError(err);
+    } catch (err) {
+      const { failureReason, statusCode, errorMessage } =
+        this.parseProviderError(err);
 
-        const baseProps = {
-          workspaceId,
-          environmentId,
-          resource,
-          model: modelConfig?.model,
-          timestamp: requestAt,
-          requestId,
-          sourceIp,
-          apiKeyId: apiKey?.apiKeyId,
-          correlationId: payload.extra?.correlationId,
-          connectionId: modelConfig?.connectionId,
-        };
-        const requestDuration = Date.now() - requestAt.getTime();
+      const baseProps = {
+        workspaceId,
+        environmentId,
+        resource,
+        model: modelConfig?.model,
+        timestamp: requestAt,
+        requestId,
+        sourceIp,
+        apiKeyId: apiKey?.apiKeyId,
+        correlationId: payload.extra?.correlationId,
+        connectionId: modelConfig?.connectionId,
+      };
+      const requestDuration = Date.now() - requestAt.getTime();
 
-        this.completionUsageService.push({
+      this.completionUsageService.push({
+        ...baseProps,
+        failureReason,
+        statusCode,
+        provider: modelConfig?.provider,
+        messageId,
+        gateDuration,
+        providerDuration,
+        routingDuration,
+        timeToFirstToken,
+        tokensPerSecond,
+        requestDuration,
+        error: true,
+      });
+      if (modelConfig) {
+        this.completionMetricsService.push({
           ...baseProps,
-          failureReason,
+          connectionId: modelConfig.connectionId,
+          model: modelConfig.model,
           statusCode,
-          provider: modelConfig?.provider,
-          messageId,
-          gateDuration,
-          providerDuration,
-          routingDuration,
-          timeToFirstToken,
-          tokensPerSecond,
-          requestDuration,
-          error: true,
         });
-        if (modelConfig) {
-          this.completionMetricsService.push({
-            ...baseProps,
-            connectionId: modelConfig.connectionId,
-            model: modelConfig.model,
-            statusCode,
-          });
-        }
-        this.completionAuditService.push({
-          ...baseProps,
-          statusCode,
-          type: PublicCompletionAuditType.COMPLETION,
-          events: auditEvents,
-          data: auditData,
-          duration: requestDuration,
-          errorMessage,
-          failureReason,
-        });
+      }
+      this.completionAuditService.push({
+        ...baseProps,
+        statusCode,
+        type: PublicCompletionAuditType.COMPLETION,
+        events: auditEvents,
+        data: auditData,
+        duration: requestDuration,
+        errorMessage,
+        failureReason,
+      });
 
-        subject.error(err);
+      throw err;
+    }
+
+    // This should never happen
+    throw new CompletionError({
+      openAICompatibleError: {
+        code: 'no_completion_response',
       },
+      message: 'No completion response',
+      rate: false,
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      retryable: false,
+      failureReason: 'No completion response',
     });
+  }
 
-    return observable;
+  private async postCompletion(
+    requestAt: Date,
+    providerStartAt: number,
+    baseEventProps: {
+      workspaceId: string;
+      environmentId: string;
+      resource: string;
+      model: string;
+      timestamp: Date;
+      requestId: string;
+      sourceIp: string;
+      apiKeyId?: string;
+      correlationId?: string | null;
+      connectionId: string;
+    },
+    evaluatedCapacities: EvaluatedCapacity[],
+    modelConfig: AIResourceModelConfigEntity,
+    messageId: string | null,
+    gateDuration: number | null,
+    routingDuration: number | null,
+    timeToFirstToken: number | null,
+    tokensPerSecond: number | null,
+    completionUsage: CompletionUsage | undefined,
+    auditEvents: CompletionAuditEventEntity[],
+    auditData: CompletionAuditDataEntity
+  ) {
+    const requestDuration = Date.now() - requestAt.getTime();
+    const providerDuration = Date.now() - providerStartAt;
+    if (completionUsage) {
+      tokensPerSecond =
+        completionUsage.total_tokens / ((Date.now() - providerStartAt) / 1000);
+    }
+
+    if (completionUsage) {
+      await this.gateService.increaseTokenResponseUsage(
+        evaluatedCapacities,
+        completionUsage
+      );
+    }
+    this.completionUsageService.push({
+      ...baseEventProps,
+      statusCode: HttpStatus.OK,
+      provider: modelConfig.provider,
+      messageId,
+      gateDuration,
+      providerDuration,
+      routingDuration,
+      timeToFirstToken,
+      tokensPerSecond,
+      requestDuration,
+      completionTokens: completionUsage?.completion_tokens,
+      promptTokens: completionUsage?.prompt_tokens,
+      totalTokens: completionUsage?.total_tokens,
+    });
+    this.completionMetricsService.push({
+      ...baseEventProps,
+      statusCode: HttpStatus.OK,
+    });
+    this.completionAuditService.push({
+      ...baseEventProps,
+      statusCode: HttpStatus.OK,
+      type: PublicCompletionAuditType.COMPLETION,
+      events: auditEvents,
+      data: auditData,
+      duration: requestDuration,
+    });
   }
 
   private parseProviderError(err: unknown) {
