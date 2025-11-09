@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CompletionAuditService } from './audit.service';
 import { CompletionAuditEntity } from './entities/audit.entity';
@@ -11,8 +11,10 @@ import {
 import { UserEntity } from '../../users/entities/user.entity';
 import { AuthenticatedUser } from '../../auth/auth.guard';
 import { ListAuditQueryDto } from './dto/list-audit.dto';
+import { WorkspaceMemberGuard } from '../../workspace/workspace.guard';
 
 @Controller('completion-audit')
+@UseGuards(WorkspaceMemberGuard())
 @ApiTags('Completion Audit')
 export class CompletionAuditController {
   constructor(

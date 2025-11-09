@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AIResourceService } from './ai-resource.service';
 import {
+  ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -30,6 +31,7 @@ import {
   WorkspaceIdParam,
 } from '../common/api.decorators';
 import { WorkspaceMemberGuard } from '../workspace/workspace.guard';
+import { AIResourceRoutingCondition } from './common/routing.entity';
 
 export function ApiAIResourceIdParam() {
   return applyDecorators(
@@ -47,6 +49,7 @@ export function AIResourceIdParam() {
 }
 
 @UseGuards(WorkspaceMemberGuard())
+@ApiExtraModels(AIResourceRoutingCondition)
 @Controller('ai-resource')
 @ApiTags('AI Resource')
 export class AIResourceController {
