@@ -1,14 +1,14 @@
 import { OmitType } from '@nestjs/mapped-types';
-import { UserEntity } from '../entities/user.entity';
+import { ApiKeyEntity } from '../entities/api-key.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty } from 'class-validator';
 
-export class UserRelationDto extends OmitType(UserEntity, [
+export class ApiKeyRelationDto extends OmitType(ApiKeyEntity, [
   'createdAt',
   'updatedAt',
 ]) {
   @ApiProperty({
-    description: 'The date and time the user was created',
+    description: 'The date and time the API key was created',
     example: '2021-01-01T00:00:00.000Z',
   })
   @IsDateString()
@@ -16,10 +16,10 @@ export class UserRelationDto extends OmitType(UserEntity, [
   createdAt: string;
 
   @ApiProperty({
-    description: 'The date and time the user was last updated',
+    description: 'The date and time the API key was last updated',
     example: '2021-01-01T00:00:00.000Z',
   })
   @IsDateString()
   @IsNotEmpty()
-  updatedAt: Date;
+  updatedAt: string;
 }

@@ -5,7 +5,9 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { ChatCompletionCreateParams } from 'openai/resources/index.js';
+import {
+  ChatCompletionCreateParams,
+} from 'openai/resources/index.js';
 import { CreateAIResourceDto } from '../../ai-resource/dto/create-ai-resource.dto';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';

@@ -1,6 +1,5 @@
 import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.entity';
 import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity';
-import { AIProviderRateLimitDto } from './dto/rate-limit.dto';
 import { AIProviderDto } from './dto/ai-provider.dto';
 import {
   ChatCompletionCreateParams,
@@ -42,11 +41,6 @@ export type CompletionResponse = {
 
 export interface CompletionProvider {
   provider: AIProviderDto;
-
-  getRateLimit(
-    connection: AIConnectionEntity,
-    modelConfig: AIResourceModelConfigEntity
-  ): Promise<AIProviderRateLimitDto[] | null>;
 
   completion(
     request: ChatCompletionCreateParamsNonStreaming,

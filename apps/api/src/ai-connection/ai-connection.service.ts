@@ -15,6 +15,7 @@ import { EncryptionService } from '../vault/encryption.service';
 import { JSONSchema7 } from 'json-schema';
 import { v4 as uuidv4 } from 'uuid';
 import { PinoLogger } from 'nestjs-pino';
+import { DiscoveredCapacityEntity } from '../capacity/capacity.entity';
 
 const MASKED_VALUE = '********';
 
@@ -168,8 +169,6 @@ export class AIConnectionService implements OnModuleInit {
         fetchedAt: Date.now(),
       };
     }
-
-    console.log('aiConnection', aiConnection?.config);
 
     return aiConnection;
   }
@@ -401,6 +400,55 @@ export class AIConnectionService implements OnModuleInit {
     ]);
 
     return this.hideSecretFields(provider.provider, aiConnection);
+  }
+
+  public async updateDiscoveredCapacity(
+    workspaceId: string,
+    environmentId: string,
+    connectionId: string,
+    discoveredCapacity: DiscoveredCapacityEntity
+  ): Promise<AIConnectionEntity> {
+    const connection = await this.getById(
+      workspaceId,
+      environmentId,
+      connectionId,
+      false,
+      false,
+      true
+    );
+
+    await this.db.writer
+      .updateTable('aiConnections')
+      .set({
+        discoveredCapacity: JSON.stringify(discoveredCapacity),
+      })
+      .where('workspaceId', '=', workspaceId)
+      .where('environmentId', '=', environmentId)
+      .where('connectionId', '=', connectionId)
+      .executeTakeFirstOrThrow();
+
+    await this.cache.mset([
+      {
+        key: this.getAIConnectionCacheKey(
+          workspaceId,
+          environmentId,
+          connectionId,
+          true
+        ),
+        value: Date.now(),
+      },
+      {
+        key: this.getAIConnectionCacheKey(
+          workspaceId,
+          environmentId,
+          connectionId,
+          false
+        ),
+        value: Date.now(),
+      },
+    ]);
+
+    return connection;
   }
 
   public async delete(

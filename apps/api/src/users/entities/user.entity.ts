@@ -12,7 +12,7 @@ import {
   IsUUID,
 } from 'class-validator';
 
-export class UserEntity<TDate extends Date | string = Date> {
+export class UserEntity {
   @ApiProperty({
     description: 'The unique identifier for the user (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -100,7 +100,7 @@ export class UserEntity<TDate extends Date | string = Date> {
   })
   @IsDateString()
   @IsNotEmpty()
-  createdAt: TDate;
+  createdAt: Date;
 
   @ApiProperty({
     description: 'The date and time the user was last updated',
@@ -108,7 +108,7 @@ export class UserEntity<TDate extends Date | string = Date> {
   })
   @IsDateString()
   @IsNotEmpty()
-  updatedAt: TDate;
+  updatedAt: Date;
 
   @ApiProperty({
     description: 'The provider specific metadata for the user (e.g claims)',

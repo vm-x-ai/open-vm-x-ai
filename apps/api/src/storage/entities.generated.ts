@@ -10,6 +10,20 @@ export enum PublicCompletionAuditType {
   COMPLETION_BATCH = "COMPLETION_BATCH",
 }
 
+export enum PublicCompletionBatchRequestStatus {
+  CANCELLED = "CANCELLED",
+  COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
+  PENDING = "PENDING",
+  RUNNING = "RUNNING",
+}
+
+export enum PublicCompletionBatchRequestType {
+  ASYNC = "ASYNC",
+  CALLBACK = "CALLBACK",
+  SYNC = "SYNC",
+}
+
 export enum PublicProviderType {
   LOCAL = "LOCAL",
   OIDC = "OIDC",
@@ -114,6 +128,47 @@ export interface CompletionAudit {
   workspaceId: string;
 }
 
+export interface CompletionBatch {
+  batchId: Generated<string>;
+  callbackOptions: ColumnType<any | null, string | null, string | null>;
+  capacity: ColumnType<any[] | null, string | null, string | null>;
+  completed: Generated<number>;
+  completedAt: Timestamp | null;
+  createdAt: Generated<Timestamp>;
+  createdByApiKeyId: string | null;
+  createdByUserId: string | null;
+  environmentId: string;
+  failed: Generated<number>;
+  pending: Generated<number>;
+  running: Generated<number>;
+  status: PublicCompletionBatchRequestStatus;
+  timestamp: Timestamp;
+  totalCompletionTokens: Generated<number>;
+  totalItems: Generated<number>;
+  totalPromptTokens: Generated<number>;
+  type: PublicCompletionBatchRequestType;
+  updatedAt: Generated<Timestamp>;
+  workspaceId: string;
+}
+
+export interface CompletionBatchItem {
+  batchId: string;
+  completedAt: Timestamp | null;
+  completionTokens: Generated<number>;
+  createdAt: Generated<Timestamp>;
+  environmentId: string;
+  errorMessage: string | null;
+  itemId: Generated<string>;
+  promptTokens: Generated<number>;
+  request: ColumnType<any | null, string | null, string | null>;
+  resource: string;
+  response: ColumnType<any | null, string | null, string | null>;
+  retryCount: Generated<number>;
+  status: PublicCompletionBatchRequestStatus;
+  totalTokens: Generated<number>;
+  workspaceId: string;
+}
+
 export interface Environment {
   createdAt: Generated<Timestamp>;
   createdBy: string;
@@ -143,6 +198,16 @@ export interface PoolDefinition {
   updatedAt: Generated<Timestamp>;
   updatedBy: string;
   workspaceId: string;
+}
+
+export interface QuestdbKyselyMigration {
+  name: string;
+  timestamp: string;
+}
+
+export interface QuestdbKyselyMigrationLock {
+  id: string;
+  isLocked: Generated<number>;
 }
 
 export interface User {
@@ -185,9 +250,13 @@ export interface DB {
   aiResources: AiResource;
   apiKeys: ApiKey;
   completionAudit: CompletionAudit;
+  completionBatch: CompletionBatch;
+  completionBatchItems: CompletionBatchItem;
   environments: Environment;
   oidcProvider: OidcProvider;
   poolDefinitions: PoolDefinition;
+  questdbKyselyMigration: QuestdbKyselyMigration;
+  questdbKyselyMigrationLock: QuestdbKyselyMigrationLock;
   users: User;
   workspaces: Workspace;
   workspaceUsers: WorkspaceUser;

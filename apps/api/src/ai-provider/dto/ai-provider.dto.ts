@@ -277,51 +277,6 @@ export class AIProviderModelOptionsDto {
   maxTokens?: number;
 }
 
-export class AIProviderModelDto {
-  @ApiProperty({ description: 'Model value or identifier', example: 'gpt-4o' })
-  @IsString()
-  @IsNotEmpty()
-  value: string;
-
-  @ApiProperty({
-    description: 'Human-friendly label for the model',
-    example: 'GPT-4o (Omni)',
-  })
-  @IsString()
-  @IsNotEmpty()
-  label: string;
-
-  @ApiProperty({
-    description: 'Logo associated with this model',
-    type: () => AIProviderLogoDto,
-    required: false,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => AIProviderLogoDto)
-  logo?: AIProviderLogoDto;
-
-  @ApiProperty({
-    description: 'Options relating to the model',
-    type: () => AIProviderModelOptionsDto,
-    required: false,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => AIProviderModelOptionsDto)
-  options?: AIProviderModelOptionsDto;
-
-  @ApiProperty({
-    description: 'Additional metadata for this model',
-    required: false,
-    type: Object,
-    example: { maxContext: 128000 },
-  })
-  @IsOptional()
-  @IsObject()
-  metadata?: Record<string, unknown>;
-}
-
 export class AIProviderConfigDto {
   @ApiProperty({
     description: 'Logo for the AI provider',
@@ -338,16 +293,6 @@ export class AIProviderConfigDto {
   @ValidateNested()
   @Type(() => AIProviderConnectionDto)
   connection: AIProviderConnectionDto;
-
-  @ApiProperty({
-    description: 'List of available models for this provider',
-    type: [AIProviderModelDto],
-    example: [{ value: 'gpt-4o', label: 'GPT-4o (Omni)' }],
-  })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => AIProviderModelDto)
-  models: AIProviderModelDto[];
 }
 
 export class AIProviderDto {

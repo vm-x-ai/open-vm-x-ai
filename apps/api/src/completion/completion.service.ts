@@ -27,9 +27,14 @@ import {
 import { CompletionError } from './completion.types';
 import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity';
 import { CompletionUsage } from 'openai/resources/completions.js';
-import { CompletionResponse } from '../ai-provider/ai-provider.types';
+import {
+  CompletionHeaders,
+  CompletionResponse,
+} from '../ai-provider/ai-provider.types';
 import { isAsyncIterable } from '../utils/async';
 import { ChatCompletionChunk } from 'openai/resources/index.js';
+import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.entity';
+import { CapacityPeriod } from '../capacity/capacity.entity';
 
 @Injectable()
 export class CompletionService {
@@ -228,6 +233,7 @@ export class CompletionService {
                 requestAt,
                 providerStartAt,
                 baseProps,
+                aiConnection,
                 evaluatedCapacities,
                 modelConfig,
                 messageId,
@@ -237,7 +243,8 @@ export class CompletionService {
                 tokensPerSecond,
                 completionUsage,
                 auditEvents,
-                auditData
+                auditData,
+                providerResponse.headers
               );
             }
 
@@ -257,6 +264,7 @@ export class CompletionService {
               requestAt,
               providerStartAt,
               baseProps,
+              aiConnection,
               evaluatedCapacities,
               modelConfig,
               messageId,
@@ -266,7 +274,8 @@ export class CompletionService {
               tokensPerSecond,
               completionUsage,
               auditEvents,
-              auditData
+              auditData,
+              providerResponse.headers
             );
           }
 
@@ -397,6 +406,7 @@ export class CompletionService {
       correlationId?: string | null;
       connectionId: string;
     },
+    aiConnection: AIConnectionEntity,
     evaluatedCapacities: EvaluatedCapacity[],
     modelConfig: AIResourceModelConfigEntity,
     messageId: string | null,
@@ -406,7 +416,8 @@ export class CompletionService {
     tokensPerSecond: number | null,
     completionUsage: CompletionUsage | undefined,
     auditEvents: CompletionAuditEventEntity[],
-    auditData: CompletionAuditDataEntity
+    auditData: CompletionAuditDataEntity,
+    headers: CompletionHeaders
   ) {
     const requestDuration = Date.now() - requestAt.getTime();
     const providerDuration = Date.now() - providerStartAt;
@@ -448,6 +459,66 @@ export class CompletionService {
       data: auditData,
       duration: requestDuration,
     });
+
+    const requestLimit = headers['x-ratelimit-limit-requests'];
+    const tokensLimit = headers['x-ratelimit-limit-tokens'];
+
+    if (requestLimit && tokensLimit) {
+      const discoveredCapacity =
+        aiConnection.discoveredCapacity?.models[modelConfig.model];
+
+      const capacityIndex = discoveredCapacity?.capacity?.findIndex(
+        (c) => c.period === CapacityPeriod.MINUTE
+      );
+      const capacity =
+        capacityIndex !== undefined && capacityIndex !== -1
+          ? discoveredCapacity?.capacity?.[capacityIndex]
+          : undefined;
+
+      if (
+        capacity?.tokens !== parseInt(tokensLimit) ||
+        capacity?.requests !== parseInt(requestLimit)
+      ) {
+        const newCapacity = [...(discoveredCapacity?.capacity ?? [])];
+        if (capacity) {
+          capacity.requests = parseInt(requestLimit);
+          capacity.tokens = parseInt(tokensLimit);
+        } else {
+          newCapacity.push({
+            period: CapacityPeriod.MINUTE,
+            enabled: true,
+            requests: parseInt(requestLimit),
+            tokens: parseInt(tokensLimit),
+          });
+        }
+
+        this.logger.info(
+          {
+            workspaceId: baseEventProps.workspaceId,
+            environmentId: baseEventProps.environmentId,
+            connectionId: aiConnection.connectionId,
+            model: modelConfig.model,
+            capacity,
+            newCapacity,
+          },
+          'Updating discovered capacity'
+        );
+        await this.aiConnectionService.updateDiscoveredCapacity(
+          baseEventProps.workspaceId,
+          baseEventProps.environmentId,
+          aiConnection.connectionId,
+          {
+            models: {
+              ...(aiConnection.discoveredCapacity?.models ?? {}),
+              [modelConfig.model]: {
+                capacity: newCapacity,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }
+        );
+      }
+    }
   }
 
   private parseProviderError(err: unknown) {

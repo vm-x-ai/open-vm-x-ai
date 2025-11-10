@@ -14,6 +14,8 @@ import { migration as migration07 } from './7-ai-resource-table';
 import { migration as migration08 } from './8-pool-definition-table';
 import { migration as migration09 } from './9-api-key-table';
 import { migration as migration10 } from './10-completion-audit-table';
+import { migration as migration11 } from './11-completion-batch-table';
+import { migration as migration12 } from './12-completion-batch-item-table';
 import { PasswordService } from '../auth/password.service';
 import { BaseMigrationsService, ListMigrationProvider } from './base';
 
@@ -55,6 +57,8 @@ export class MigrationsService
         '08': migration08,
         '09': migration09,
         '10': migration10,
+        '11': migration11,
+        '12': migration12,
       }),
     });
   }

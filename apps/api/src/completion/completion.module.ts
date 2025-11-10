@@ -15,6 +15,7 @@ import { PoolDefinitionModule } from '../pool-definition/pool-definition.module'
 import { CompletionMetricsModule } from './metrics/metrics.module';
 import { CompletionAuditModule } from './audit/audit.module';
 import { CompletionUsageModule } from './usage/usage.module';
+import { CompletionBatchModule } from './batch/batch.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CompletionUsageModule } from './usage/usage.module';
     CompletionMetricsModule,
     CompletionAuditModule,
     CompletionUsageModule,
+    CompletionBatchModule,
   ],
   controllers: [CompletionController],
   providers: [CompletionService, GateService, ResourceRoutingService],

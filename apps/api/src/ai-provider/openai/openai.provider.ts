@@ -11,10 +11,6 @@ import {
   CompletionResponse,
   CompletionStreamingResponse,
 } from '../ai-provider.types';
-import {
-  AIProviderRateLimitDto,
-  AIProviderRateLimitPeriod,
-} from '../dto/rate-limit.dto';
 import OpenAI, { APIError, RateLimitError } from 'openai';
 import { throwServiceError } from '../../error';
 import { HttpStatus, Injectable } from '@nestjs/common';
@@ -62,97 +58,8 @@ export class OpenAIProvider implements CompletionProvider {
             },
           },
         },
-        models: [
-          {
-            value: 'gpt-5',
-            label: 'GPT-5',
-          },
-          {
-            value: 'gpt-5-pro',
-            label: 'GPT-5 Pro',
-          },
-          {
-            label: 'GPT-4.1 mini',
-            value: 'gpt-4.1-mini',
-          },
-          {
-            label: 'GPT-4.1',
-            value: 'gpt-4.1',
-          },
-          {
-            label: 'GPT 4o Mini',
-            value: 'gpt-4o-mini',
-          },
-          {
-            label: 'GPT 4o',
-            value: 'gpt-4o',
-          },
-          {
-            label: 'o1',
-            value: 'o1',
-          },
-          {
-            label: 'o1 Mini',
-            value: 'o1-mini',
-          },
-          {
-            label: 'GPT-4 Turbo',
-            value: 'gpt-4-turbo',
-          },
-          {
-            label: 'GPT-4',
-            value: 'gpt-4',
-          },
-          {
-            label: 'GPT-3.5 Turbo',
-            value: 'gpt-3.5-turbo',
-          },
-        ],
       },
     };
-  }
-
-  async getRateLimit(
-    connection: AIConnectionEntity<OpenAIConnectionConfig>,
-    modelConfig: AIResourceModelConfigEntity
-  ): Promise<AIProviderRateLimitDto[] | null> {
-    const client = await this.createClient(connection);
-    const response = await client.chat.completions
-      .create({
-        stream: false,
-        messages: [
-          {
-            role: 'user',
-            content: 'ping, respond with pong',
-          },
-        ],
-        model: modelConfig.model,
-      })
-      .withResponse();
-
-    // Ref: https://platform.openai.com/docs/guides/rate-limits#rate-limits-in-headers
-    const requestsLimit = response.response.headers.get(
-      'x-ratelimit-limit-requests'
-    );
-    const tokensLimit = response.response.headers.get(
-      'x-ratelimit-limit-tokens'
-    );
-
-    if (!requestsLimit || !tokensLimit) {
-      this.logger.warn(
-        'The rate limit headers are not present in the response'
-      );
-      return null;
-    }
-
-    return [
-      {
-        period: AIProviderRateLimitPeriod.MINUTE,
-        model: modelConfig.model,
-        requests: parseInt(requestsLimit),
-        tokens: parseInt(tokensLimit),
-      },
-    ];
   }
 
   completion(

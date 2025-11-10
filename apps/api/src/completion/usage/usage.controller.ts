@@ -38,9 +38,9 @@ export class CompletionUsageController {
   @ApiEnvironmentIdParam()
   @ApiOperation({
     operationId: 'getCompletionUsage',
-    summary: 'List all completion usage records based on the query parameters',
+    summary: 'Query completion usage records',
     description:
-      'Returns a list of all completion usage records, the results time gaps will be filled with null values',
+      'Returns a list of completion usage records based on the query parameters',
   })
   public async getAll(
     @WorkspaceIdParam() workspaceId: string,
