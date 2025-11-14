@@ -13,6 +13,7 @@ export class WorkspaceEntity {
   @ApiProperty({
     description: 'The unique identifier for the workspace (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -27,8 +28,11 @@ export class WorkspaceEntity {
   name: string;
 
   @ApiProperty({
+    type: 'string',
+    nullable: true,
     description: 'The description of the workspace',
     example: 'This is my workspace',
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -57,6 +61,8 @@ export class WorkspaceEntity {
   createdBy: string;
 
   @ApiProperty({
+    nullable: true,
+    required: false,
     description: 'The user who created the workspace',
   })
   @IsOptional()
@@ -70,7 +76,9 @@ export class WorkspaceEntity {
   updatedBy: string;
 
   @ApiProperty({
+    nullable: true,
     description: 'The user who last updated the workspace',
+    required: false,
   })
   @IsOptional()
   @Type(() => UserRelationDto)

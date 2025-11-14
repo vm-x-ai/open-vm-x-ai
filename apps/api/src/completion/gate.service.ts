@@ -2,9 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { RedisClient } from '../cache/redis-client';
 import { PoolDefinitionService } from '../pool-definition/pool-definition.service';
-import {
-  CapacityService,
-} from '../capacity/capacity.service';
+import { CapacityService } from '../capacity/capacity.service';
 import { PrioritizationService } from '../prioritization/prioritization.service';
 import {
   CapacityDimension,
@@ -80,7 +78,7 @@ export class GateService {
     }));
 
     for (const { capacity, source, dimensionValue } of enabledCapacities) {
-      await this.checkRequestCapacity(
+      this.checkRequestCapacity(
         capacity,
         source,
         usageMetricsMap[capacity.period].totalRequests,
@@ -184,11 +182,21 @@ export class GateService {
     await Promise.all([
       capacities.map(async ({ period, keyPrefix }) => {
         const key = `${keyPrefix}${period}`;
-        await this.increaseRpmTpmCounters(
-          key,
-          usageMetricsMap[period].remainingSeconds,
-          requestTokens
-        );
+        if (!usageMetricsMap[period]) {
+          return;
+        }
+        try {
+          await this.increaseRpmTpmCounters(
+            key,
+            usageMetricsMap[period].remainingSeconds,
+            requestTokens
+          );
+        } catch (error) {
+          this.logger.error(
+            { error },
+            `Error increasing RPM TPM counters for ${key}`
+          );
+        }
       }),
     ]);
 
@@ -238,7 +246,7 @@ export class GateService {
     await operation.exec();
   }
 
-  private async checkRequestCapacity(
+  private checkRequestCapacity(
     capacity: CapacityEntity,
     capacityResource: string,
     totalRequests: number,

@@ -33,10 +33,16 @@ export class CompletionBatchCallbackOptionsDto {
     example: {
       'Content-Type': 'application/json',
     },
+    nullable: true,
+    required: false,
+    type: Object,
+    additionalProperties: {
+      type: 'string',
+    },
   })
   @IsOptional()
   @IsObject()
-  headers?: Record<string, string>;
+  headers?: Record<string, string> | null;
 
   @ApiProperty({
     description: 'The events to send the callback for',

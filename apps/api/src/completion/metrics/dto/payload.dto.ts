@@ -5,6 +5,7 @@ export class CompletionPayloadMetricDto {
   @ApiProperty({
     description: 'The workspace ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -13,6 +14,7 @@ export class CompletionPayloadMetricDto {
   @ApiProperty({
     description: 'The environment ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -29,6 +31,7 @@ export class CompletionPayloadMetricDto {
   @ApiProperty({
     description: 'The AI connection ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()

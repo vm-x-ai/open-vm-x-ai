@@ -124,11 +124,12 @@ export class AIConnectionService implements OnModuleInit {
       connectionId,
       !!includesUsers
     );
+    let aiConnection: AIConnectionEntity | undefined;
     if (decrypt && !shouldRevalidate) {
-      return this.preloadedConnections[connectionId]?.entity;
+      aiConnection = this.preloadedConnections[connectionId]?.entity;
     }
 
-    const aiConnection = await this.db.reader
+    aiConnection = await this.db.reader
       .selectFrom('aiConnections')
       .selectAll('aiConnections')
       .$if(!!includesUsers, this.db.includeEntityControlUsers('aiConnections'))

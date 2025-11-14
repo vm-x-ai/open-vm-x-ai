@@ -16,6 +16,7 @@ export class UserEntity {
   @ApiProperty({
     description: 'The unique identifier for the user (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -70,6 +71,9 @@ export class UserEntity {
   emailVerified: boolean;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
     description: 'The URL of the user\'s profile picture',
     example: 'https://example.com/profile.jpg',
   })
@@ -111,7 +115,11 @@ export class UserEntity {
   updatedAt: Date;
 
   @ApiProperty({
+    type: Object,
+    additionalProperties: true,
+    nullable: true,
     description: 'The provider specific metadata for the user (e.g claims)',
+    required: false,
   })
   @IsObject()
   @IsOptional()

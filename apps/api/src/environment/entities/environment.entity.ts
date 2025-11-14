@@ -13,6 +13,7 @@ export class EnvironmentEntity {
   @ApiProperty({
     description: 'The unique identifier for the environment (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -21,6 +22,7 @@ export class EnvironmentEntity {
   @ApiProperty({
     description: 'The workspace that the environment is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -35,6 +37,9 @@ export class EnvironmentEntity {
   name: string;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
     description: 'The description of the environment',
     example: 'This is my production environment',
   })
@@ -65,6 +70,8 @@ export class EnvironmentEntity {
   createdBy: string;
 
   @ApiProperty({
+    required: false,
+    nullable: true,
     description: 'The user who created the workspace',
   })
   @IsOptional()
@@ -78,6 +85,8 @@ export class EnvironmentEntity {
   updatedBy: string;
 
   @ApiProperty({
+    required: false,
+    nullable: true,
     description: 'The user who last updated the workspace',
   })
   @IsOptional()

@@ -11,10 +11,10 @@ import {
   CompletionNonStreamingRequestDto,
   CompletionRequestDto,
   CompletionStreamingRequestDto,
+  PartialAIResourceDto,
 } from './dto/completion-request.dto';
 import { AIResourceEntity } from '../ai-resource/entities/ai-resource.entity';
 import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
-import { CreateAIResourceDto } from '../ai-resource/dto/create-ai-resource.dto';
 import { ResourceRoutingService } from './routing.service';
 import { TokenService } from '../token/token.service';
 import { PinoLogger } from 'nestjs-pino';
@@ -43,6 +43,7 @@ import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.enti
 import { CapacityPeriod } from '../capacity/capacity.entity';
 import os from 'os';
 import { CompletionBatchEntity } from './batch/entity/batch.entity';
+import merge from 'lodash.merge';
 
 @Injectable()
 export class CompletionService {
@@ -231,6 +232,12 @@ export class CompletionService {
               request,
               batch
             );
+          } catch (error) {
+            this.logger.error(
+              { error },
+              `Error requesting gate for provider ${modelConfig.provider}`
+            );
+            throw error;
           } finally {
             gateDuration = Date.now() - gateStartAt;
           }
@@ -296,6 +303,7 @@ export class CompletionService {
             };
           } else {
             completionUsage = providerResponse.data.usage;
+            messageId = providerResponse.data.id;
             auditData.response.push(providerResponse.data);
 
             await this.postCompletion(
@@ -578,7 +586,7 @@ export class CompletionService {
     workspaceId: string,
     environmentId: string,
     resource: string,
-    resourceConfigOverrides?: Partial<CreateAIResourceDto> | null
+    resourceConfigOverrides?: PartialAIResourceDto | null
   ): Promise<AIResourceEntity> {
     const aiResourceEntity = await this.aiResourceService.getById(
       {
@@ -594,9 +602,9 @@ export class CompletionService {
       !resourceConfigOverrides?.model
     );
 
-    return {
-      ...(aiResourceEntity || {}),
-      ...(resourceConfigOverrides || {}),
-    } as AIResourceEntity;
+    return merge(
+      aiResourceEntity || {},
+      resourceConfigOverrides || {}
+    ) as AIResourceEntity;
   }
 }

@@ -50,6 +50,8 @@ export class CompletionAuditEventEntity {
 
   @ApiProperty({
     description: 'The data of the Audit event',
+    type: 'object',
+    additionalProperties: true,
   })
   @IsNotEmpty()
   @IsObject()
@@ -59,6 +61,9 @@ export class CompletionAuditEventEntity {
 export class CompletionAuditDataEntity {
   @ApiProperty({
     description: 'The response of the completion audit data',
+    type: [Object],
+    nullable: true,
+    required: false,
   })
   @IsArray()
   response: CompletionResponseData[];
@@ -74,6 +79,7 @@ export class CompletionAuditEntity {
   @ApiProperty({
     description: 'The unique identifier for the completion audit event (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -91,6 +97,7 @@ export class CompletionAuditEntity {
     description:
       'The workspace that the completion audit event is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -100,6 +107,7 @@ export class CompletionAuditEntity {
     description:
       'The environment that the completion audit event is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -109,6 +117,10 @@ export class CompletionAuditEntity {
     description:
       'The AI connection that the completion audit event is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    nullable: true,
+    required: false,
+    type: 'string',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsOptional()
@@ -143,6 +155,7 @@ export class CompletionAuditEntity {
   @ApiProperty({
     description: 'The request ID of the completion audit event',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -151,6 +164,8 @@ export class CompletionAuditEntity {
   @ApiProperty({
     description: 'The events of the completion audit event (JSON array)',
     type: [CompletionAuditEventEntity],
+    nullable: true,
+    required: false,
   })
   @IsArray()
   @Type(() => CompletionAuditEventEntity)
@@ -160,6 +175,10 @@ export class CompletionAuditEntity {
   @ApiProperty({
     description: 'The batch ID of the completion audit event (if applicable)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsUUID('4')
   @IsOptional()
@@ -169,6 +188,9 @@ export class CompletionAuditEntity {
     description:
       'The correlation ID for correlating logs and events (if applicable)',
     example: 'corr-abc-123',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -178,6 +200,9 @@ export class CompletionAuditEntity {
     description:
       'The associated resource of the completion audit event (if applicable)',
     example: 'resource-identifier',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -187,6 +212,9 @@ export class CompletionAuditEntity {
     description:
       'The model involved in the completion audit event (if applicable)',
     example: 'gpt-4o',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -196,6 +224,9 @@ export class CompletionAuditEntity {
     description:
       'The source IP address associated with the completion audit event (if applicable)',
     example: '192.168.1.1',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -205,6 +236,9 @@ export class CompletionAuditEntity {
     description:
       'The error message if the completion audit event resulted in an error',
     example: 'Rate limit exceeded',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -213,6 +247,9 @@ export class CompletionAuditEntity {
   @ApiProperty({
     description: 'The failure reason if the completion audit event failed',
     example: 'INVALID_REQUEST',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -222,6 +259,10 @@ export class CompletionAuditEntity {
     description:
       'API Key ID related to the completion audit event (if applicable)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsUUID('4')
   @IsOptional()
@@ -230,6 +271,8 @@ export class CompletionAuditEntity {
   @ApiProperty({
     description:
       'Additional data associated with the completion audit event (JSON object, if any)',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   data?: CompletionAuditDataEntity | null;

@@ -14,8 +14,11 @@ export class CreateWorkspaceDto {
   name: string;
 
   @ApiProperty({
+    type: 'string',
+    nullable: true,
     description: 'The description of the workspace',
     example: 'This is my workspace',
+    required: false,
   })
   @IsString()
   @IsOptional()

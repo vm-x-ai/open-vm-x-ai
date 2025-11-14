@@ -32,6 +32,7 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The unique identifier for the workspace (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -40,6 +41,7 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The unique identifier for the environment (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -56,6 +58,7 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The unique identifier for the batch request (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -74,6 +77,8 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The callback options for the batch request',
     type: CompletionBatchCallbackOptionsDto,
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()
@@ -83,6 +88,8 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The capacities of the batch request',
     type: [CapacityEntity],
+    nullable: true,
+    required: false,
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -101,6 +108,10 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The date and time the batch request was completed',
     example: '2021-01-01T00:00:00.000Z',
+    nullable: true,
+    required: false,
+    type: 'string',
+    format: 'date-time',
   })
   @IsDate()
   @IsOptional()
@@ -175,6 +186,9 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The error message of the batch request',
     example: 'An error occurred',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -199,6 +213,10 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The unique identifier for the API key that created the batch request',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsUUID('4')
   @IsOptional()
@@ -207,6 +225,8 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The API key that created the batch request',
     type: ApiKeyRelationDto,
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()
@@ -216,6 +236,10 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The unique identifier for the user that created the batch request',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsUUID('4')
   @IsOptional()
@@ -224,6 +248,8 @@ export class CompletionBatchEntity {
   @ApiProperty({
     description: 'The user that created the batch request',
     type: UserRelationDto,
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()

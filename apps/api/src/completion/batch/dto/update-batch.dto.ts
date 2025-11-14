@@ -21,6 +21,10 @@ export class UpdateCompletionBatchDto {
   @ApiProperty({
     description: 'The date and time the batch request was completed',
     example: '2021-01-01T00:00:00.000Z',
+    nullable: true,
+    required: false,
+    type: 'string',
+    format: 'date-time',
   })
   @IsDate()
   @IsOptional()

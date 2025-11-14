@@ -287,11 +287,14 @@ export class CompletionUsageQueryDto {
   @ApiProperty({
     description: 'Time zone to use for the query (defaults to UTC)',
     example: 'UTC',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
   @IsTimeZone()
-  timeZone?: string;
+  timeZone?: string | null;
 
   @ApiProperty({
     type: 'object',
@@ -360,6 +363,8 @@ export class CompletionUsageQueryDto {
       provider: OrderByDirection.ASC,
     },
     type: 'object',
+    nullable: true,
+    selfRequired: false,
     properties: completionDimensions.reduce((acc, dimension) => {
       acc[dimension] = {
         type: 'string',
@@ -371,5 +376,5 @@ export class CompletionUsageQueryDto {
   })
   @IsOptional()
   @IsOrderByObject()
-  orderBy?: Partial<Record<CompletionDimensions, OrderByDirection>>;
+  orderBy?: Partial<Record<CompletionDimensions, OrderByDirection>> | null;
 }

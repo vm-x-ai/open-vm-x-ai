@@ -15,6 +15,7 @@ export class CreateCompletionBatchItemDto {
     description:
       'The completion request payload (openai chat completion request payload)',
     type: Object,
+    additionalProperties: true,
   })
   @IsNotEmpty()
   request: CompletionRequestDto;

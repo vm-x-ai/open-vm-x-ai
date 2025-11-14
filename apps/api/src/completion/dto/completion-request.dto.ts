@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import {
   IsNumber,
   IsOptional,
@@ -13,6 +13,33 @@ import {
 import { CreateAIResourceDto } from '../../ai-resource/dto/create-ai-resource.dto';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
+import { AIResourceModelConfigEntity } from '../../ai-resource/common/model.entity';
+import { AIResourceModelRoutingEntity } from '../../ai-resource/common/routing.entity';
+
+export class PartialAIResourceDto extends OmitType(
+  PartialType(CreateAIResourceDto),
+  ['model', 'fallbackModels', 'secondaryModels', 'routing', 'capacity']
+) {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PartialType(AIResourceModelConfigEntity))
+  model?: Partial<AIResourceModelConfigEntity>;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => PartialType(AIResourceModelConfigEntity))
+  fallbackModels?: Partial<AIResourceModelConfigEntity>[];
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => PartialType(AIResourceModelConfigEntity))
+  secondaryModels?: Partial<AIResourceModelConfigEntity>[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PartialType(AIResourceModelRoutingEntity))
+  routing?: Partial<AIResourceModelRoutingEntity>;
+}
 
 export class ExtraCompletionRequestDto {
   @ApiProperty({
@@ -42,8 +69,8 @@ export class ExtraCompletionRequestDto {
     },
   })
   @ValidateNested()
-  @Type(() => PartialType(CreateAIResourceDto))
-  resourceConfigOverrides?: Partial<CreateAIResourceDto> | null;
+  @Type(() => PartialAIResourceDto)
+  resourceConfigOverrides?: PartialAIResourceDto | null;
 }
 
 export class CompletionRequestPayloadDto {

@@ -17,6 +17,7 @@ export class AIResourceEntity {
   @ApiProperty({
     description: 'Workspace ID associated with the resource',
     example: 'workspace-uuid-string',
+    format: 'uuid'
   })
   @IsUUID('4')
   workspaceId: string;
@@ -24,6 +25,7 @@ export class AIResourceEntity {
   @ApiProperty({
     description: 'Environment ID associated with the resource',
     example: 'environment-uuid-string',
+    format: 'uuid'
   })
   @IsUUID('4')
   environmentId: string;
@@ -31,6 +33,9 @@ export class AIResourceEntity {
   @ApiPropertyOptional({
     description: 'Description of the AI resource',
     example: 'A high throughput GPT-4O endpoint for production',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsOptional()
   @IsString()
@@ -54,6 +59,8 @@ export class AIResourceEntity {
   @ApiPropertyOptional({
     type: [AIResourceModelConfigEntity],
     description: 'List of fallback model configurations',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @IsArray()
@@ -64,6 +71,8 @@ export class AIResourceEntity {
   @ApiPropertyOptional({
     type: [AIResourceModelConfigEntity],
     description: 'List of secondary (non-fallback) models for A/B/ensemble use',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @IsArray()
@@ -74,6 +83,8 @@ export class AIResourceEntity {
   @ApiPropertyOptional({
     type: AIResourceModelRoutingEntity,
     description: 'Routing rules for this resource',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()
@@ -83,6 +94,8 @@ export class AIResourceEntity {
   @ApiPropertyOptional({
     type: [CapacityEntity],
     description: 'Capacity configuration entries for rate limiting',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @IsArray()
@@ -114,6 +127,7 @@ export class AIResourceEntity {
   @ApiProperty({
     description: 'User ID who created the resource',
     example: 'user-uuid-string',
+    format: 'uuid'
   })
   @IsUUID('4')
   createdBy: string;
@@ -121,6 +135,8 @@ export class AIResourceEntity {
   @ApiPropertyOptional({
     type: UserRelationDto,
     description: 'User details of who created the resource',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()
@@ -130,6 +146,7 @@ export class AIResourceEntity {
   @ApiProperty({
     description: 'User ID who last updated the resource',
     example: 'user-uuid-string',
+    format: 'uuid'
   })
   @IsUUID('4')
   updatedBy: string;
@@ -137,6 +154,8 @@ export class AIResourceEntity {
   @ApiPropertyOptional({
     type: UserRelationDto,
     description: 'User details of who last updated the resource',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()

@@ -16,6 +16,7 @@ export type CompletionHeaders = {
   'x-ratelimit-remaining-tokens'?: string;
   'x-ratelimit-reset-requests'?: string;
   'x-ratelimit-reset-tokens'?: string;
+  [key: string]: string | undefined;
 };
 
 export type CompletionNonStreamingResponse = {

@@ -6,6 +6,7 @@ import {
 import { AIConnectionEntity } from '../../ai-connection/entities/ai-connection.entity';
 import { AIResourceModelConfigEntity } from '../../ai-resource/common/model.entity';
 import {
+  CompletionHeaders,
   CompletionNonStreamingResponse,
   CompletionProvider,
   CompletionResponse,
@@ -25,7 +26,7 @@ export type OpenAIConnectionConfig = {
 
 @Injectable()
 export class OpenAIProvider implements CompletionProvider {
-  readonly provider: AIProviderDto;
+  provider: AIProviderDto;
 
   constructor(private readonly logger: PinoLogger) {
     this.provider = {
@@ -87,16 +88,18 @@ export class OpenAIProvider implements CompletionProvider {
   ): Promise<CompletionResponse> {
     const client = await this.createClient(connection);
     try {
+      const requestBody = {
+        ...request,
+        stream_options: request.stream
+          ? {
+              include_usage: true,
+            }
+          : undefined,
+        model: model.model,
+      };
+      this.logger.info({ requestBody }, 'AI Provider request body');
       const response = await client.chat.completions
-        .create({
-          ...request,
-          stream_options: request.stream
-            ? {
-                include_usage: true,
-              }
-            : undefined,
-          model: model.model,
-        })
+        .create(requestBody)
         .withResponse();
 
       const headers = this.filterRelevantHeaders(response.response.headers);
@@ -169,7 +172,7 @@ export class OpenAIProvider implements CompletionProvider {
     }
   }
 
-  private filterRelevantHeaders(headers?: Headers) {
+  protected filterRelevantHeaders(headers?: Headers): CompletionHeaders {
     if (!headers) {
       return {};
     }

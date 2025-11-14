@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { CompletionBatchItemEntity } from '../entity/batch-item.entity';
 import { CompletionBatchEntity } from '../entity/batch.entity';
 import {
@@ -10,7 +10,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { OmitType } from '@nestjs/mapped-types';
 
 export class CompletionBatchItemRelationDto extends OmitType(
   CompletionBatchItemEntity,
@@ -27,6 +26,10 @@ export class CompletionBatchItemRelationDto extends OmitType(
   @ApiProperty({
     description: 'The date and time the batch item was completed',
     example: '2021-01-01T00:00:00.000Z',
+    nullable: true,
+    required: false,
+    type: 'string',
+    format: 'date-time',
   })
   @IsDateString()
   @IsOptional()
@@ -37,6 +40,8 @@ export class CompletionBatchDto extends CompletionBatchEntity {
   @ApiProperty({
     description: 'The items in the batch',
     type: [CompletionBatchItemRelationDto],
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @IsArray()
@@ -49,6 +54,9 @@ export class CompletionBatchDto extends CompletionBatchEntity {
   @ApiProperty({
     description: 'The completed percentage of the batch request',
     example: 50,
+    nullable: true,
+    required: false,
+    type: 'number',
   })
   @IsOptional()
   @IsNumber()

@@ -29,6 +29,7 @@ export class ListAuditQueryDto {
     required: false,
     description: 'The connection ID to list audits for',
     example: 'connection-identifier',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsOptional()

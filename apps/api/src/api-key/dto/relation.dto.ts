@@ -1,6 +1,5 @@
-import { OmitType } from '@nestjs/mapped-types';
 import { ApiKeyEntity } from '../entities/api-key.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { IsDateString, IsNotEmpty } from 'class-validator';
 
 export class ApiKeyRelationDto extends OmitType(ApiKeyEntity, [

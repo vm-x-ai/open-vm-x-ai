@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -42,6 +42,9 @@ export class CapacityEntity {
   period: CapacityPeriod;
 
   @ApiProperty({
+    required: false,
+    type: 'number',
+    nullable: true,
     description: 'The number of requests allowed per period',
     example: 100,
   })
@@ -50,6 +53,9 @@ export class CapacityEntity {
   requests?: number | null;
 
   @ApiProperty({
+    required: false,
+    type: 'number',
+    nullable: true,
     description: 'The number of tokens allowed per period',
     example: 100000,
   })
@@ -58,6 +64,9 @@ export class CapacityEntity {
   tokens?: number | null;
 
   @ApiProperty({
+    required: false,
+    type: 'boolean',
+    nullable: true,
     description: 'Whether the capacity is enabled',
     example: true,
   })
@@ -66,6 +75,8 @@ export class CapacityEntity {
   enabled?: boolean | null;
 
   @ApiProperty({
+    required: false,
+    nullable: true,
     description: 'The dimension of the capacity',
     enum: capacityDimension,
     example: CapacityDimension.SOURCE_IP,
@@ -94,6 +105,9 @@ export class DiscoveredCapacityEntry {
   capacity: CapacityEntity[];
 
   @ApiProperty({
+    type: 'string',
+    nullable: true,
+    required: false,
     description: 'The error message of the discovered capacity',
     example: 'Error discovering capacity',
   })
@@ -105,6 +119,10 @@ export class DiscoveredCapacityEntry {
 export class DiscoveredCapacityEntity {
   @ApiProperty({
     description: 'The models of the discovered capacity (JSON object)',
+    type: 'object',
+    additionalProperties: {
+      $ref: getSchemaPath(DiscoveredCapacityEntry),
+    },
     example: {
       'gpt-4o': {
         updatedAt: '2021-01-01T00:00:00.000Z',

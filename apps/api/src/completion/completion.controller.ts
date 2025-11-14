@@ -113,17 +113,17 @@ export class CompletionController {
     @AuthenticatedUser() user?: UserEntity,
     @ApiKey() apiKey?: ApiKeyEntity
   ) {
-    const response = await this.completionService.completion(
-      workspaceId,
-      environmentId,
-      resource,
-      payload,
-      apiKey,
-      request
-    );
     let sseStarted = false;
-
     try {
+      const response = await this.completionService.completion(
+        workspaceId,
+        environmentId,
+        resource,
+        payload,
+        apiKey,
+        request
+      );
+
       if (isAsyncIterable(response.data)) {
         res.raw.writeHead(200, {
           'Content-Type': 'text/event-stream',
@@ -195,6 +195,8 @@ export class CompletionController {
         },
       };
     }
+
+    console.log('errorResponse', errorResponse);
 
     if (sseStarted) {
       res.raw.write(`data: ${JSON.stringify(errorResponse)}\n\n`);

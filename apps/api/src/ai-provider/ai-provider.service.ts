@@ -1,16 +1,26 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { OpenAIProvider } from './openai/openai.provider';
+import { OpenAIProvider } from './providers/openai.provider';
 import { CompletionProvider } from './ai-provider.types';
 import { throwServiceError } from '../error';
 import { ErrorCode } from '../error-code';
 import { AIProviderDto } from './dto/ai-provider.dto';
-
+import { AnthropicProvider } from './providers/anthropic.provider';
+import { GroqProvider } from './providers/groq.provider';
+import { GeminiProvider } from './providers/gemini.provider';
 @Injectable()
 export class AIProviderService {
   private readonly providers: Record<string, CompletionProvider> = {};
 
-  constructor(private readonly openaiProvider: OpenAIProvider) {
+  constructor(
+    private readonly openaiProvider: OpenAIProvider,
+    private readonly anthropicProvider: AnthropicProvider,
+    private readonly groqProvider: GroqProvider,
+    private readonly geminiProvider: GeminiProvider
+  ) {
     this.providers[openaiProvider.provider.id] = this.openaiProvider;
+    this.providers[anthropicProvider.provider.id] = this.anthropicProvider;
+    this.providers[groqProvider.provider.id] = this.groqProvider;
+    this.providers[geminiProvider.provider.id] = this.geminiProvider;
   }
 
   public getAll(): AIProviderDto[] {

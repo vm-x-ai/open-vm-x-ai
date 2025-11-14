@@ -14,6 +14,9 @@ export class CreateEnvironmentDto {
   name: string;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
     description: 'The description of the workspace',
     example: 'This is my workspace',
   })

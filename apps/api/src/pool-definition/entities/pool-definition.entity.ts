@@ -103,6 +103,8 @@ export class PoolDefinitionEntity {
   @ApiProperty({
     description: 'User who created the pool definition',
     example: 'user-uuid-string',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()
@@ -119,6 +121,8 @@ export class PoolDefinitionEntity {
   @ApiProperty({
     description: 'User who last updated the pool definition',
     example: 'user-uuid-string',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested()

@@ -16,6 +16,7 @@ export class ApiKeyEntity {
   @ApiProperty({
     description: 'The unique identifier for the API key (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -24,6 +25,7 @@ export class ApiKeyEntity {
   @ApiProperty({
     description: 'The workspace that the API key is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -32,6 +34,7 @@ export class ApiKeyEntity {
   @ApiProperty({
     description: 'The environment that the API key is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -48,6 +51,9 @@ export class ApiKeyEntity {
   @ApiProperty({
     description: 'The description of the API key',
     example: 'This is my API key',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -73,6 +79,13 @@ export class ApiKeyEntity {
   @ApiProperty({
     description: 'The labels that the API key is associated with',
     example: ['label-1', 'label-2'],
+    nullable: true,
+    required: false,
+    type: 'array',
+    items: {
+      type: 'string',
+      example: 'label-1',
+    },
   })
   @IsArray()
   @IsString({ each: true })
@@ -90,6 +103,8 @@ export class ApiKeyEntity {
   @ApiProperty({
     description: 'The capacities of the API key (JSON array)',
     type: [CapacityEntity],
+    nullable: true,
+    required: false,
   })
   @IsArray()
   @Type(() => CapacityEntity)
@@ -103,22 +118,6 @@ export class ApiKeyEntity {
   @IsString()
   @IsNotEmpty()
   maskedKey: string;
-
-  @ApiProperty({
-    description: 'The date and time the API key was last used',
-    example: '2021-01-01T00:00:00.000Z',
-  })
-  @IsDateString()
-  @IsOptional()
-  lastUsedAt?: Date | null;
-
-  @ApiProperty({
-    description: 'The IP address of the last request to the API key',
-    example: '127.0.0.1',
-  })
-  @IsString()
-  @IsOptional()
-  lastUsedIp?: string | null;
 
   @ApiProperty({
     description: 'The date and time the API key was created',
@@ -144,6 +143,8 @@ export class ApiKeyEntity {
 
   @ApiProperty({
     description: 'The user who created the API key',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @Type(() => UserRelationDto)
@@ -157,6 +158,8 @@ export class ApiKeyEntity {
 
   @ApiProperty({
     description: 'The user who last updated the API key',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @Type(() => UserRelationDto)

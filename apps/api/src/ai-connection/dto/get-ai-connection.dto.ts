@@ -5,6 +5,7 @@ export class GetAIConnectionDto {
   @ApiProperty({
     description: 'The workspace ID to list AI connections for',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -13,6 +14,7 @@ export class GetAIConnectionDto {
   @ApiProperty({
     description: 'The environment ID to list AI connections for',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -21,6 +23,7 @@ export class GetAIConnectionDto {
   @ApiProperty({
     description: 'The connection ID to get AI connection for',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()

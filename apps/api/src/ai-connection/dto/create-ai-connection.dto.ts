@@ -24,6 +24,9 @@ export class CreateAIConnectionDto {
   @ApiProperty({
     description: 'The description of the AI connection',
     example: 'This is my OpenAI connection',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsString()
   @IsOptional()
@@ -40,6 +43,13 @@ export class CreateAIConnectionDto {
   @ApiProperty({
     description: 'The allowed models of the AI connection',
     example: ['gpt-4o', 'gpt-4o-mini'],
+    type: 'array',
+    items: {
+      type: 'string',
+      example: 'gpt-4o',
+    },
+    required: false,
+    nullable: true,
   })
   @IsArray()
   @IsOptional()
@@ -48,6 +58,8 @@ export class CreateAIConnectionDto {
   @ApiProperty({
     description: 'The capacities of the AI connection (JSON array)',
     type: [CapacityEntity],
+    required: false,
+    nullable: true,
   })
   @IsArray()
   @Type(() => CapacityEntity)
@@ -57,6 +69,8 @@ export class CreateAIConnectionDto {
   @ApiProperty({
     description: 'The configuration of the AI connection (JSON object)',
     type: Object,
+    required: false,
+    nullable: true,
   })
   @IsObject()
   @IsOptional()

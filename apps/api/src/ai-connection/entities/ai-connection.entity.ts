@@ -21,6 +21,7 @@ export class AIConnectionEntity<
   @ApiProperty({
     description: 'The unique identifier for the AI connection (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -29,6 +30,7 @@ export class AIConnectionEntity<
   @ApiProperty({
     description: 'The workspace that the AI connection is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -37,6 +39,7 @@ export class AIConnectionEntity<
   @ApiProperty({
     description: 'The environment that the AI connection is associated with',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -51,6 +54,9 @@ export class AIConnectionEntity<
   name: string;
 
   @ApiProperty({
+    type: 'string',
+    required: false,
+    nullable: true,
     description: 'The description of the AI connection',
     example: 'OpenAI default connection',
   })
@@ -67,6 +73,13 @@ export class AIConnectionEntity<
   provider: string;
 
   @ApiProperty({
+    type: 'array',
+    items: {
+      type: 'string',
+      example: 'gpt-4o',
+    },
+    required: false,
+    nullable: true,
     description: 'The allowed models of the AI connection',
     example: ['gpt-4o', 'gpt-4o-mini'],
   })
@@ -75,6 +88,8 @@ export class AIConnectionEntity<
   allowedModels?: string[] | null;
 
   @ApiProperty({
+    nullable: true,
+    required: false,
     description: 'The capacities of the AI connection (JSON array)',
     type: [CapacityEntity],
   })
@@ -84,6 +99,8 @@ export class AIConnectionEntity<
   capacity?: CapacityEntity[] | null;
 
   @ApiProperty({
+    nullable: true,
+    required: false,
     description:
       'The automatically discovered capacity of the AI connection (JSON object)',
     type: DiscoveredCapacityEntity,
@@ -94,6 +111,8 @@ export class AIConnectionEntity<
   discoveredCapacity?: DiscoveredCapacityEntity | null;
 
   @ApiProperty({
+    nullable: true,
+    required: false,
     description: 'The configuration of the AI connection (JSON object)',
     type: Object,
   })
@@ -125,6 +144,8 @@ export class AIConnectionEntity<
 
   @ApiProperty({
     description: 'The user who created the AI connection',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @Type(() => UserRelationDto)
@@ -138,6 +159,8 @@ export class AIConnectionEntity<
 
   @ApiProperty({
     description: 'The user who last updated the AI connection',
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   @Type(() => UserRelationDto)

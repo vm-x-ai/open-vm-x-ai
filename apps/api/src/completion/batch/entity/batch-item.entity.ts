@@ -17,6 +17,7 @@ export class CompletionBatchItemEntity {
   @ApiProperty({
     description: 'The unique identifier for the workspace (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -25,6 +26,7 @@ export class CompletionBatchItemEntity {
   @ApiProperty({
     description: 'The unique identifier for the environment (UUID)',
     example: '123e4567-e89b-12d3-a456-426614174001',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -33,6 +35,7 @@ export class CompletionBatchItemEntity {
   @ApiProperty({
     description: 'The unique identifier for the batch (UUID)',
     example: '223e4567-e89b-12d3-a456-426614174002',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -41,6 +44,7 @@ export class CompletionBatchItemEntity {
   @ApiProperty({
     description: 'The unique identifier for the batch item (UUID)',
     example: '323e4567-e89b-12d3-a456-426614174003',
+    format: 'uuid'
   })
   @IsUUID('4')
   @IsNotEmpty()
@@ -68,6 +72,7 @@ export class CompletionBatchItemEntity {
     description:
       'The completion request payload (openai chat completion request payload)',
     type: Object,
+    additionalProperties: true,
   })
   @IsNotEmpty()
   request: CompletionRequestDto;
@@ -76,6 +81,9 @@ export class CompletionBatchItemEntity {
     description:
       'The response for the batch item (if completed) (openai chat completion response)',
     type: Object,
+    additionalProperties: true,
+    nullable: true,
+    required: false,
   })
   @IsOptional()
   response?: CompletionResponse | null;
@@ -83,6 +91,10 @@ export class CompletionBatchItemEntity {
   @ApiProperty({
     description: 'The timestamp when the item was completed',
     example: '2024-01-01T10:00:00.000Z',
+    nullable: true,
+    required: false,
+    type: 'string',
+    format: 'date-time',
   })
   @IsDate()
   @IsOptional()
@@ -123,6 +135,9 @@ export class CompletionBatchItemEntity {
   @ApiProperty({
     description: 'The error message if the batch item failed',
     example: 'Request failed: Rate limit exceeded.',
+    nullable: true,
+    required: false,
+    type: 'string',
   })
   @IsOptional()
   @IsString()

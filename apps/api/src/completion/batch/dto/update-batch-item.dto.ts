@@ -33,6 +33,10 @@ export class UpdateCompletionBatchItemDto {
   @ApiProperty({
     description: 'The timestamp when the item was completed',
     example: '2024-01-01T10:00:00.000Z',
+    nullable: true,
+    required: false,
+    type: 'string',
+    format: 'date-time',
   })
   @IsDate()
   @IsOptional()
