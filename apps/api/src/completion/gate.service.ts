@@ -2,7 +2,9 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { RedisClient } from '../cache/redis-client';
 import { PoolDefinitionService } from '../pool-definition/pool-definition.service';
-import { CapacityService } from '../capacity/capacity.service';
+import {
+  CapacityService,
+} from '../capacity/capacity.service';
 import { PrioritizationService } from '../prioritization/prioritization.service';
 import {
   CapacityDimension,
@@ -16,6 +18,7 @@ import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.enti
 import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
 import { CompletionError } from './completion.types';
 import { CompletionUsage } from 'openai/resources/completions.js';
+import { CompletionBatchEntity } from './batch/entity/batch.entity';
 
 export type EvaluatedCapacity = {
   period: CapacityPeriod;
@@ -33,7 +36,6 @@ export class GateService {
   ) {}
 
   public async requestGate(
-    request: FastifyRequest,
     requestTime: Date,
     requestTokens: number,
     workspaceId: string,
@@ -41,7 +43,9 @@ export class GateService {
     resource: AIResourceEntity,
     model: AIResourceModelConfigEntity,
     aiConnection: AIConnectionEntity,
-    apiKey?: ApiKeyEntity
+    apiKey?: ApiKeyEntity,
+    request?: FastifyRequest,
+    batch?: CompletionBatchEntity
   ): Promise<EvaluatedCapacity[]> {
     this.logger.debug('Resource config', {
       resource,
@@ -60,7 +64,7 @@ export class GateService {
 
     const startCheckCapacity = Date.now();
     const [poolDefinition, usageMetricsMap] = await Promise.all([
-      this.poolDefinitionService.getById(workspaceId, environmentId, false),
+      this.poolDefinitionService.getById({ workspaceId, environmentId }, false),
       this.capacityService.getUsage(requestTime, enabledCapacities),
     ]);
 
@@ -102,7 +106,7 @@ export class GateService {
         capacity.period === CapacityPeriod.MINUTE && capacity.enabled
     );
 
-    if (pool && connectionMinuteCapacity) {
+    if (poolDefinition && pool && connectionMinuteCapacity) {
       const prioritizationStartAt = Date.now();
       this.logger.info(
         {
@@ -158,6 +162,16 @@ export class GateService {
       ...(discoveredCapacity?.capacity?.map((capacity) => ({
         period: capacity.period,
         source: 'discovered',
+        keyPrefix: this.capacityService.getResourceKeyPrefix(
+          workspaceId,
+          environmentId,
+          resource.resource,
+          aiConnection.connectionId
+        ),
+      })) ?? []),
+      ...(batch?.capacity?.map((capacity) => ({
+        period: capacity.period,
+        source: 'batch',
         keyPrefix: this.capacityService.getResourceKeyPrefix(
           workspaceId,
           environmentId,

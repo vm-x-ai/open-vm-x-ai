@@ -1,7 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isAfter, subDays } from 'date-fns';
-import { defer, Observable, Subject } from 'rxjs';
 import dedent from 'string-dedent';
 import { QueueItem } from './types/QueueItemMetadata';
 import { CompletionBatchStream } from './types/stream';
@@ -9,24 +8,27 @@ import { RedisClient } from '../../cache/redis-client';
 import { AIResourceService } from '../../ai-resource/ai-resource.service';
 import { AIConnectionService } from '../../ai-connection/ai-connection.service';
 import { CapacityService } from '../../capacity/capacity.service';
-import { WorkspaceService } from '../../workspace/workspace.service';
 import { sleep } from '../../utils/sleep';
 import { CompletionBatchItemEntity } from './entity/batch-item.entity';
 import { CompletionBatchEntity } from './entity/batch.entity';
 import { PublicCompletionBatchRequestStatus } from '../../storage/entities.generated';
+import os from 'os';
+import { PinoLogger } from 'nestjs-pino';
+import { ApiKeyEntity } from '../../api-key/entities/api-key.entity';
+import { ApiKeyService } from '../../api-key/api-key.service';
 
 const RESOURCE_LOOK_MS = 10000;
 const REPROCESS_LOOP_MAX_FETCH_ITEMS = 100;
 @Injectable()
 export class CompletionBatchQueueService {
   constructor(
-    private readonly logger: Logger,
+    private readonly logger: PinoLogger,
     private readonly redis: RedisClient,
     private readonly configService: ConfigService,
     private readonly aiResourceService: AIResourceService,
     private readonly aiConnectionService: AIConnectionService,
     private readonly capacityService: CapacityService,
-    private readonly workspaceService: WorkspaceService
+    private readonly apiKeyService: ApiKeyService
   ) {
     this.reprocessLoop();
     this.standbyResourcesLoop();
@@ -35,7 +37,7 @@ export class CompletionBatchQueueService {
   private readonly queueKeyPrefix = 'completion-batch';
 
   private async reprocessLoop() {
-    this.logger.log('Starting reprocess infinite loop');
+    this.logger.info('Starting reprocess infinite loop');
     while (true) {
       try {
         const fetchItemsLua = dedent`
@@ -68,10 +70,10 @@ export class CompletionBatchQueueService {
 
         const startAt = Date.now();
         await Promise.all(
-          expired.map(async (itemId) => {
-            this.logger.log(`Reprocessing item ${itemId}`);
-            const [workspaceId, environmentId, batchId, resourceId] =
-              itemId.split('|');
+          expired.map(async (item) => {
+            this.logger.info(`Reprocessing item ${item}`);
+            const [workspaceId, environmentId, batchId, itemId, resourceId] =
+              item.split('|');
             const baseKey = this.baseKey(workspaceId, environmentId);
             const payloadKey = this.queueItemPayloadKey(
               workspaceId,
@@ -90,26 +92,26 @@ export class CompletionBatchQueueService {
 
             const [timestampResult] = (await this.redis.client
               .multi()
-              .zscore(processingQueue, itemId)
-              .zrem(processingQueue, itemId)
-              .zadd(mainQueue, payload.timestamp, itemId)
+              .zscore(processingQueue, item)
+              .zrem(processingQueue, item)
+              .zadd(mainQueue, payload.timestamp, item)
               .hincrby(payloadKey, 'retryCount', 1)
               .exec()) as [Error | null, number | null][];
 
             const activeResourceMember = this.activeResourcesMember(
               workspaceId,
               environmentId,
-              resourceId,
-              batchId
+              batchId,
+              resourceId
             );
             const added = await this.updateActiveResourceTimestamp(
               workspaceId,
               environmentId,
-              resourceId,
-              batchId
+              batchId,
+              resourceId
             );
             if (added) {
-              this.logger.log(
+              this.logger.info(
                 `Adding resource ${resourceId} to new resources stream, waking up workers`
               );
               await this.sendActiveResourceEvent(activeResourceMember);
@@ -117,7 +119,7 @@ export class CompletionBatchQueueService {
 
             if (Number(timestampResult[1]) < Date.now() - 5000) {
               this.logger.warn(`The item is late by more than 5 seconds`, {
-                itemId,
+                item,
                 timestamp: timestampResult[1],
                 now: Date.now(),
                 delay: Date.now() - Number(timestampResult[1]),
@@ -125,7 +127,7 @@ export class CompletionBatchQueueService {
             }
           })
         );
-        this.logger.log(
+        this.logger.info(
           `Reprocessed ${expired.length} items in ${Date.now() - startAt}ms`
         );
 
@@ -140,7 +142,7 @@ export class CompletionBatchQueueService {
   }
 
   private async standbyResourcesLoop() {
-    this.logger.log('Starting standby resources infinite loop');
+    this.logger.info('Starting standby resources infinite loop');
     while (true) {
       try {
         const expireScriptLua = dedent`
@@ -173,7 +175,7 @@ export class CompletionBatchQueueService {
         )) as string[];
 
         if (expired.length !== 0) {
-          this.logger.log(
+          this.logger.info(
             `Moved ${expired.length} items from standby to active resources`
           );
         }
@@ -211,7 +213,7 @@ export class CompletionBatchQueueService {
     itemId: string,
     resourceId: string
   ) {
-    return `${this.queueKeyPrefix}:{${workspaceId}:${environmentId}:${batchId}:${resourceId}}:item-payload:${itemId}`;
+    return `${this.queueKeyPrefix}:{${workspaceId}:${environmentId}:${resourceId}}:item-payload:${batchId}:${itemId}`;
   }
 
   public resourceLockKey(baseKey: string, resourceId: string) {
@@ -241,17 +243,17 @@ export class CompletionBatchQueueService {
   public activeResourcesMember(
     workspaceId: string,
     environmentId: string,
-    resourceId: string,
-    batchId: string
+    batchId: string,
+    resourceId: string
   ) {
-    return `${workspaceId}:${environmentId}:${batchId}:${resourceId}`;
+    return `${workspaceId}|${environmentId}|${batchId}|${resourceId}`;
   }
 
   private getItemMemberId(item: CompletionBatchItemEntity) {
     return `${item.workspaceId}|${item.environmentId}|${item.batchId}|${
       item.itemId
     }|${item.resource}|${new Date(item.createdAt).getTime()}|${
-      item.promptTokens
+      item.estimatedPromptTokens
     }`;
   }
 
@@ -334,7 +336,7 @@ export class CompletionBatchQueueService {
 
     const baseKey = this.baseKey(batch.workspaceId, batch.environmentId);
 
-    this.logger.log(`Sending batch for ${items.length} items`);
+    this.logger.info(`Sending batch for ${items.length} items`);
     const batchKey = this.batchKey(baseKey, batch.batchId);
     await this.redis.client
       .multi()
@@ -355,7 +357,7 @@ export class CompletionBatchQueueService {
 
     await Promise.all(
       Object.entries(resourceItems).map(async ([resource, items]) => {
-        this.logger.log(
+        this.logger.info(
           `Sending batch for resource ${resource} with ${items.length} items`
         );
         await Promise.all(
@@ -387,23 +389,23 @@ export class CompletionBatchQueueService {
                 this.activeResourcesMember(
                   batch.workspaceId,
                   batch.environmentId,
-                  resource,
-                  batch.batchId
+                  batch.batchId,
+                  resource
                 )
               )
               .exec();
           })
         );
 
-        this.logger.log(
+        this.logger.info(
           `Sent batch for resource ${resource} with ${items.length} items`
         );
-        this.logger.log(`Adding resource ${resource} to active resources`);
+        this.logger.info(`Adding resource ${resource} to active resources`);
         const activeResourceMember = this.activeResourcesMember(
           batch.workspaceId,
           batch.environmentId,
-          resource,
-          batch.batchId
+          batch.batchId,
+          resource
         );
         const added = await this.redis.client.zadd(
           this.globalActiveResourcesKey(),
@@ -412,7 +414,7 @@ export class CompletionBatchQueueService {
           activeResourceMember
         );
         if (added) {
-          this.logger.log(
+          this.logger.info(
             `Adding resource ${resource} to new resources stream, waking up workers`
           );
           await this.sendActiveResourceEvent(activeResourceMember);
@@ -446,20 +448,20 @@ export class CompletionBatchQueueService {
     return result;
   }
 
-  async subscribeToBatchEvents(
+  async *listenToBatchEvents(
     workspaceId: string,
     environmentId: string,
     batchId: string
-  ): Promise<Observable<CompletionBatchStream>> {
+  ): AsyncIterable<CompletionBatchStream> {
     const baseKey = this.baseKey(workspaceId, environmentId);
     const streamKey = this.batchQueueStreamKey(baseKey, batchId);
 
     await this.initStreamGroup(streamKey);
     const workerId = this.configService.get<string>('ecs.TaskId');
 
-    const stream$ = new Subject<CompletionBatchStream>();
     const redisConnection = this.redis.client.duplicate();
-    defer(async () => {
+
+    try {
       while (true) {
         try {
           const result = (await redisConnection.xreadgroup(
@@ -479,7 +481,7 @@ export class CompletionBatchQueueService {
             for (const [, messages] of result) {
               for (const [messageId, [, data]] of messages) {
                 const event = JSON.parse(data) as CompletionBatchStream;
-                stream$.next(event);
+                yield event;
                 await redisConnection.xack(
                   streamKey,
                   'workersGroup',
@@ -490,6 +492,9 @@ export class CompletionBatchQueueService {
                   event.action === 'batch-completed' ||
                   event.action === 'batch-failed'
                 ) {
+                  this.logger.info(
+                    `Batch ${batchId} has no pending items to process, completing`
+                  );
                   return;
                 }
               }
@@ -499,7 +504,7 @@ export class CompletionBatchQueueService {
           await sleep(1000);
         } catch (error) {
           if ((error as Error).message.includes('NOGROUP No such key')) {
-            this.logger.log(
+            this.logger.info(
               `The batch ${batchId} has no pending items to process, returning`
             );
             return;
@@ -508,25 +513,17 @@ export class CompletionBatchQueueService {
           throw error;
         }
       }
-    }).subscribe({
-      error: async (error) => {
-        this.logger.error(
-          `Error on reading new events for batch ${batchId}, ${error.message}`,
-          error
-        );
-        stream$.error(error);
-        await redisConnection.quit();
-      },
-      complete: async () => {
-        this.logger.log(
-          `Batch ${batchId} has no pending items to process, completing`
-        );
-        stream$.complete();
-        await redisConnection.quit();
-      },
-    });
-
-    return stream$.asObservable();
+    } catch (error) {
+      this.logger.error(
+        `Error on reading new events for batch ${batchId}, ${
+          (error as Error).message
+        }`,
+        error
+      );
+      throw error;
+    } finally {
+      await redisConnection.quit();
+    }
   }
 
   async waitForNewResources() {
@@ -569,14 +566,14 @@ export class CompletionBatchQueueService {
   ) {
     const baseKey = this.baseKey(workspaceId, environmentId);
     const key = this.resourceLockKey(baseKey, resourceId);
-    const instanceId = this.configService.get<string>('ecs.TaskId');
+    const instanceId = os.hostname();
     const lock = await this.redis.client
       .multi()
       .set(key, instanceId, 'PX', RESOURCE_LOOK_MS, 'NX')
       .get(key)
       .exec();
 
-    return lock[1][1] === instanceId;
+    return lock?.[1][1] === instanceId;
   }
 
   async unlockResource(
@@ -595,21 +592,35 @@ export class CompletionBatchQueueService {
     resourceId: string,
     batchId: string,
     count: number
-  ): Promise<QueueItem<CompletionBatchRequestItem>[]> {
-    const [workspace, resource, batch] = await Promise.all([
-      this.workspaceService.get(workspaceId, environmentId),
-      this.resourceService.get(workspaceId, environmentId, resourceId),
+  ): Promise<QueueItem<CompletionBatchItemEntity>[]> {
+    const [resource, batch] = await Promise.all([
+      this.aiResourceService.getById({
+        workspaceId,
+        environmentId,
+        resource: resourceId,
+        includesUsers: false,
+      }),
       this.getBatch(workspaceId, environmentId, batchId),
     ]);
-    const connection = await this.aiConnectionService.get(
+    const connection = await this.aiConnectionService.getById({
       workspaceId,
       environmentId,
-      resource.model.connectionId
-    );
+      connectionId: resource.model.connectionId,
+      decrypt: true,
+    });
+    let apiKey: ApiKeyEntity | undefined;
+    if (batch.createdByApiKeyId) {
+      apiKey = await this.apiKeyService.getById({
+        workspaceId,
+        environmentId,
+        apiKeyId: batch.createdByApiKeyId,
+        includesUsers: false,
+      });
+    }
 
     const capacity = [
       ...this.capacityService.resolve(
-        workspace,
+        workspaceId,
         environmentId,
         connection,
         resource
@@ -656,13 +667,14 @@ export class CompletionBatchQueueService {
     let remainingSeconds = Infinity;
     for (const item of capacity) {
       const remainingRequests =
-        item.capacity.requests > 0
-          ? item.capacity.requests -
+        (item.capacity.requests ?? 0) > 0
+          ? (item.capacity.requests ?? 0) -
             usageMetrics[item.capacity.period].totalRequests
           : Infinity;
       const remainingTokens =
-        item.capacity.tokens > 0
-          ? item.capacity.tokens - usageMetrics[item.capacity.period].usedTokens
+        (item.capacity.tokens ?? 0) > 0
+          ? (item.capacity.tokens ?? 0) -
+            usageMetrics[item.capacity.period].usedTokens
           : Infinity;
       const seconds = usageMetrics[item.capacity.period].remainingSeconds;
       if (seconds < remainingSeconds) {
@@ -707,7 +719,7 @@ export class CompletionBatchQueueService {
         for part in string.gmatch(itemId, "([^|]+)") do
             table.insert(parts, part)
         end
-        local requestTokens = tonumber(parts[5])
+        local requestTokens = tonumber(parts[7])
         totalTokens = totalTokens + requestTokens
 
         if totalTokens > maxTokens then
@@ -727,9 +739,23 @@ export class CompletionBatchQueueService {
     const processingQueue = this.processingQueueKey(baseKey, resourceId);
     const globalProcessingQueue = this.globalProcessingQueueKey();
 
-    this.logger.log(`Trying to retrieve ${count} items from ${mainQueue}`);
-    const visibilityTimeout = this.configService.get<number>(
-      'completionBatch.visibilityTimeout'
+    this.logger.info(
+      {
+        batchId,
+        workspaceId,
+        environmentId,
+        resourceId,
+        maxToRetrieve: Math.min(count, availableRequests),
+        mainQueue,
+        processingQueue,
+        globalProcessingQueue,
+        availableRequests,
+        availableTokens,
+      },
+      `Trying to retrieve ${count} items from ${mainQueue}`
+    );
+    const visibilityTimeout = this.configService.getOrThrow<number>(
+      'BATCH_QUEUE_VISIBILITY_TIMEOUT'
     );
 
     const [itemIdsWithTimestamp, itemsIds] = (await this.redis.client.eval(
@@ -741,7 +767,7 @@ export class CompletionBatchQueueService {
       availableTokens,
       now.getTime(),
       visibilityTimeout
-    )) as [string[], string[]];
+    )) as [string[], string[], number];
 
     if (itemIdsWithTimestamp.length === 0 && itemsIds.length > 0) {
       await this.moveBatchToStandby(
@@ -756,20 +782,20 @@ export class CompletionBatchQueueService {
     }
 
     if (itemIdsWithTimestamp.length === 0) {
-      this.logger.log(
+      this.logger.info(
         `No items to retrieve from ${mainQueue}, removing resource from active resources`
       );
       const result = await this.deleteBatchResourceFromActiveResources(
         workspaceId,
         environmentId,
-        resourceId,
-        batchId
+        batchId,
+        resourceId
       );
-      this.logger.log(`Removed resource from active resources`, result);
+      this.logger.info(`Removed resource from active resources`, result);
       return [];
     }
 
-    this.logger.log(
+    this.logger.info(
       `Retrieved ${itemIdsWithTimestamp.length} items from ${mainQueue}`
     );
     const globalProcessingQueueCommander = this.redis.client.multi();
@@ -785,8 +811,15 @@ export class CompletionBatchQueueService {
 
     const chainCommander = this.redis.client.multi();
     for (const itemIdWithTimestamp of itemIdsWithTimestamp) {
-      const [itemId] = itemIdWithTimestamp.split('|');
-      const payloadKey = this.queueItemPayloadKey(itemId, resourceId);
+      const [workspaceId, environmentId, batchId, itemId, resourceId] =
+        itemIdWithTimestamp.split('|');
+      const payloadKey = this.queueItemPayloadKey(
+        workspaceId,
+        environmentId,
+        batchId,
+        itemId,
+        resourceId
+      );
       chainCommander
         .hget(payloadKey, 'payload')
         .hget(payloadKey, 'retryCount')
@@ -794,19 +827,25 @@ export class CompletionBatchQueueService {
     }
 
     const redisResult = await chainCommander.exec();
-    const items: QueueItem<CompletionBatchRequestItem>[] = [];
-    for (let i = 0; i < redisResult.length; i += 3) {
-      const payload = JSON.parse(redisResult[i][1] as string);
-      const retryCount = parseInt(redisResult[i + 1][1] as string);
-      const timestamp = parseInt(redisResult[i + 2][1] as string);
+    const items: QueueItem<CompletionBatchItemEntity>[] = [];
+    if (redisResult) {
+      for (let i = 0; i < redisResult.length; i += 3) {
+        const payload = JSON.parse(redisResult[i][1] as string);
+        const retryCount = parseInt(redisResult[i + 1][1] as string);
+        const timestamp = parseInt(redisResult[i + 2][1] as string);
 
-      items.push({
-        payload,
-        metadata: {
-          retryCount,
-          createdAt: timestamp,
-        },
-      });
+        items.push({
+          payload,
+          metadata: {
+            retryCount,
+            createdAt: timestamp,
+          },
+          context: {
+            batch,
+            apiKey,
+          },
+        });
+      }
     }
 
     return items;
@@ -820,14 +859,14 @@ export class CompletionBatchQueueService {
     now: Date,
     delay: number
   ) {
-    this.logger.log(
+    this.logger.info(
       `No available requests or tokens, skipping batch ${batchId} and adding to standby resources to ${delay}ms`
     );
     const key = this.activeResourcesMember(
       workspaceId,
       environmentId,
-      resourceId,
-      batchId
+      batchId,
+      resourceId
     );
     await this.redis.client
       .multi()
@@ -836,20 +875,18 @@ export class CompletionBatchQueueService {
       .exec();
   }
 
-  async deleteItem(item: CompletionBatchRequestItem): Promise<boolean> {
-    const [workspaceId, environmentId] =
-      item.workspaceEnvironmentItemId.split(':');
-    const baseKey = this.baseKey(workspaceId, environmentId);
+  async deleteItem(item: CompletionBatchItemEntity): Promise<boolean> {
+    const baseKey = this.baseKey(item.workspaceId, item.environmentId);
     const queueMember = this.getItemMemberId(item);
 
     const payloadKey = this.queueItemPayloadKey(
-      item.workspaceEnvironmentItemId,
-      item.request.resource
+      item.workspaceId,
+      item.environmentId,
+      item.batchId,
+      item.itemId,
+      item.resource
     );
-    const processingQueue = this.processingQueueKey(
-      baseKey,
-      item.request.resource
-    );
+    const processingQueue = this.processingQueueKey(baseKey, item.resource);
     const globalProcessingQueue = this.globalProcessingQueueKey();
     const batchKey = this.batchKey(baseKey, item.batchId);
 
@@ -860,12 +897,12 @@ export class CompletionBatchQueueService {
         .hincrby(
           batchKey,
           'completed',
-          item.status === CompletionBatchRequestStatus.COMPLETED ? 1 : 0
+          item.status === PublicCompletionBatchRequestStatus.COMPLETED ? 1 : 0
         )
         .hincrby(
           batchKey,
           'failed',
-          item.status === CompletionBatchRequestStatus.FAILED ? 1 : 0
+          item.status === PublicCompletionBatchRequestStatus.FAILED ? 1 : 0
         )
         .exec(),
       this.redis.client
@@ -877,10 +914,10 @@ export class CompletionBatchQueueService {
       this.redis.client.xadd(
         this.batchQueueStreamKey(baseKey, item.batchId),
         '*',
-        'event',
+        'payload',
         JSON.stringify({
           action:
-            item.status === CompletionBatchRequestStatus.COMPLETED
+            item.status === PublicCompletionBatchRequestStatus.COMPLETED
               ? 'item-completed'
               : 'item-failed',
           payload: item,
@@ -888,19 +925,16 @@ export class CompletionBatchQueueService {
       ),
     ]);
 
-    return result[0][1] === 0;
+    return result?.[0][1] === 0;
   }
 
   async updateQueueProcessingTimestamp(
-    item: CompletionBatchRequestItem,
+    item: CompletionBatchItemEntity,
     delay = 0
   ) {
-    const [workspaceId, environmentId] =
-      item.workspaceEnvironmentItemId.split(':');
-    const resourceId = item.request.resource;
     const timestamp = Date.now() + delay;
-    const baseKey = this.baseKey(workspaceId, environmentId);
-    const processingKey = this.processingQueueKey(baseKey, resourceId);
+    const baseKey = this.baseKey(item.workspaceId, item.environmentId);
+    const processingKey = this.processingQueueKey(baseKey, item.resource);
     const globalProcessingKey = this.globalProcessingQueueKey();
     const queueMember = this.getItemMemberId(item);
 
@@ -913,15 +947,15 @@ export class CompletionBatchQueueService {
   async updateActiveResourceTimestamp(
     workspaceId: string,
     environmentId: string,
-    resourceId: string,
-    batchId: string
+    batchId: string,
+    resourceId: string
   ) {
     const key = this.globalActiveResourcesKey();
     const member = this.activeResourcesMember(
       workspaceId,
       environmentId,
-      resourceId,
-      batchId
+      batchId,
+      resourceId
     );
     return await this.redis.client.zadd(key, 'LT', Date.now(), member);
   }
@@ -929,16 +963,16 @@ export class CompletionBatchQueueService {
   async deleteBatchResourceFromActiveResources(
     workspaceId: string,
     environmentId: string,
-    resourceId: string,
-    batchId: string
+    batchId: string,
+    resourceId: string
   ) {
     return await this.redis.client.zrem(
       this.globalActiveResourcesKey(),
       this.activeResourcesMember(
         workspaceId,
         environmentId,
-        resourceId,
-        batchId
+        batchId,
+        resourceId
       )
     );
   }
@@ -965,7 +999,7 @@ export class CompletionBatchQueueService {
 
   private async initStreamGroup(key: string) {
     try {
-      this.logger.log(`Initializing stream group`);
+      this.logger.info(`Initializing stream group`);
       await this.redis.client.xgroup(
         'CREATE',
         key,
@@ -973,11 +1007,11 @@ export class CompletionBatchQueueService {
         '0',
         'MKSTREAM'
       );
-      this.logger.log(`Stream group initialized`);
+      this.logger.info(`Stream group initialized`);
     } catch (error) {
-      this.logger.log(`Stream group already initialized`);
+      this.logger.info(`Stream group already initialized`);
       // Ignore error if group already exists
-      if (!error.message.includes('BUSYGROUP')) {
+      if (!(error as Error).message.includes('BUSYGROUP')) {
         throw error;
       }
     }

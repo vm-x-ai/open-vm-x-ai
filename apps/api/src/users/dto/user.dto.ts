@@ -21,5 +21,5 @@ export class UserRelationDto extends OmitType(UserEntity, [
   })
   @IsDateString()
   @IsNotEmpty()
-  updatedAt: Date;
+  updatedAt: string;
 }

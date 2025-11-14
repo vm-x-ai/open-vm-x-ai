@@ -27,6 +27,7 @@ export const migration: Migration = {
       .addColumn('running', 'integer', (col) => col.notNull().defaultTo(0))
       .addColumn('pending', 'integer', (col) => col.notNull().defaultTo(0))
       .addColumn('total_items', 'integer', (col) => col.notNull().defaultTo(0))
+      .addColumn('total_estimated_prompt_tokens', 'integer', (col) => col.notNull().defaultTo(0))
       .addColumn('total_prompt_tokens', 'integer', (col) =>
         col.notNull().defaultTo(0)
       )
@@ -34,6 +35,7 @@ export const migration: Migration = {
         col.notNull().defaultTo(0)
       )
       .addColumn('capacity', 'jsonb')
+      .addColumn('error_message', 'text')
       .addColumn('created_at', 'timestamp', (col) =>
         col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
       )

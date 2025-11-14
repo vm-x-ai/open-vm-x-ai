@@ -45,10 +45,11 @@ export class WorkspaceController {
     includesUsers: boolean,
     @AuthenticatedUser() user: UserEntity
   ): Promise<WorkspaceEntity[]> {
-    return this.workspaceService.getAllByMemberUserId(user.id, includesUsers);
+    return this.workspaceService.getAll({ userId: user.id, includesUsers });
   }
 
   @Get(':workspaceId')
+  @UseGuards(WorkspaceMemberGuard())
   @ApiOkResponse({
     type: WorkspaceEntity,
     description: 'Get a workspace by ID',
@@ -65,13 +66,8 @@ export class WorkspaceController {
     @WorkspaceIdParam() workspaceId: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<WorkspaceEntity> {
-    return this.workspaceService.getByMemberUserId(
-      workspaceId,
-      user.id,
-      includesUsers
-    );
+    return this.workspaceService.getById(workspaceId, includesUsers);
   }
 
   @Post()

@@ -39,13 +39,11 @@ export class EnvironmentController {
     @WorkspaceIdParam() workspaceId: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<EnvironmentEntity[]> {
-    return this.environmentService.getAllByMemberUserId(
+    return this.environmentService.getAll({
       workspaceId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Get(':workspaceId/:environmentId')
@@ -67,14 +65,12 @@ export class EnvironmentController {
     @EnvironmentIdParam() environmentId: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<EnvironmentEntity> {
-    return this.environmentService.getByMemberUserId(
+    return this.environmentService.getById({
       workspaceId,
       environmentId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Post(':workspaceId')

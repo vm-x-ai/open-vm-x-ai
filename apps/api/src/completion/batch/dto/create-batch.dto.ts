@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { completionBatchRequestTypeValues } from '../entity/batch.entity';
 import { PublicCompletionBatchRequestType } from '../../../storage/entities.generated';
 import {
   ArrayMinSize,
@@ -7,52 +6,14 @@ import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsString,
   ValidateNested,
 } from 'class-validator';
 import { CompletionBatchCallbackOptionsDto } from './callback-options.dto';
 import { Type } from 'class-transformer';
 import { CapacityEntity } from '../../../capacity/capacity.entity';
-import type { CompletionRequestDto } from '../../dto/completion-request.dto';
+import { CreateCompletionBatchItemDto } from './create-batch-item.dto';
 
-export class CreateCompletionBatchItemDto {
-  @ApiProperty({
-    description: 'The name of the resource this item references',
-    example: 'openai-gpt4',
-  })
-  @IsString()
-  @IsNotEmpty()
-  resource: string;
-
-  @ApiProperty({
-    description:
-      'The completion request payload (openai chat completion request payload)',
-    type: Object,
-  })
-  @IsNotEmpty()
-  request: CompletionRequestDto;
-}
-
-export class CreateCompletionBatchDto {
-  @ApiProperty({
-    description: 'The type of the batch request',
-    enumName: 'CompletionBatchRequestType',
-    enum: completionBatchRequestTypeValues,
-    example: PublicCompletionBatchRequestType.ASYNC,
-  })
-  @IsEnum(PublicCompletionBatchRequestType)
-  @IsNotEmpty()
-  type: PublicCompletionBatchRequestType;
-
-  @ApiProperty({
-    description: 'The callback options for the batch request',
-    type: CompletionBatchCallbackOptionsDto,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => CompletionBatchCallbackOptionsDto)
-  callbackOptions?: CompletionBatchCallbackOptionsDto | null;
-
+export class CreateCompletionBaseBatchDto {
   @ApiProperty({
     description: 'The capacities of the batch request',
     type: [CapacityEntity],
@@ -72,4 +33,45 @@ export class CreateCompletionBatchDto {
   @ValidateNested({ each: true })
   @Type(() => CreateCompletionBatchItemDto)
   items: CreateCompletionBatchItemDto[];
+}
+
+export class CreateCompletionBatchDto extends CreateCompletionBaseBatchDto {
+  @ApiProperty({
+    description: 'The type of the batch request',
+    enumName: 'CompletionBatchRequestType',
+    enum: [
+      PublicCompletionBatchRequestType.SYNC,
+      PublicCompletionBatchRequestType.ASYNC,
+    ],
+    example: PublicCompletionBatchRequestType.ASYNC,
+  })
+  @IsEnum([
+    PublicCompletionBatchRequestType.SYNC,
+    PublicCompletionBatchRequestType.ASYNC,
+  ])
+  @IsNotEmpty()
+  type:
+    | PublicCompletionBatchRequestType.SYNC
+    | PublicCompletionBatchRequestType.ASYNC;
+}
+
+export class CreateCompletionCallbackBatchDto extends CreateCompletionBaseBatchDto {
+  @ApiProperty({
+    description: 'The type of the batch request',
+    enumName: 'CompletionBatchRequestType',
+    enum: [PublicCompletionBatchRequestType.CALLBACK],
+    example: PublicCompletionBatchRequestType.CALLBACK,
+  })
+  @IsEnum([PublicCompletionBatchRequestType.CALLBACK])
+  @IsNotEmpty()
+  type: PublicCompletionBatchRequestType.CALLBACK;
+
+  @ApiProperty({
+    description: 'The callback options for the batch request',
+    type: CompletionBatchCallbackOptionsDto,
+  })
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => CompletionBatchCallbackOptionsDto)
+  callbackOptions: CompletionBatchCallbackOptionsDto;
 }

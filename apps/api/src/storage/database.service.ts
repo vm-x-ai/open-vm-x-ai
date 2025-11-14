@@ -120,7 +120,7 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
       );
   }
 
-  public withUser(userId: Expression<string>, alias: string) {
+  public withUser(userId: Expression<string | null>, alias: string) {
     return jsonObjectFrom(
       this.reader
         .selectFrom(`users as ${alias}`)
@@ -140,6 +140,38 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
           'updatedAt',
         ])
         .where(`${alias}.id`, '=', userId)
+    );
+  }
+
+  public withApiKey(
+    workspaceId: Expression<string>,
+    environmentId: Expression<string>,
+    apiKeyId: Expression<string | null>,
+    alias: string
+  ) {
+    return jsonObjectFrom(
+      this.reader
+        .selectFrom(`apiKeys as ${alias}`)
+        .select([
+          'workspaceId',
+          'environmentId',
+          'apiKeyId',
+          'name',
+          'description',
+          'enabled',
+          'resources',
+          'maskedKey',
+          'enforceCapacity',
+          'capacity',
+          'labels',
+          'createdAt',
+          'createdBy',
+          'updatedAt',
+          'updatedBy',
+        ])
+        .where(`${alias}.workspaceId`, '=', workspaceId)
+        .where(`${alias}.environmentId`, '=', environmentId)
+        .where(`${alias}.apiKeyId`, '=', apiKeyId)
     );
   }
 }

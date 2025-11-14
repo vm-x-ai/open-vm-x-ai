@@ -10,6 +10,8 @@ import { nanoid } from 'nanoid';
 import { UpdateApiKeyDto } from './dto/update-api-key.dto';
 import { CreatedApiKeyDto } from './dto/created-api-key.dto';
 import { createHash } from 'crypto';
+import { ListApiKeyDto } from './dto/list-api-key.dto';
+import { GetApiKeyDto } from './dto/get-api-key.dto';
 
 @Injectable()
 export class ApiKeyService {
@@ -18,45 +20,41 @@ export class ApiKeyService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
-  public async getAll(includesUsers = false): Promise<ApiKeyEntity[]> {
+  public async getAll({
+    workspaceId,
+    environmentId,
+    includesUsers,
+  }: ListApiKeyDto): Promise<ApiKeyEntity[]> {
     const apiKeys = await this.db.reader
       .selectFrom('apiKeys')
       .selectAll('apiKeys')
-      .$if(includesUsers, this.db.includeEntityControlUsers('apiKeys'))
+      .$if(!!includesUsers, this.db.includeEntityControlUsers('apiKeys'))
+      .$if(!!workspaceId, (qb) =>
+        qb.where('apiKeys.workspaceId', '=', workspaceId as string)
+      )
+      .$if(!!environmentId, (qb) =>
+        qb.where('apiKeys.environmentId', '=', environmentId as string)
+      )
       .orderBy('createdAt', 'desc')
       .execute();
 
     return apiKeys.map(({ hash, ...apiKey }) => apiKey);
   }
 
-  public async getById(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    includesUser: boolean
-  ): Promise<ApiKeyEntity>;
+  public async getById(payload: GetApiKeyDto): Promise<ApiKeyEntity>;
 
   public async getById<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    includesUser: boolean,
+    payload: GetApiKeyDto,
     throwOnNotFound: T
   ): Promise<ApiKeyEntity | undefined>;
 
   public async getById<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    includesUser: boolean,
+    payload: GetApiKeyDto,
     throwOnNotFound: T
   ): Promise<ApiKeyEntity>;
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    includesUser = false,
+    { workspaceId, environmentId, apiKeyId, includesUsers }: GetApiKeyDto,
     throwOnNotFound = true
   ): Promise<ApiKeyEntity | undefined> {
     const apiKey = await this.cache.wrap(
@@ -64,13 +62,13 @@ export class ApiKeyService {
         workspaceId,
         environmentId,
         apiKeyId,
-        includesUser
+        !!includesUsers
       ),
       () =>
         this.db.reader
           .selectFrom('apiKeys')
           .selectAll('apiKeys')
-          .$if(includesUser, this.db.includeEntityControlUsers('apiKeys'))
+          .$if(!!includesUsers, this.db.includeEntityControlUsers('apiKeys'))
           .where('workspaceId', '=', workspaceId)
           .where('environmentId', '=', environmentId)
           .where('apiKeyId', '=', apiKeyId)
@@ -86,87 +84,6 @@ export class ApiKeyService {
     if (!apiKey) return apiKey;
     const { hash, ...rest } = apiKey;
     return rest;
-  }
-
-  public async getAllByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser = false
-  ): Promise<ApiKeyEntity[]> {
-    const apiKeys = await this.db.reader
-      .selectFrom('apiKeys')
-      .selectAll('apiKeys')
-      .$if(includesUser, this.db.includeEntityControlUsers('apiKeys'))
-      .innerJoin(
-        'workspaceUsers',
-        'apiKeys.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('apiKeys.workspaceId', '=', workspaceId)
-      .where('apiKeys.environmentId', '=', environmentId)
-      .where('workspaceUsers.userId', '=', userId)
-      .execute();
-
-    return apiKeys.map(({ hash, ...apiKey }) => apiKey);
-  }
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    userId: string,
-    includesUser: boolean
-  ): Promise<ApiKeyEntity>;
-
-  public async getByMemberUserId<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<ApiKeyEntity | undefined>;
-
-  public async getByMemberUserId<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<ApiKeyEntity>;
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    apiKeyId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound = true
-  ): Promise<ApiKeyEntity | undefined> {
-    const apiKey = await this.db.reader
-      .selectFrom('apiKeys')
-      .selectAll('apiKeys')
-      .innerJoin(
-        'workspaceUsers',
-        'apiKeys.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('workspaceUsers.userId', '=', userId)
-      .where('apiKeys.workspaceId', '=', workspaceId)
-      .where('apiKeys.environmentId', '=', environmentId)
-      .where('apiKeys.apiKeyId', '=', apiKeyId)
-      .$if(includesUser, this.db.includeEntityControlUsers('apiKeys'))
-      .executeTakeFirst();
-
-    if (throwOnNotFound && !apiKey) {
-      throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.API_KEY_NOT_FOUND, {
-        apiKeyId,
-      });
-    }
-
-    return apiKey;
   }
 
   public async create(
@@ -239,7 +156,7 @@ export class ApiKeyService {
   public async delete(
     workspaceId: string,
     environmentId: string,
-    apiKeyId: string,
+    apiKeyId: string
   ): Promise<void> {
     const apiKey = await this.db.reader
       .selectFrom('apiKeys')

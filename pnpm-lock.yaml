@@ -177,6 +177,12 @@ importers:
       argon2:
         specifier: ^0.44.0
         version: 0.44.0
+      axios:
+        specifier: ^1.13.2
+        version: 1.13.2
+      axios-retry:
+        specifier: ^4.5.0
+        version: 4.5.0(axios@1.13.2)
       cacheable:
         specifier: ^2.1.1
         version: 2.1.1
@@ -3094,8 +3100,16 @@ packages:
   aws4@1.13.2:
     resolution: {integrity: sha512-lHe62zvbTB5eEABUVi/AwVh0ZKY9rMMDhmm+eeyuuUQbQ3+J+fONVQOZyj+DdrvD4BY33uYniyRJ4UJIaSKAfw==}
 
+  axios-retry@4.5.0:
+    resolution: {integrity: sha512-aR99oXhpEDGo0UuAlYcn2iGRds30k366Zfa05XWScR9QaQD4JYiP3/1Qt1u7YlefUOK+cn0CcwoL1oefavQUlQ==}
+    peerDependencies:
+      axios: 0.x || 1.x
+
   axios@1.12.2:
     resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
+
+  axios@1.13.2:
+    resolution: {integrity: sha512-VPk9ebNqPcy5lRGuSlKx752IlDatOjT9paPlm8A7yOuW2Fbvp4X3JznJtT4f0GzGLLiWE9W8onz51SqLYwzGaA==}
 
   b4a@1.7.3:
     resolution: {integrity: sha512-5Q2mfq2WfGuFp3uS//0s6baOJLMoVduPYVeNmDYxu5OUA1/cBfvr2RIS7vi62LdNj/urk1hfmj867I3qt6uZ7Q==}
@@ -4715,6 +4729,10 @@ packages:
 
   is-promise@4.0.0:
     resolution: {integrity: sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==}
+
+  is-retry-allowed@2.2.0:
+    resolution: {integrity: sha512-XVm7LOeLpTW4jV19QSH38vkswxoLud8sQ57YwJVTPWdiaI9I8keEhGFpBlslyVsgdQy4Opg8QOLb8YRgsyZiQg==}
+    engines: {node: '>=10'}
 
   is-stream@2.0.1:
     resolution: {integrity: sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg==}
@@ -10691,7 +10709,20 @@ snapshots:
 
   aws4@1.13.2: {}
 
+  axios-retry@4.5.0(axios@1.13.2):
+    dependencies:
+      axios: 1.13.2
+      is-retry-allowed: 2.2.0
+
   axios@1.12.2:
+    dependencies:
+      follow-redirects: 1.15.11
+      form-data: 4.0.4
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.13.2:
     dependencies:
       follow-redirects: 1.15.11
       form-data: 4.0.4
@@ -12468,6 +12499,8 @@ snapshots:
 
   is-promise@4.0.0:
     optional: true
+
+  is-retry-allowed@2.2.0: {}
 
   is-stream@2.0.1: {}
 

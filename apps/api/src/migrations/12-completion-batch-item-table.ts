@@ -19,6 +19,7 @@ export const migration: Migration = {
       .addColumn('response', 'jsonb')
       .addColumn('error_message', 'text')
       .addColumn('retry_count', 'integer', (col) => col.notNull().defaultTo(0))
+      .addColumn('estimated_prompt_tokens', 'integer', (col) => col.notNull().defaultTo(0))
       .addColumn('prompt_tokens', 'integer', (col) =>
         col.notNull().defaultTo(0)
       )

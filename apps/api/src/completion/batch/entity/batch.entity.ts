@@ -14,6 +14,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
@@ -103,7 +104,7 @@ export class CompletionBatchEntity {
   })
   @IsDate()
   @IsOptional()
-  completedAt: Date | null;
+  completedAt?: Date | null;
 
   @ApiProperty({
     description: 'The number of failed items in the batch request',
@@ -140,6 +141,14 @@ export class CompletionBatchEntity {
   status: PublicCompletionBatchRequestStatus;
 
   @ApiProperty({
+    description: 'The total estimated number of prompt tokens in the batch request',
+    example: 1000,
+  })
+  @IsInt()
+  @IsNotEmpty()
+  totalEstimatedPromptTokens: number;
+
+  @ApiProperty({
     description: 'The total number of prompt tokens in the batch request',
     example: 1000,
   })
@@ -162,6 +171,14 @@ export class CompletionBatchEntity {
   @IsInt()
   @IsNotEmpty()
   totalItems: number;
+
+  @ApiProperty({
+    description: 'The error message of the batch request',
+    example: 'An error occurred',
+  })
+  @IsString()
+  @IsOptional()
+  errorMessage?: string | null;
 
   @ApiProperty({
     description: 'The date and time the batch request was last updated',
@@ -194,7 +211,7 @@ export class CompletionBatchEntity {
   @IsOptional()
   @ValidateNested()
   @Type(() => ApiKeyRelationDto)
-  createdByApiKey?: ApiKeyRelationDto;
+  createdByApiKey?: ApiKeyRelationDto | null;
 
   @ApiProperty({
     description: 'The unique identifier for the user that created the batch request',
@@ -211,5 +228,5 @@ export class CompletionBatchEntity {
   @IsOptional()
   @ValidateNested()
   @Type(() => UserRelationDto)
-  createdByUser?: UserRelationDto;
+  createdByUser?: UserRelationDto | null;
 }

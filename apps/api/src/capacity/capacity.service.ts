@@ -14,9 +14,16 @@ import { getSourceIpFromRequest } from '../utils/http';
 import { endOfWeek, endOfMonth } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
-type PrefixedCapacity = {
+export type PrefixedCapacity = {
   capacity: CapacityEntity;
   keyPrefix: string;
+};
+
+export type ResolvedCapacity = {
+  capacity: CapacityEntity;
+  keyPrefix: string;
+  source: string;
+  dimensionValue?: string;
 };
 
 type UsageMetrics = {
@@ -101,9 +108,12 @@ export class CapacityService {
     environmentId: string,
     aiConnection: AIConnectionEntity,
     resource: AIResourceEntity,
-    request: FastifyRequest,
+    request?: FastifyRequest,
     apiKey?: ApiKeyEntity
-  ) {
+  ): {
+    enabledCapacities: ResolvedCapacity[];
+    connectionCapacities: CapacityEntity[];
+  } {
     const resourceKeyPrefix = this.getResourceKeyPrefix(
       workspaceId,
       environmentId,
@@ -175,10 +185,14 @@ export class CapacityService {
   private resolveCapacityKeyPrefix(
     capacity: CapacityEntity,
     baseKeyPrefix: string,
-    request: FastifyRequest
+    request?: FastifyRequest
   ): { keyPrefix: string; dimensionValue?: string } {
     if (!baseKeyPrefix.endsWith(':')) {
       throw new Error('Base key prefix should end with a colon');
+    }
+
+    if (!request) {
+      return { keyPrefix: baseKeyPrefix };
     }
 
     if (capacity.dimension === CapacityDimension.SOURCE_IP) {

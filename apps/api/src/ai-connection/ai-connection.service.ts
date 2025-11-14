@@ -16,6 +16,8 @@ import { JSONSchema7 } from 'json-schema';
 import { v4 as uuidv4 } from 'uuid';
 import { PinoLogger } from 'nestjs-pino';
 import { DiscoveredCapacityEntity } from '../capacity/capacity.entity';
+import { ListAIConnectionDto } from './dto/list-ai-connection.dto';
+import { GetAIConnectionDto } from './dto/get-ai-connection.dto';
 
 const MASKED_VALUE = '********';
 
@@ -36,7 +38,7 @@ export class AIConnectionService implements OnModuleInit {
 
   async onModuleInit() {
     this.logger.info('Preloading AI connections');
-    const connections = await this.getAll(false, true);
+    const connections = await this.getAll({ decrypt: true });
     for (const connection of connections) {
       this.preloadedConnections[connection.connectionId] = {
         entity: connection,
@@ -51,14 +53,22 @@ export class AIConnectionService implements OnModuleInit {
     );
   }
 
-  public async getAll(
+  public async getAll({
+    workspaceId,
+    environmentId,
     includesUsers = false,
-    decrypt = false
-  ): Promise<AIConnectionEntity[]> {
+    decrypt = false,
+  }: ListAIConnectionDto): Promise<AIConnectionEntity[]> {
     const connections = await this.db.reader
       .selectFrom('aiConnections')
       .selectAll('aiConnections')
-      .$if(includesUsers, this.db.includeEntityControlUsers('aiConnections'))
+      .$if(!!includesUsers, this.db.includeEntityControlUsers('aiConnections'))
+      .$if(!!workspaceId, (qb) =>
+        qb.where('aiConnections.workspaceId', '=', workspaceId as string)
+      )
+      .$if(!!environmentId, (qb) =>
+        qb.where('aiConnections.environmentId', '=', environmentId as string)
+      )
       .orderBy('createdAt', 'desc')
       .execute();
 
@@ -84,44 +94,35 @@ export class AIConnectionService implements OnModuleInit {
   }
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    includesUser: boolean,
-    decrypt: boolean
+    payload: GetAIConnectionDto
   ): Promise<AIConnectionEntity>;
 
   public async getById<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    includesUser: boolean,
-    decrypt: boolean,
+    payload: GetAIConnectionDto,
     throwOnNotFound: T
   ): Promise<AIConnectionEntity | undefined>;
 
   public async getById<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    includesUser: boolean,
-    decrypt: boolean,
+    payload: GetAIConnectionDto,
     throwOnNotFound: T
   ): Promise<AIConnectionEntity>;
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    includesUser = false,
-    decrypt = false,
+    {
+      workspaceId,
+      environmentId,
+      connectionId,
+      includesUsers = false,
+      decrypt = false,
+      hideSecretFields = false,
+    }: GetAIConnectionDto,
     throwOnNotFound = true
   ): Promise<AIConnectionEntity | undefined> {
     const shouldRevalidate = await this.shouldRevalidate(
       workspaceId,
       environmentId,
       connectionId,
-      includesUser
+      !!includesUsers
     );
     if (decrypt && !shouldRevalidate) {
       return this.preloadedConnections[connectionId]?.entity;
@@ -130,7 +131,7 @@ export class AIConnectionService implements OnModuleInit {
     const aiConnection = await this.db.reader
       .selectFrom('aiConnections')
       .selectAll('aiConnections')
-      .$if(includesUser, this.db.includeEntityControlUsers('aiConnections'))
+      .$if(!!includesUsers, this.db.includeEntityControlUsers('aiConnections'))
       .where('workspaceId', '=', workspaceId)
       .where('environmentId', '=', environmentId)
       .where('connectionId', '=', connectionId)
@@ -170,91 +171,6 @@ export class AIConnectionService implements OnModuleInit {
       };
     }
 
-    return aiConnection;
-  }
-
-  public async getAllByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser = false
-  ): Promise<AIConnectionEntity[]> {
-    const connections = await this.db.reader
-      .selectFrom('aiConnections')
-      .selectAll('aiConnections')
-      .$if(includesUser, this.db.includeEntityControlUsers('aiConnections'))
-      .innerJoin(
-        'workspaceUsers',
-        'aiConnections.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('aiConnections.workspaceId', '=', workspaceId)
-      .where('aiConnections.environmentId', '=', environmentId)
-      .where('workspaceUsers.userId', '=', userId)
-      .execute();
-
-    return this.hideSecretValuesFromConnections(connections);
-  }
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    userId: string,
-    includesUser: boolean
-  ): Promise<AIConnectionEntity>;
-
-  public async getByMemberUserId<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<AIConnectionEntity | undefined>;
-
-  public async getByMemberUserId<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<AIConnectionEntity>;
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    connectionId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound = true
-  ): Promise<AIConnectionEntity | undefined> {
-    const aiConnection = await this.db.reader
-      .selectFrom('aiConnections')
-      .selectAll('aiConnections')
-      .innerJoin(
-        'workspaceUsers',
-        'aiConnections.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('workspaceUsers.userId', '=', userId)
-      .where('aiConnections.workspaceId', '=', workspaceId)
-      .where('aiConnections.environmentId', '=', environmentId)
-      .where('aiConnections.connectionId', '=', connectionId)
-      .$if(includesUser, this.db.includeEntityControlUsers('aiConnections'))
-      .executeTakeFirst();
-
-    if (throwOnNotFound && !aiConnection) {
-      throwServiceError(
-        HttpStatus.NOT_FOUND,
-        ErrorCode.AI_CONNECTION_NOT_FOUND,
-        {
-          connectionId,
-        }
-      );
-    }
-
     if (!aiConnection) return aiConnection;
 
     const provider = this.aiProviderService.get(aiConnection.provider);
@@ -268,7 +184,9 @@ export class AIConnectionService implements OnModuleInit {
       );
     }
 
-    return this.hideSecretFields(provider.provider, aiConnection);
+    return hideSecretFields
+      ? this.hideSecretFields(provider.provider, aiConnection)
+      : aiConnection;
   }
 
   public async create(
@@ -326,13 +244,13 @@ export class AIConnectionService implements OnModuleInit {
     payload: UpdateAIConnectionDto,
     user: UserEntity
   ): Promise<AIConnectionEntity> {
-    const existingConnection = await this.getById(
+    const existingConnection = await this.getById({
       workspaceId,
       environmentId,
       connectionId,
-      false,
-      false
-    );
+      hideSecretFields: false,
+    });
+
     const provider = this.aiProviderService.get(existingConnection.provider);
     if (!provider) {
       throwServiceError(
@@ -407,16 +325,7 @@ export class AIConnectionService implements OnModuleInit {
     environmentId: string,
     connectionId: string,
     discoveredCapacity: DiscoveredCapacityEntity
-  ): Promise<AIConnectionEntity> {
-    const connection = await this.getById(
-      workspaceId,
-      environmentId,
-      connectionId,
-      false,
-      false,
-      true
-    );
-
+  ): Promise<void> {
     await this.db.writer
       .updateTable('aiConnections')
       .set({
@@ -447,8 +356,6 @@ export class AIConnectionService implements OnModuleInit {
         value: Date.now(),
       },
     ]);
-
-    return connection;
   }
 
   public async delete(
@@ -542,11 +449,11 @@ export class AIConnectionService implements OnModuleInit {
     config?: AIConnectionEntity['config']
   ) {
     const existingConnection = await this.getById(
-      workspaceId,
-      environmentId,
-      connectionId,
-      false,
-      false,
+      {
+        workspaceId,
+        environmentId,
+        connectionId,
+      },
       false
     );
 

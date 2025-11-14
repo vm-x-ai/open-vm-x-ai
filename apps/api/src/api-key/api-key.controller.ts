@@ -69,15 +69,13 @@ export class ApiKeyController {
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
     @IncludesUsersQuery()
-    includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
+    includesUsers: boolean
   ): Promise<ApiKeyEntity[]> {
-    return this.apiKeyService.getAllByMemberUserId(
+    return this.apiKeyService.getAll({
       workspaceId,
       environmentId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Get(':workspaceId/:environmentId/:apiKeyId')
@@ -100,16 +98,14 @@ export class ApiKeyController {
     @EnvironmentIdParam() environmentId: string,
     @ApiKeyIdParam() apiKeyId: string,
     @IncludesUsersQuery()
-    includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
+    includesUsers: boolean
   ): Promise<ApiKeyEntity> {
-    return this.apiKeyService.getByMemberUserId(
+    return this.apiKeyService.getById({
       workspaceId,
       environmentId,
       apiKeyId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Post(':workspaceId/:environmentId')

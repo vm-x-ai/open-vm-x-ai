@@ -8,6 +8,8 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 import { PassportResult } from './strategies/oidc.strategy';
+import { UserEntity } from '../users/entities/user.entity';
+import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
@@ -20,6 +22,21 @@ export const AuthenticatedUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
     return (request.user as PassportResult)?.user;
+  }
+);
+
+export type AuthContext = {
+  user?: UserEntity;
+  apiKey?: ApiKeyEntity;
+};
+
+export const AuthContext = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    return {
+      user: (request.user as PassportResult)?.user,
+      apiKey: request.apiKey,
+    };
   }
 );
 

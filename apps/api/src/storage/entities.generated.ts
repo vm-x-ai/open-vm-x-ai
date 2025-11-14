@@ -138,12 +138,14 @@ export interface CompletionBatch {
   createdByApiKeyId: string | null;
   createdByUserId: string | null;
   environmentId: string;
+  errorMessage: string | null;
   failed: Generated<number>;
   pending: Generated<number>;
   running: Generated<number>;
   status: PublicCompletionBatchRequestStatus;
   timestamp: Timestamp;
   totalCompletionTokens: Generated<number>;
+  totalEstimatedPromptTokens: Generated<number>;
   totalItems: Generated<number>;
   totalPromptTokens: Generated<number>;
   type: PublicCompletionBatchRequestType;
@@ -158,6 +160,7 @@ export interface CompletionBatchItem {
   createdAt: Generated<Timestamp>;
   environmentId: string;
   errorMessage: string | null;
+  estimatedPromptTokens: Generated<number>;
   itemId: Generated<string>;
   promptTokens: Generated<number>;
   request: ColumnType<any | null, string | null, string | null>;

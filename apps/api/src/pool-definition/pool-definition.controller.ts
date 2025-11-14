@@ -40,14 +40,12 @@ export class PoolDefinitionController {
     @EnvironmentIdParam() environmentId: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<PoolDefinitionEntity> {
-    return this.poolDefinitionService.getByMemberUserId(
+    return this.poolDefinitionService.getById({
       workspaceId,
       environmentId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Post(':workspaceId/:environmentId')
@@ -90,7 +88,7 @@ export class PoolDefinitionController {
   })
   public async delete(
     @WorkspaceIdParam() workspaceId: string,
-    @EnvironmentIdParam() environmentId: string,
+    @EnvironmentIdParam() environmentId: string
   ): Promise<void> {
     await this.poolDefinitionService.delete(workspaceId, environmentId);
   }

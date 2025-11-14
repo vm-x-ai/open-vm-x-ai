@@ -49,4 +49,7 @@ export const configSchema = Joi.object({
   // TimeseriesDB
   QUESTDB_URL: Joi.string().uri().required(),
   QUESTDB_MIGRATION_URL: Joi.string().uri().required(),
+
+  // Batch Queue
+  BATCH_QUEUE_VISIBILITY_TIMEOUT: Joi.number().default(1000 * 120), // 2 minutes
 });

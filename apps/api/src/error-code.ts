@@ -38,6 +38,10 @@ export enum ErrorCode {
 
   // Completion errors
   COMPLETION_SECONDARY_MODEL_NOT_FOUND = 'COMPLETION_SECONDARY_MODEL_NOT_FOUND',
+
+  // Completion Batch errors
+  COMPLETION_BATCH_NOT_FOUND = 'COMPLETION_BATCH_NOT_FOUND',
+  COMPLETION_BATCH_ITEM_NOT_FOUND = 'COMPLETION_BATCH_ITEM_NOT_FOUND',
 }
 
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
@@ -83,4 +87,8 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
 
   // Completion errors
   [ErrorCode.COMPLETION_SECONDARY_MODEL_NOT_FOUND]: 'Secondary model index ${secondaryModelIndex} not found',
+
+  // Completion Batch errors
+  [ErrorCode.COMPLETION_BATCH_NOT_FOUND]: 'Completion Batch ${batchId} not found',
+  [ErrorCode.COMPLETION_BATCH_ITEM_NOT_FOUND]: 'Completion Batch Item ${itemId} not found',
 };

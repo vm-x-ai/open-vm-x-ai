@@ -8,6 +8,8 @@ import { CreateAIResourceDto } from './dto/create-ai-resource.dto';
 import { UserEntity } from '../users/entities/user.entity';
 import { UpdateAIResourceDto } from './dto/update-ai-resource.dto';
 import { DatabaseError } from 'pg';
+import { ListAIResourceDto } from './dto/list-ai-resource.dto';
+import { GetAIResourceDto } from './dto/get-ai-resource.dto';
 
 @Injectable()
 export class AIResourceService {
@@ -16,51 +18,44 @@ export class AIResourceService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
-  public async getAll(includesUsers = false): Promise<AIResourceEntity[]> {
+  public async getAll({
+    workspaceId,
+    environmentId,
+    includesUsers = false,
+  }: ListAIResourceDto): Promise<AIResourceEntity[]> {
     return await this.db.reader
       .selectFrom('aiResources')
       .selectAll('aiResources')
-      .$if(includesUsers, this.db.includeEntityControlUsers('aiResources'))
+      .$if(!!includesUsers, this.db.includeEntityControlUsers('aiResources'))
+      .$if(!!workspaceId, (qb) =>
+        qb.where('aiResources.workspaceId', '=', workspaceId as string)
+      )
+      .$if(!!environmentId, (qb) =>
+        qb.where('aiResources.environmentId', '=', environmentId as string)
+      )
       .orderBy('createdAt', 'desc')
       .execute();
   }
 
-  public async getById(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    includesUser: boolean
-  ): Promise<AIResourceEntity>;
+  public async getById(payload: GetAIResourceDto): Promise<AIResourceEntity>;
 
   public async getById<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    includesUser: boolean,
+    payload: GetAIResourceDto,
     throwOnNotFound: T
   ): Promise<AIResourceEntity | undefined>;
 
   public async getById<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    includesUser: boolean,
+    payload: GetAIResourceDto,
     throwOnNotFound: T
   ): Promise<AIResourceEntity>;
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    includesUser: boolean,
+    payload: GetAIResourceDto,
     throwOnNotFound: boolean
   ): Promise<AIResourceEntity | undefined>;
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    includesUser = false,
+    { workspaceId, environmentId, resource, includesUsers }: GetAIResourceDto,
     throwOnNotFound = true
   ): Promise<AIResourceEntity | undefined> {
     const aiResource = await this.cache.wrap(
@@ -68,13 +63,16 @@ export class AIResourceService {
         workspaceId,
         environmentId,
         resource,
-        includesUser
+        !!includesUsers
       ),
       () =>
         this.db.reader
           .selectFrom('aiResources')
           .selectAll('aiResources')
-          .$if(includesUser, this.db.includeEntityControlUsers('aiResources'))
+          .$if(
+            !!includesUsers,
+            this.db.includeEntityControlUsers('aiResources')
+          )
           .where('workspaceId', '=', workspaceId)
           .where('environmentId', '=', environmentId)
           .where('resource', '=', resource)
@@ -90,83 +88,18 @@ export class AIResourceService {
     return aiResource;
   }
 
-  public async getAllByMemberUserId(
+  public async getByIds(
     workspaceId: string,
     environmentId: string,
-    userId: string,
-    includesUser = false
+    resourceIds: string[]
   ): Promise<AIResourceEntity[]> {
     return await this.db.reader
       .selectFrom('aiResources')
       .selectAll('aiResources')
-      .$if(includesUser, this.db.includeEntityControlUsers('aiResources'))
-      .innerJoin(
-        'workspaceUsers',
-        'aiResources.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('aiResources.workspaceId', '=', workspaceId)
-      .where('aiResources.environmentId', '=', environmentId)
-      .where('workspaceUsers.userId', '=', userId)
+      .where('workspaceId', '=', workspaceId)
+      .where('environmentId', '=', environmentId)
+      .where('resource', 'in', resourceIds)
       .execute();
-  }
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    userId: string,
-    includesUser: boolean
-  ): Promise<AIResourceEntity>;
-
-  public async getByMemberUserId<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<AIResourceEntity | undefined>;
-
-  public async getByMemberUserId<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<AIResourceEntity>;
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    resource: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound = true
-  ): Promise<AIResourceEntity | undefined> {
-    const aiResource = await this.db.reader
-      .selectFrom('aiResources')
-      .selectAll('aiResources')
-      .innerJoin(
-        'workspaceUsers',
-        'aiResources.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('workspaceUsers.userId', '=', userId)
-      .where('aiResources.workspaceId', '=', workspaceId)
-      .where('aiResources.environmentId', '=', environmentId)
-      .where('aiResources.resource', '=', resource)
-      .$if(includesUser, this.db.includeEntityControlUsers('aiResources'))
-      .executeTakeFirst();
-
-    if (throwOnNotFound && !aiResource) {
-      throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.AI_RESOURCE_NOT_FOUND, {
-        resource,
-      });
-    }
-
-    return aiResource;
   }
 
   public async create(

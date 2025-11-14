@@ -7,7 +7,11 @@ import { ErrorCode } from '../error-code';
 import { CompletionUsageService } from './usage/usage.service';
 import { CompletionMetricsService } from './metrics/metrics.service';
 import { CompletionAuditService } from './audit/audit.service';
-import { CompletionRequestDto } from './dto/completion-request.dto';
+import {
+  CompletionNonStreamingRequestDto,
+  CompletionRequestDto,
+  CompletionStreamingRequestDto,
+} from './dto/completion-request.dto';
 import { AIResourceEntity } from '../ai-resource/entities/ai-resource.entity';
 import { ApiKeyEntity } from '../api-key/entities/api-key.entity';
 import { CreateAIResourceDto } from '../ai-resource/dto/create-ai-resource.dto';
@@ -29,12 +33,16 @@ import { AIResourceModelConfigEntity } from '../ai-resource/common/model.entity'
 import { CompletionUsage } from 'openai/resources/completions.js';
 import {
   CompletionHeaders,
+  CompletionNonStreamingResponse,
   CompletionResponse,
+  CompletionStreamingResponse,
 } from '../ai-provider/ai-provider.types';
 import { isAsyncIterable } from '../utils/async';
 import { ChatCompletionChunk } from 'openai/resources/index.js';
 import { AIConnectionEntity } from '../ai-connection/entities/ai-connection.entity';
 import { CapacityPeriod } from '../capacity/capacity.entity';
+import os from 'os';
+import { CompletionBatchEntity } from './batch/entity/batch.entity';
 
 @Injectable()
 export class CompletionService {
@@ -52,14 +60,45 @@ export class CompletionService {
   ) {}
 
   public async completion(
-    request: FastifyRequest,
+    workspaceId: string,
+    environmentId: string,
+    resource: string,
+    payload: CompletionNonStreamingRequestDto,
+    apiKey?: ApiKeyEntity,
+    request?: FastifyRequest,
+    batch?: CompletionBatchEntity
+  ): Promise<CompletionNonStreamingResponse>;
+
+  public async completion(
+    workspaceId: string,
+    environmentId: string,
+    resource: string,
+    payload: CompletionStreamingRequestDto,
+    apiKey?: ApiKeyEntity,
+    request?: FastifyRequest,
+    batch?: CompletionBatchEntity
+  ): Promise<CompletionStreamingResponse>;
+
+  public async completion(
     workspaceId: string,
     environmentId: string,
     resource: string,
     payload: CompletionRequestDto,
-    apiKey?: ApiKeyEntity
+    apiKey?: ApiKeyEntity,
+    request?: FastifyRequest,
+    batch?: CompletionBatchEntity
+  ): Promise<CompletionResponse>;
+
+  public async completion(
+    workspaceId: string,
+    environmentId: string,
+    resource: string,
+    payload: CompletionRequestDto,
+    apiKey?: ApiKeyEntity,
+    request?: FastifyRequest,
+    batch?: CompletionBatchEntity
   ): Promise<CompletionResponse> {
-    const sourceIp = getSourceIpFromRequest(request);
+    const sourceIp = request ? getSourceIpFromRequest(request) : os.hostname();
     let modelConfig: AIResourceModelConfigEntity | null = null;
     let requestAt: Date = new Date();
     let routingDuration: number | null = null;
@@ -159,14 +198,12 @@ export class CompletionService {
         };
 
         try {
-          const aiConnection = await this.aiConnectionService.getById(
+          const aiConnection = await this.aiConnectionService.getById({
             workspaceId,
             environmentId,
-            modelConfig.connectionId,
-            false,
-            true,
-            true
-          );
+            connectionId: modelConfig.connectionId,
+            decrypt: true,
+          });
 
           const provider = this.aiProviderService.get(aiConnection.provider);
           if (!provider) {
@@ -183,7 +220,6 @@ export class CompletionService {
           let evaluatedCapacities: EvaluatedCapacity[] = [];
           try {
             evaluatedCapacities = await this.gateService.requestGate(
-              request,
               requestAt,
               requestTokens,
               workspaceId,
@@ -191,7 +227,9 @@ export class CompletionService {
               aiResource,
               modelConfig,
               aiConnection,
-              apiKey
+              apiKey,
+              request,
+              batch
             );
           } finally {
             gateDuration = Date.now() - gateStartAt;
@@ -543,10 +581,12 @@ export class CompletionService {
     resourceConfigOverrides?: Partial<CreateAIResourceDto> | null
   ): Promise<AIResourceEntity> {
     const aiResourceEntity = await this.aiResourceService.getById(
-      workspaceId,
-      environmentId,
-      resource,
-      false,
+      {
+        workspaceId,
+        environmentId,
+        resource,
+        includesUsers: false,
+      },
       /**
        * If the resource config overrides provides the minimum,
        * we don't need to throw an error if the resource is not found.

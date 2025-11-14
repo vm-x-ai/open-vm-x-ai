@@ -7,6 +7,8 @@ import { ErrorCode } from '../error-code';
 import { CreateEnvironmentDto } from './dto/create-environment.dto';
 import { UserEntity } from '../users/entities/user.entity';
 import { UpdateEnvironmentDto } from './dto/update-environment.dto';
+import { ListEnvironmentDto } from './dto/list-environment.dto';
+import { GetEnvironmentDto } from './dto/get-environment.dto';
 
 @Injectable()
 export class EnvironmentService {
@@ -15,124 +17,51 @@ export class EnvironmentService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
-  public async getAll(includesUsers = false): Promise<EnvironmentEntity[]> {
+  public async getAll({
+    workspaceId,
+    includesUsers,
+  }: ListEnvironmentDto): Promise<EnvironmentEntity[]> {
     return await this.db.reader
       .selectFrom('environments')
       .selectAll('environments')
-      .$if(includesUsers, this.db.includeEntityControlUsers('environments'))
+      .$if(!!includesUsers, this.db.includeEntityControlUsers('environments'))
+      .$if(!!workspaceId, (qb) =>
+        qb.where('environments.workspaceId', '=', workspaceId as string)
+      )
       .orderBy('createdAt', 'desc')
       .execute();
   }
 
-  public async getById(
-    workspaceId: string,
-    environmentId: string,
-    includesUser: boolean
-  ): Promise<EnvironmentEntity>;
+  public async getById(payload: GetEnvironmentDto): Promise<EnvironmentEntity>;
 
   public async getById<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    includesUser: boolean,
+    payload: GetEnvironmentDto,
     throwOnNotFound: T
   ): Promise<EnvironmentEntity | undefined>;
 
   public async getById<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    includesUser: boolean,
+    payload: GetEnvironmentDto,
     throwOnNotFound: T
   ): Promise<EnvironmentEntity>;
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    includesUser = false,
+    { workspaceId, environmentId, includesUsers }: GetEnvironmentDto,
     throwOnNotFound = true
   ): Promise<EnvironmentEntity | undefined> {
     const environment = await this.cache.wrap(
-      this.getEnvironmentCacheKey(workspaceId, environmentId, includesUser),
+      this.getEnvironmentCacheKey(workspaceId, environmentId, !!includesUsers),
       () =>
         this.db.reader
           .selectFrom('environments')
           .selectAll('environments')
-          .$if(includesUser, this.db.includeEntityControlUsers('environments'))
+          .$if(
+            !!includesUsers,
+            this.db.includeEntityControlUsers('environments')
+          )
           .where('workspaceId', '=', workspaceId)
           .where('environmentId', '=', environmentId)
           .executeTakeFirst()
     );
-
-    if (throwOnNotFound && !environment) {
-      throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.ENVIRONMENT_NOT_FOUND, {
-        environmentId,
-      });
-    }
-
-    return environment;
-  }
-
-  public async getAllByMemberUserId(
-    workspaceId: string,
-    userId: string,
-    includesUser = false
-  ): Promise<EnvironmentEntity[]> {
-    return await this.db.reader
-      .selectFrom('environments')
-      .selectAll('environments')
-      .$if(includesUser, this.db.includeEntityControlUsers('environments'))
-      .innerJoin(
-        'workspaceUsers',
-        'environments.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('environments.workspaceId', '=', workspaceId)
-      .where('workspaceUsers.userId', '=', userId)
-      .execute();
-  }
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean
-  ): Promise<EnvironmentEntity>;
-
-  public async getByMemberUserId<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<EnvironmentEntity | undefined>;
-
-  public async getByMemberUserId<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<EnvironmentEntity>;
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound = true
-  ): Promise<EnvironmentEntity | undefined> {
-    const environment = await this.db.reader
-      .selectFrom('environments')
-      .selectAll('environments')
-      .innerJoin(
-        'workspaceUsers',
-        'environments.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('workspaceUsers.userId', '=', userId)
-      .where('environments.workspaceId', '=', workspaceId)
-      .where('environments.environmentId', '=', environmentId)
-      .$if(includesUser, this.db.includeEntityControlUsers('environments'))
-      .executeTakeFirst();
 
     if (throwOnNotFound && !environment) {
       throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.ENVIRONMENT_NOT_FOUND, {

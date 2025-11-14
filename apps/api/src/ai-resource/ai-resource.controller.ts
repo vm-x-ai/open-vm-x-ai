@@ -75,14 +75,12 @@ export class AIResourceController {
     @EnvironmentIdParam() environmentId: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<AIResourceEntity[]> {
-    return this.aiResourceService.getAllByMemberUserId(
+    return this.aiResourceService.getAll({
       workspaceId,
       environmentId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Get(':workspaceId/:environmentId/:resource')
@@ -106,15 +104,13 @@ export class AIResourceController {
     @AIResourceIdParam() resource: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<AIResourceEntity> {
-    return this.aiResourceService.getByMemberUserId(
+    return this.aiResourceService.getById({
       workspaceId,
       environmentId,
       resource,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Post(':workspaceId/:environmentId')

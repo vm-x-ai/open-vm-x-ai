@@ -6,6 +6,7 @@ import { ErrorCode } from '../error-code';
 import { throwServiceError } from '../error';
 import { UserEntity } from '../users/entities/user.entity';
 import { UpsertPoolDefinitionDto } from './dto/upsert-pool-definition.dto';
+import { GetPoolDefinitionDto } from './dto/get-pool-definition.dto';
 
 @Injectable()
 export class PoolDefinitionService {
@@ -24,103 +25,41 @@ export class PoolDefinitionService {
   }
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    includesUser: boolean
+    payload: GetPoolDefinitionDto
   ): Promise<PoolDefinitionEntity>;
 
   public async getById<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    includesUser: boolean,
+    payload: GetPoolDefinitionDto,
     throwOnNotFound: T
   ): Promise<PoolDefinitionEntity | undefined>;
 
   public async getById<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    includesUser: boolean,
+    payload: GetPoolDefinitionDto,
     throwOnNotFound: T
   ): Promise<PoolDefinitionEntity>;
 
   public async getById(
-    workspaceId: string,
-    environmentId: string,
-    includesUser = false,
+    { workspaceId, environmentId, includesUsers }: GetPoolDefinitionDto,
     throwOnNotFound = false
   ): Promise<PoolDefinitionEntity | undefined> {
     const poolDefinition = await this.cache.wrap(
-      this.getPoolDefinitionCacheKey(workspaceId, environmentId, includesUser),
+      this.getPoolDefinitionCacheKey(
+        workspaceId,
+        environmentId,
+        !!includesUsers
+      ),
       () =>
         this.db.reader
           .selectFrom('poolDefinitions')
           .selectAll('poolDefinitions')
           .$if(
-            includesUser,
+            !!includesUsers,
             this.db.includeEntityControlUsers('poolDefinitions')
           )
           .where('workspaceId', '=', workspaceId)
           .where('environmentId', '=', environmentId)
           .executeTakeFirst()
     );
-
-    if (throwOnNotFound && !poolDefinition) {
-      throwServiceError(
-        HttpStatus.NOT_FOUND,
-        ErrorCode.POOL_DEFINITION_NOT_FOUND,
-        {
-          workspaceId,
-          environmentId,
-        }
-      );
-    }
-
-    return poolDefinition;
-  }
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean
-  ): Promise<PoolDefinitionEntity>;
-
-  public async getByMemberUserId<T extends false>(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<PoolDefinitionEntity | undefined>;
-
-  public async getByMemberUserId<T extends true>(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<PoolDefinitionEntity>;
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    environmentId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound = true
-  ): Promise<PoolDefinitionEntity | undefined> {
-    const poolDefinition = await this.db.reader
-      .selectFrom('poolDefinitions')
-      .selectAll('poolDefinitions')
-      .innerJoin(
-        'workspaceUsers',
-        'poolDefinitions.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('workspaceUsers.userId', '=', userId)
-      .where('poolDefinitions.workspaceId', '=', workspaceId)
-      .where('poolDefinitions.environmentId', '=', environmentId)
-      .$if(includesUser, this.db.includeEntityControlUsers('poolDefinitions'))
-      .executeTakeFirst();
 
     if (throwOnNotFound && !poolDefinition) {
       throwServiceError(

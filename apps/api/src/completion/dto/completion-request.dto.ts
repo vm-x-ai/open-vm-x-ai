@@ -7,6 +7,8 @@ import {
 } from 'class-validator';
 import {
   ChatCompletionCreateParams,
+  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionCreateParamsStreaming,
 } from 'openai/resources/index.js';
 import { CreateAIResourceDto } from '../../ai-resource/dto/create-ai-resource.dto';
 import { PartialType } from '@nestjs/mapped-types';
@@ -57,3 +59,9 @@ export class CompletionRequestPayloadDto {
 
 export type CompletionRequestDto = ChatCompletionCreateParams &
   CompletionRequestPayloadDto;
+
+export type CompletionNonStreamingRequestDto =
+  ChatCompletionCreateParamsNonStreaming & CompletionRequestPayloadDto;
+
+export type CompletionStreamingRequestDto =
+  ChatCompletionCreateParamsStreaming & CompletionRequestPayloadDto;

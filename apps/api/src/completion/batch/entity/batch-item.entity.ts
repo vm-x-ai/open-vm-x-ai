@@ -8,7 +8,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { CompletionNonStreamingResponse } from '../../../ai-provider/ai-provider.types';
+import { CompletionResponse } from '../../../ai-provider/ai-provider.types';
 import { PublicCompletionBatchRequestStatus } from '../../../storage/entities.generated';
 import type { CompletionRequestDto } from '../../dto/completion-request.dto';
 import { completionBatchRequestStatusValues } from './batch.entity';
@@ -78,7 +78,7 @@ export class CompletionBatchItemEntity {
     type: Object,
   })
   @IsOptional()
-  response?: CompletionNonStreamingResponse | null;
+  response?: CompletionResponse | null;
 
   @ApiProperty({
     description: 'The timestamp when the item was completed',
@@ -87,6 +87,14 @@ export class CompletionBatchItemEntity {
   @IsDate()
   @IsOptional()
   completedAt?: Date | null;
+
+  @ApiProperty({
+    description: 'The estimated number of prompt tokens for the batch item',
+    example: 100,
+  })
+  @IsInt()
+  @IsNotEmpty()
+  estimatedPromptTokens: number;
 
   @ApiProperty({
     description: 'Number of completion tokens used',

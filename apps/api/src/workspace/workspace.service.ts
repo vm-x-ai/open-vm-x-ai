@@ -8,6 +8,7 @@ import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { throwServiceError } from '../error';
 import { ErrorCode } from '../error-code';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { ListWorkspaceDto } from './dto/list-workspace.dto';
 
 @Injectable()
 export class WorkspaceService {
@@ -44,11 +45,23 @@ export class WorkspaceService {
     }
   }
 
-  public async getAll(includesUsers = false): Promise<WorkspaceEntity[]> {
+  public async getAll({
+    userId,
+    includesUsers,
+  }: ListWorkspaceDto): Promise<WorkspaceEntity[]> {
     return await this.db.reader
       .selectFrom('workspaces')
       .selectAll('workspaces')
-      .$if(includesUsers, this.db.includeEntityControlUsers('workspaces'))
+      .$if(!!includesUsers, this.db.includeEntityControlUsers('workspaces'))
+      .$if(!!userId, (qb) =>
+        qb
+          .innerJoin(
+            'workspaceUsers',
+            'workspaces.workspaceId',
+            'workspaceUsers.workspaceId'
+          )
+          .where('workspaceUsers.userId', '=', userId as string)
+      )
       .orderBy('createdAt', 'desc')
       .execute();
   }
@@ -85,73 +98,6 @@ export class WorkspaceService {
           .where('workspaceId', '=', workspaceId)
           .executeTakeFirst()
     );
-
-    if (throwOnNotFound && !workspace) {
-      throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.WORKSPACE_NOT_FOUND, {
-        workspaceId,
-      });
-    }
-
-    return workspace;
-  }
-
-  public async getAllByMemberUserId(
-    userId: string,
-    includesUser = false
-  ): Promise<WorkspaceEntity[]> {
-    const workspaces = await this.db.reader
-      .selectFrom('workspaces')
-      .selectAll('workspaces')
-      .$if(includesUser, this.db.includeEntityControlUsers('workspaces'))
-      .innerJoin(
-        'workspaceUsers',
-        'workspaces.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('workspaceUsers.userId', '=', userId)
-      .execute();
-
-    return workspaces;
-  }
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    userId: string,
-    includesUser: boolean
-  ): Promise<WorkspaceEntity>;
-
-  public async getByMemberUserId<T extends false>(
-    workspaceId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<WorkspaceEntity | undefined>;
-
-  public async getByMemberUserId<T extends true>(
-    workspaceId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound: T
-  ): Promise<WorkspaceEntity>;
-
-  public async getByMemberUserId(
-    workspaceId: string,
-    userId: string,
-    includesUser: boolean,
-    throwOnNotFound = true
-  ): Promise<WorkspaceEntity | undefined> {
-    const workspace = await this.db.reader
-      .selectFrom('workspaces')
-      .selectAll('workspaces')
-      .innerJoin(
-        'workspaceUsers',
-        'workspaces.workspaceId',
-        'workspaceUsers.workspaceId'
-      )
-      .where('workspaceUsers.userId', '=', userId)
-      .where('workspaces.workspaceId', '=', workspaceId)
-      .$if(includesUser, this.db.includeEntityControlUsers('workspaces'))
-      .executeTakeFirst();
 
     if (throwOnNotFound && !workspace) {
       throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.WORKSPACE_NOT_FOUND, {

@@ -114,12 +114,12 @@ export class CompletionController {
     @ApiKey() apiKey?: ApiKeyEntity
   ) {
     const response = await this.completionService.completion(
-      request,
       workspaceId,
       environmentId,
       resource,
       payload,
-      apiKey
+      apiKey,
+      request
     );
     let sseStarted = false;
 

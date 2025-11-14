@@ -73,14 +73,12 @@ export class AIConnectionController {
     @EnvironmentIdParam() environmentId: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<AIConnectionEntity[]> {
-    return this.aiConnectionService.getAllByMemberUserId(
+    return this.aiConnectionService.getAll({
       workspaceId,
       environmentId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+    });
   }
 
   @Get(':workspaceId/:environmentId/:connectionId')
@@ -104,15 +102,15 @@ export class AIConnectionController {
     @AIConnectionIdParam() connectionId: string,
     @IncludesUsersQuery()
     includesUsers: boolean,
-    @AuthenticatedUser() user: UserEntity
   ): Promise<AIConnectionEntity> {
-    return this.aiConnectionService.getByMemberUserId(
+    return this.aiConnectionService.getById({
       workspaceId,
       environmentId,
       connectionId,
-      user.id,
-      includesUsers
-    );
+      includesUsers,
+      decrypt: false,
+      hideSecretFields: true,
+    });
   }
 
   @Post(':workspaceId/:environmentId')
