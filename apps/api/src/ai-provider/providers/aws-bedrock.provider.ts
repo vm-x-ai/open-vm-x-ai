@@ -423,24 +423,22 @@ export class AWSBedrockProvider implements CompletionProvider {
       if (item.messageStart) {
         continue;
       } else if (item.contentBlockStart?.start?.toolUse) {
-        const toolIndex = item.contentBlockStart.contentBlockIndex ?? 0;
-        const tools = chunk.choices[0]?.delta?.tool_calls ?? [];
-        tools[toolIndex] = {
-          type: 'function',
-          index: toolIndex,
-          function: {
-            name: item.contentBlockStart.start.toolUse.name,
-            arguments: '',
-          },
-          id: item.contentBlockStart.start.toolUse.toolUseId,
-        };
-
         chunk.choices[0] = {
           index: 0,
           delta: {
             content: '',
             role: 'assistant',
-            tool_calls: tools,
+            tool_calls: [
+              {
+                type: 'function',
+                index: item.contentBlockStart.contentBlockIndex ?? 0,
+                function: {
+                  name: item.contentBlockStart.start.toolUse.name,
+                  arguments: '',
+                },
+                id: item.contentBlockStart.start.toolUse.toolUseId,
+              },
+            ],
           },
           finish_reason: null,
         };
@@ -456,20 +454,19 @@ export class AWSBedrockProvider implements CompletionProvider {
             finish_reason: null,
           };
         } else if (item.contentBlockDelta.delta?.toolUse) {
-          const toolIndex = item.contentBlockDelta.contentBlockIndex ?? 0;
-          const tools = chunk.choices[0]?.delta?.tool_calls ?? [];
-          tools[toolIndex] = {
-            index: toolIndex,
-            function: {
-              arguments: item.contentBlockDelta.delta.toolUse.input ?? '',
-            },
-          };
           chunk.choices[0] = {
             index: 0,
             delta: {
               content: '',
               role: 'assistant',
-              tool_calls: tools,
+              tool_calls: [
+                {
+                  index: item.contentBlockDelta.contentBlockIndex ?? 0,
+                  function: {
+                    arguments: item.contentBlockDelta.delta.toolUse.input ?? '',
+                  },
+                }
+              ],
             },
             finish_reason: null,
           };

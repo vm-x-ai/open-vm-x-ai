@@ -16,7 +16,12 @@ from langchain_openai import ChatOpenAI
 
 def get_weather(city: str) -> str:
     """Get weather for a given city."""
-    return f"It's always sunny in {city}!"
+    if city.lower() == "são paulo":
+        return "It's always cloudy in São Paulo!"
+    elif city.lower() == "rio de janeiro":
+        return "It's always sunny in Rio de Janeiro!"
+    else:
+        return "I don't know the weather in this city."
 
 
 def main():
@@ -27,7 +32,7 @@ def main():
     base_url = f"http://localhost:3000/v1/completion/{workspace_id}/{environment_id}/{resource_id}"
 
     model = ChatOpenAI(
-        model="router", # It will use the resource model/routing configuration
+        model="router",  # It will use the resource model/routing configuration
         api_key=api_key,
         base_url=base_url,
         extra_body={
@@ -37,12 +42,12 @@ def main():
                     "model": {
                         "provider": "aws-bedrock",
                         "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-                        "connectionId": "f0fb0a42-6b31-424e-ae85-2ee6ffdeff65"
+                        "connectionId": "f0fb0a42-6b31-424e-ae85-2ee6ffdeff65",
                     }
                 }
             }
         },
-        streaming=True
+        streaming=True,
     )
     agent = create_agent(
         model=model,
@@ -59,14 +64,17 @@ def main():
                         "a fun fact about the asked location"
                     ),
                 },
-                {"role": "user", "content": "what is the weather in sf"},
+                {
+                    "role": "user",
+                    "content": "what is the weather in São Paulo and Rio de Janeiro",
+                },
             ]
         }
     )
 
     for chunk in result:
-        if 'model' in chunk:
-            for message in chunk['model']["messages"]:
+        if "model" in chunk:
+            for message in chunk["model"]["messages"]:
                 print("-" * 30)
                 match message:
                     case HumanMessage():
