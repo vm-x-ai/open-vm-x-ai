@@ -45,8 +45,8 @@ export class CompletionAuditService {
       .$if(!!query.connectionId, (qb) =>
         qb.where('completionAudit.connectionId', '=', query.connectionId!)
       )
-      .$if(!!query.resource, (qb) =>
-        qb.where('completionAudit.resource', '=', query.resource!)
+      .$if(!!query.resourceId, (qb) =>
+        qb.where('completionAudit.resourceId', '=', query.resourceId!)
       )
       .$if(!!query.model, (qb) =>
         qb.where('completionAudit.model', '=', query.model!)

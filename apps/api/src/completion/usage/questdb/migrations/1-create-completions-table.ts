@@ -24,7 +24,7 @@ export const migration = (db: Kysely<DB>): Migration => ({
       workspace_id SYMBOL,
       environment_id SYMBOL,
       connection_id SYMBOL,
-      resource SYMBOL,
+      resource_id SYMBOL,
       provider SYMBOL,
       model SYMBOL,
       request_id STRING,
@@ -33,7 +33,8 @@ export const migration = (db: Kysely<DB>): Migration => ({
       status_code INT,
       correlation_id STRING,
       api_key_id SYMBOL,
-      source_ip STRING
+      source_ip STRING,
+      user_id SYMBOL
     ) TIMESTAMP(ts)
     PARTITION BY DAY;
     `.execute(db);

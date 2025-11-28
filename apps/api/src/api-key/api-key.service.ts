@@ -12,6 +12,8 @@ import { CreatedApiKeyDto } from './dto/created-api-key.dto';
 import { createHash } from 'crypto';
 import { ListApiKeyDto } from './dto/list-api-key.dto';
 import { GetApiKeyDto } from './dto/get-api-key.dto';
+import { sql, Transaction } from 'kysely';
+import { DB } from '../storage/entities.generated';
 
 @Injectable()
 export class ApiKeyService {
@@ -86,6 +88,15 @@ export class ApiKeyService {
     return rest;
   }
 
+  public async getByIds(apiKeyIds: string[]): Promise<ApiKeyEntity[]> {
+    if (apiKeyIds.length === 0) return [];
+    return await this.db.reader
+      .selectFrom('apiKeys')
+      .selectAll('apiKeys')
+      .where('apiKeyId', 'in', apiKeyIds)
+      .execute();
+  }
+
   public async create(
     workspaceId: string,
     environmentId: string,
@@ -153,6 +164,40 @@ export class ApiKeyService {
     return rest;
   }
 
+  public async appendResource(
+    workspaceId: string,
+    environmentId: string,
+    apiKeyIds: string[],
+    resourceId: string,
+    tx?: Transaction<DB>
+  ): Promise<void> {
+    const updatedApiKeys = await (tx ?? this.db.writer)
+      .updateTable('apiKeys')
+      .set({
+        resources: sql`
+          (
+            SELECT jsonb_agg(DISTINCT e)
+            FROM jsonb_array_elements_text(
+              resources || ${JSON.stringify([resourceId])}::jsonb
+            ) AS t(e)
+          )
+        `,
+      })
+      .where('workspaceId', '=', workspaceId)
+      .where('environmentId', '=', environmentId)
+      .where('apiKeyId', 'in', apiKeyIds)
+      .returning(['apiKeyId', 'hash'])
+      .execute();
+
+    await this.cache.mdel(
+      updatedApiKeys.flatMap(({ apiKeyId, hash }) => [
+        this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, true),
+        this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, false),
+        this.getApiKeyHashCacheKey(workspaceId, environmentId, hash),
+      ])
+    );
+  }
+
   public async delete(
     workspaceId: string,
     environmentId: string,
@@ -184,6 +229,40 @@ export class ApiKeyService {
       this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, false),
       this.getApiKeyHashCacheKey(workspaceId, environmentId, apiKey.hash),
     ]);
+  }
+
+  public async deleteResourceFromApiKeys(
+    workspaceId: string,
+    environmentId: string,
+    resourceId: string,
+    tx?: Transaction<DB>
+  ): Promise<void> {
+    const updatedApiKeys = await (tx ?? this.db.writer)
+      .updateTable('apiKeys')
+      .set({
+        resources: sql`
+        (
+          SELECT jsonb_agg(DISTINCT e)
+          FROM jsonb_array_elements_text(
+            resources 
+          ) AS t(e)
+         WHERE e != ${sql.lit(resourceId)}
+        )
+      `,
+      })
+      .where('workspaceId', '=', workspaceId)
+      .where('environmentId', '=', environmentId)
+      .where(sql`COALESCE(resources::text, '')`, 'like', `%${resourceId}%`)
+      .returning(['apiKeyId', 'hash'])
+      .execute();
+
+    await this.cache.mdel(
+      updatedApiKeys.flatMap(({ apiKeyId, hash }) => [
+        this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, true),
+        this.getApiKeyCacheKey(workspaceId, environmentId, apiKeyId, false),
+        this.getApiKeyHashCacheKey(workspaceId, environmentId, hash),
+      ])
+    );
   }
 
   public async verify(

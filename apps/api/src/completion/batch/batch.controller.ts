@@ -245,7 +245,7 @@ export class CompletionBatchController {
   ) {
     if (authContext.apiKey) {
       const unauthorizedResources = payload.items.filter(
-        (item) => !authContext.apiKey?.resources.includes(item.resource)
+        (item) => !authContext.apiKey?.resources.includes(item.resourceId)
       );
 
       if (unauthorizedResources.length > 0) {
@@ -254,7 +254,7 @@ export class CompletionBatchController {
           ErrorCode.API_KEY_RESOURCE_NOT_AUTHORIZED,
           {
             resource: unauthorizedResources
-              .map((item) => item.resource)
+              .map((item) => item.resourceId)
               .join(', '),
           }
         );

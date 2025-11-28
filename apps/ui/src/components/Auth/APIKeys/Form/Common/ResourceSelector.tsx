@@ -7,6 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import TextField from '@mui/material/TextField';
+import { useMemo } from 'react';
 
 export type ResourceSelectorProps = {
   resources: AiResourceEntity[];
@@ -21,11 +22,18 @@ export default function ResourceSelector({
   onChange,
   onBlur,
 }: ResourceSelectorProps) {
+  const resourcesMap = useMemo(() => {
+    return resources.reduce((acc, item) => {
+      acc[item.resourceId] = item;
+      return acc;
+    }, {} as Record<string, AiResourceEntity>);
+  }, [resources]);
+
   return (
     <Autocomplete
       value={value}
       multiple
-      options={resources.map(({ resource }) => resource) ?? []}
+      options={resources.map(({ resourceId }) => resourceId) ?? []}
       onChange={async (_, value) => {
         onChange(value);
       }}
@@ -34,7 +42,14 @@ export default function ResourceSelector({
       renderTags={(value, getTagProps) =>
         value.map((option, index) => {
           const { key, ...tagProps } = getTagProps({ index });
-          return <Chip key={key} label={option} {...tagProps} size="small" />;
+          return (
+            <Chip
+              key={key}
+              label={resourcesMap?.[option]?.name ?? option}
+              {...tagProps}
+              size="small"
+            />
+          );
         })
       }
       renderOption={(props, option, { selected }) => {
@@ -46,7 +61,7 @@ export default function ResourceSelector({
               style={{ marginRight: 8 }}
               checked={selected}
             />
-            {option}
+            {resourcesMap?.[option]?.name ?? option}
           </li>
         );
       }}

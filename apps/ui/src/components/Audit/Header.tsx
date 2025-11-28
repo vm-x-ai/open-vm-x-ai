@@ -28,29 +28,16 @@ import {
 } from '@/clients/api';
 
 export type AuditHeaderProps = {
-  resources?: AiResourceEntity[];
+  resourcesMap?: Record<string, AiResourceEntity>;
   aiConnectionMap?: Record<string, AiConnectionEntity>;
   providersMap?: Record<string, AiProviderDto>;
 };
 
 export default function AuditHeader({
-  resources,
+  resourcesMap,
   aiConnectionMap,
   providersMap,
 }: AuditHeaderProps) {
-  const [resourceMap, setResourceMap] = useState<
-    Record<string, AiResourceEntity> | undefined
-  >();
-
-  useEffect(() => {
-    setResourceMap(
-      resources?.reduce(
-        (acc, resource) => ({ ...acc, [resource.resource]: resource }),
-        {}
-      )
-    );
-  }, [resources]);
-
   const [dateType, setDateType] = useQueryState(
     'dateType',
     parseAsString.withDefault('relative').withOptions({
@@ -110,8 +97,8 @@ export default function AuditHeader({
     })
   );
 
-  const [resource, setResource] = useQueryState(
-    'resource',
+  const [resourceId, setResourceId] = useQueryState(
+    'resourceId',
     parseAsString.withOptions({
       history: 'push',
       shallow: false,
@@ -205,13 +192,14 @@ export default function AuditHeader({
         cloneOnSelection={false}
       />
 
-      {resourceMap && (
+      {resourcesMap && (
         <Autocomplete
           disablePortal
-          value={resource}
-          options={Object.keys(resourceMap)}
+          value={resourceId}
+          options={Object.keys(resourcesMap)}
+          getOptionLabel={(option) => resourcesMap[option]?.name ?? option}
           onChange={(_, newValue) => {
-            setResource(newValue);
+            setResourceId(newValue);
           }}
           size="small"
           sx={{

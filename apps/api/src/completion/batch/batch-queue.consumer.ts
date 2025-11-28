@@ -57,9 +57,9 @@ export class CompletionBatchQueueConsumer extends CompletionBatchQueueBaseConsum
     const completionResponse = await this.completionService.completion(
       item.payload.workspaceId,
       item.payload.environmentId,
-      item.payload.resource,
       {
         ...item.payload.request,
+        model: item.payload.resourceId,
         stream: false,
         vmx: { correlationId: item.payload.batchId },
       },

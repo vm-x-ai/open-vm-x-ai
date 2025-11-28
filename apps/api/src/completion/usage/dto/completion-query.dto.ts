@@ -7,7 +7,6 @@ import {
   IsInt,
   IsArray,
   ValidateNested,
-  Min,
   registerDecorator,
   ValidationArguments,
   validate,
@@ -75,7 +74,7 @@ export enum CompletionDimensions {
   WORKSPACE_ID = 'workspaceId',
   ENVIRONMENT_ID = 'environmentId',
   CONNECTION_ID = 'connectionId',
-  RESOURCE = 'resource',
+  RESOURCE_ID = 'resourceId',
   PROVIDER = 'provider',
   MODEL = 'model',
   REQUEST_ID = 'requestId',
@@ -85,6 +84,11 @@ export enum CompletionDimensions {
   CORRELATION_ID = 'correlationId',
   API_KEY_ID = 'apiKeyId',
   SOURCE_IP = 'sourceIp',
+  USER_ID = 'userId',
+}
+
+export enum CompletionTimeDimension {
+  TIME = 'time',
 }
 
 export const completionDimensions = $enum(CompletionDimensions).getValues();
@@ -102,7 +106,7 @@ function IsOrderByObject() {
 
           return Object.entries(value).every(
             ([key, val]) =>
-              [...completionDimensions, 'time'].includes(
+              [...completionDimensions, ...completionMetrics, 'time'].includes(
                 key as CompletionDimensions
               ) && orderByDirections.includes(val as OrderByDirection)
           );
@@ -160,7 +164,11 @@ function IsDimensionFilterObject() {
           if (typeof value !== 'object' || Array.isArray(value)) return false;
 
           for (const [key, val] of Object.entries(value)) {
-            if (!completionDimensions.includes(key as CompletionDimensions)) {
+            if (
+              ![...completionDimensions, ...completionMetrics].includes(
+                key as CompletionDimensions | CompletionMetrics
+              )
+            ) {
               return false;
             }
 
@@ -221,6 +229,7 @@ export enum CompletionUsageDimensionOperator {
   GTE = 'gte',
   LT = 'lt',
   LTE = 'lte',
+  IS_NOT = 'is_not',
 }
 
 export const completionUsageDimensionOperators = $enum(
@@ -239,11 +248,17 @@ export class CompletionUsageDimensionFilterDto {
 
   @ApiProperty({
     description: 'Value or values to compare against',
-    oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
+    oneOf: [
+      { type: 'string' },
+      { type: 'array', items: { type: 'string' } },
+      { type: 'null' },
+    ],
     example: 'abc',
+    nullable: true,
+    required: false,
   })
-  @IsNotEmpty()
-  value: string | string[];
+  @IsOptional()
+  value?: string | string[] | null;
 }
 
 export class CompletionUsageQueryFilterDto {
@@ -259,17 +274,27 @@ export class CompletionUsageQueryFilterDto {
   @ApiProperty({
     type: 'object',
     description: 'Dimensions and their filters',
-    properties: completionDimensions.reduce((acc, dimension) => {
-      acc[dimension] = {
-        $ref: getSchemaPath(CompletionUsageDimensionFilterDto),
-      } as SchemaObjectMetadata;
-      return acc;
-    }, {} as Record<string, SchemaObjectMetadata>),
+    properties: [...completionDimensions, ...completionMetrics].reduce(
+      (acc, dimension) => {
+        acc[dimension] = {
+          $ref: getSchemaPath(CompletionUsageDimensionFilterDto),
+        } as SchemaObjectMetadata;
+        return acc;
+      },
+      {
+        time: {
+          $ref: getSchemaPath(CompletionUsageDimensionFilterDto),
+        } as SchemaObjectMetadata,
+      } as Record<string, SchemaObjectMetadata>
+    ),
   })
   @Optional()
   @IsDimensionFilterObject()
-  dimensions?: Partial<
-    Record<CompletionDimensions, CompletionUsageDimensionFilterDto>
+  fields?: Partial<
+    Record<
+      CompletionDimensions | CompletionTimeDimension.TIME | CompletionMetrics,
+      CompletionUsageDimensionFilterDto
+    >
   >;
 }
 
@@ -279,10 +304,12 @@ export class CompletionUsageQueryDto {
     enumName: 'GranularityUnit',
     description: 'Granularity unit for aggregation (time bucket size)',
     example: GranularityUnit.MINUTE,
+    nullable: true,
+    required: false,
   })
   @IsEnum(GranularityUnit)
-  @IsNotEmpty()
-  granularity: GranularityUnit;
+  @IsOptional()
+  granularity?: GranularityUnit | null;
 
   @ApiProperty({
     description: 'Time zone to use for the query (defaults to UTC)',
@@ -329,12 +356,12 @@ export class CompletionUsageQueryDto {
     type: Number,
     description: 'Maximum number of records to return',
     example: 100,
-    required: true,
+    required: false,
+    nullable: true,
   })
   @IsInt()
-  @IsNotEmpty()
-  @Min(1)
-  limit: number;
+  @IsOptional()
+  limit?: number | null;
 
   @ApiProperty({
     type: CompletionUsageQueryFilterDto,
@@ -365,16 +392,30 @@ export class CompletionUsageQueryDto {
     type: 'object',
     nullable: true,
     selfRequired: false,
-    properties: completionDimensions.reduce((acc, dimension) => {
-      acc[dimension] = {
-        type: 'string',
-        enum: orderByDirections,
-        example: OrderByDirection.ASC,
-      };
-      return acc;
-    }, {} as Record<string, SchemaObjectMetadata>),
+    properties: [...completionDimensions, ...completionMetrics].reduce(
+      (acc, dimension) => {
+        acc[dimension] = {
+          type: 'string',
+          enum: orderByDirections,
+          example: OrderByDirection.ASC,
+        };
+        return acc;
+      },
+      {
+        time: {
+          type: 'string',
+          enum: orderByDirections,
+          example: OrderByDirection.ASC,
+        },
+      } as Record<string, SchemaObjectMetadata>
+    ),
   })
   @IsOptional()
   @IsOrderByObject()
-  orderBy?: Partial<Record<CompletionDimensions, OrderByDirection>> | null;
+  orderBy?: Partial<
+    Record<
+      CompletionDimensions | CompletionMetrics | CompletionTimeDimension.TIME,
+      OrderByDirection
+    >
+  > | null;
 }

@@ -105,7 +105,7 @@ export async function submitForm(
                 environmentId: data.environmentId,
               },
               body: {
-                resource: `${connection.data.name}-default`,
+                name: `${connection.data.name}-default`,
                 description: `${connection.data.name} default resource`,
                 useFallback: false,
                 enforceCapacity: false,
@@ -194,7 +194,7 @@ export async function submitForm(
             environmentId,
           },
           body: {
-            resource: resourceName,
+            name: resourceName,
             description: `${payload.name} default resource`,
             useFallback: false,
             enforceCapacity: false,
@@ -222,7 +222,12 @@ export async function submitForm(
               },
             ],
             resources: [
-              { request: { name: resourceName }, response: resource },
+              {
+                request: {
+                  name: resourceName,
+                },
+                response: resource,
+              },
             ],
           },
           data,

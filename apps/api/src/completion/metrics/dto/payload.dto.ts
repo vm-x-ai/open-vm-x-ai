@@ -22,11 +22,12 @@ export class CompletionPayloadMetricDto {
   
   @ApiProperty({
     description: 'The resource',
-    example: 'resource-identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
-  @IsString()
+  @IsUUID('4')
   @IsNotEmpty()
-  resource: string;
+  resourceId: string;
   
   @ApiProperty({
     description: 'The AI connection ID',

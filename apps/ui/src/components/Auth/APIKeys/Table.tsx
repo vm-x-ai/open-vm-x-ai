@@ -22,7 +22,7 @@ import {
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import ConfirmDeleteAPIKeyDialog from './ConfirmDeleteDialog';
-import { ApiKeyEntity } from '@/clients/api';
+import { AiResourceEntity, ApiKeyEntity } from '@/clients/api';
 import { useQuery } from '@tanstack/react-query';
 import { getApiKeysOptions } from '@/clients/api/@tanstack/react-query.gen';
 
@@ -30,7 +30,7 @@ export type APIKeysTableProps = {
   workspaceId?: string;
   environmentId?: string;
   data?: ApiKeyEntity[];
-  resources?: string[];
+  resourcesMap?: Record<string, AiResourceEntity>;
   loading?: boolean;
 };
 
@@ -39,6 +39,7 @@ export default function APIKeysTable({
   data: initialData,
   workspaceId,
   environmentId,
+  resourcesMap,
 }: APIKeysTableProps) {
   const { data, isLoading, refetch } = useQuery({
     ...getApiKeysOptions({
@@ -50,7 +51,7 @@ export default function APIKeysTable({
     enabled: !!workspaceId && !!environmentId,
     initialData: initialData,
   });
-  const loading = initialLoading || isLoading;
+  const loading = useMemo(() => initialLoading || isLoading, [initialLoading, isLoading]);
 
   const [confirmDeleteItem, setConfirmDeleteItem] = useState<
     ApiKeyEntity | undefined
@@ -116,13 +117,17 @@ export default function APIKeysTable({
             }}
           >
             {row.resources?.map((resource) => (
-              <Chip key={resource} label={resource} size="small" />
+              <Chip
+                key={resource}
+                label={resourcesMap?.[resource]?.name ?? resource}
+                size="small"
+              />
             ))}
           </Box>
         ),
       },
     ],
-    [environmentId, workspaceId]
+    [environmentId, workspaceId, resourcesMap]
   );
 
   const initialExpandedRootRows = useMemo<MRT_ExpandedState>(
@@ -140,7 +145,7 @@ export default function APIKeysTable({
 
   const table = useMaterialReactTable({
     columns,
-    data: data ? [...data] : [],
+    data: data ?? [],
     enableFullScreenToggle: false,
     enableExpandAll: false,
     enableRowActions: true,

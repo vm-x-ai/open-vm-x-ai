@@ -9,16 +9,16 @@ import type { GateOutput, PriorizationStrategy } from './types';
 export class BasePriorizationStrategy implements PriorizationStrategy {
   protected getResourcePool(
     pool: PoolDefinitionEntity,
-    resource: string
+    resourceId: string
   ): PoolDefinitionEntry | undefined {
-    return pool.definition.find((pool) => pool.resources.includes(resource));
+    return pool.definition.find((pool) => pool.resources.includes(resourceId));
   }
 
   async gate(
     pool: PoolDefinitionEntity,
     requestTime: Date,
     requestTokens: number,
-    resource: string,
+    resourceId: string,
     connection: AIConnectionEntity,
     allocation: PoolWorkloadAllocation
   ): Promise<GateOutput> {

@@ -44,6 +44,7 @@ import { CapacityPeriod } from '../capacity/capacity.entity';
 import os from 'os';
 import { CompletionBatchEntity } from './batch/entity/batch.entity';
 import merge from 'lodash.merge';
+import { UserEntity } from '../users/entities/user.entity';
 
 @Injectable()
 export class CompletionService {
@@ -63,60 +64,60 @@ export class CompletionService {
   public async completion(
     workspaceId: string,
     environmentId: string,
-    resource: string,
     payload: CompletionNonStreamingRequestDto,
     apiKey?: ApiKeyEntity,
     request?: FastifyRequest,
-    batch?: CompletionBatchEntity
+    batch?: CompletionBatchEntity,
+    user?: UserEntity
   ): Promise<CompletionNonStreamingResponse>;
 
   public async completion(
     workspaceId: string,
     environmentId: string,
-    resource: string,
     payload: CompletionStreamingRequestDto,
     apiKey?: ApiKeyEntity,
     request?: FastifyRequest,
-    batch?: CompletionBatchEntity
+    batch?: CompletionBatchEntity,
+    user?: UserEntity
   ): Promise<CompletionStreamingResponse>;
 
   public async completion(
     workspaceId: string,
     environmentId: string,
-    resource: string,
     payload: CompletionRequestDto,
     apiKey?: ApiKeyEntity,
     request?: FastifyRequest,
-    batch?: CompletionBatchEntity
+    batch?: CompletionBatchEntity,
+    user?: UserEntity
   ): Promise<CompletionResponse>;
 
   public async completion(
     workspaceId: string,
     environmentId: string,
-    resource: string,
     payload: CompletionRequestDto,
     apiKey?: ApiKeyEntity,
     request?: FastifyRequest,
-    batch?: CompletionBatchEntity
+    batch?: CompletionBatchEntity,
+    user?: UserEntity
   ): Promise<CompletionResponse> {
     const sourceIp = request ? getSourceIpFromRequest(request) : os.hostname();
     let modelConfig: AIResourceModelConfigEntity | null = null;
+    let aiResource: AIResourceEntity | null = null;
     let requestAt: Date = new Date();
     let routingDuration: number | null = null;
     let gateDuration: number | null = null;
-    const providerDuration: number | null = null;
     let providerStartAt: number | null = null;
     let timeToFirstToken: number | null = null;
-    const tokensPerSecond: number | null = null;
+
     let messageId: string | null = null;
     const auditEvents: CompletionAuditEventEntity[] = [];
     const requestId = uuidv4();
 
     try {
-      const aiResource = await this.getAIResource(
+      aiResource = await this.getAIResource(
         workspaceId,
         environmentId,
-        resource,
+        payload.model,
         payload.vmx?.resourceConfigOverrides
       );
 
@@ -185,7 +186,7 @@ export class CompletionService {
         const baseProps = {
           workspaceId,
           environmentId,
-          resource,
+          resourceId: aiResource.resourceId,
           model: modelConfig.model,
           timestamp: requestAt,
           requestId,
@@ -193,6 +194,7 @@ export class CompletionService {
           apiKeyId: apiKey?.apiKeyId,
           correlationId: payload.vmx?.correlationId,
           connectionId: modelConfig.connectionId,
+          userId: user?.id,
         };
 
         try {
@@ -277,11 +279,15 @@ export class CompletionService {
                       gateDurationMs: gateDuration ?? null,
                       routingDurationMs: routingDuration ?? null,
                       timeToFirstTokenMs: timeToFirstToken ?? null,
-                      tokensPerSecond: tokensPerSecond ?? null,
                     },
                   },
                 };
               }
+
+              const tokensPerSecond = completionUsage
+                ? completionUsage.total_tokens /
+                  ((Date.now() - providerStartAt) / 1000)
+                : null;
 
               await this.postCompletion(
                 requestAt,
@@ -335,7 +341,7 @@ export class CompletionService {
               gateDuration,
               routingDuration,
               timeToFirstToken,
-              tokensPerSecond,
+              null,
               completionUsage,
               auditEvents,
               providerResponse.data,
@@ -352,7 +358,7 @@ export class CompletionService {
                   gateDurationMs: gateDuration ?? null,
                   routingDurationMs: routingDuration ?? null,
                   timeToFirstTokenMs: timeToFirstToken ?? null,
-                  tokensPerSecond: tokensPerSecond ?? null,
+                  tokensPerSecond: null,
                 },
               },
             },
@@ -400,7 +406,6 @@ export class CompletionService {
             gateDuration,
             routingDuration,
             timeToFirstToken,
-            tokensPerSecond,
             requestDuration: Date.now() - requestAt.getTime(),
             error: true,
             failureReason,
@@ -418,7 +423,7 @@ export class CompletionService {
       const baseProps = {
         workspaceId,
         environmentId,
-        resource,
+        resourceId: aiResource?.resourceId,
         model: modelConfig?.model,
         timestamp: requestAt,
         requestId,
@@ -436,17 +441,16 @@ export class CompletionService {
         provider: modelConfig?.provider,
         messageId,
         gateDuration,
-        providerDuration,
         routingDuration,
         timeToFirstToken,
-        tokensPerSecond,
         requestDuration,
         error: true,
       });
-      if (modelConfig) {
+      if (modelConfig && aiResource) {
         this.completionMetricsService.push({
           ...baseProps,
           connectionId: modelConfig.connectionId,
+          resourceId: aiResource.resourceId,
           model: modelConfig.model,
           statusCode,
         });
@@ -547,7 +551,7 @@ export class CompletionService {
     baseEventProps: {
       workspaceId: string;
       environmentId: string;
-      resource: string;
+      resourceId: string;
       model: string;
       timestamp: Date;
       requestId: string;
@@ -555,6 +559,7 @@ export class CompletionService {
       apiKeyId?: string;
       correlationId?: string | null;
       connectionId: string;
+      userId?: string;
     },
     aiConnection: AIConnectionEntity,
     evaluatedCapacities: EvaluatedCapacity[],
@@ -697,16 +702,13 @@ export class CompletionService {
   private async getAIResource(
     workspaceId: string,
     environmentId: string,
-    resource: string,
+    resourceName: string,
     resourceConfigOverrides?: PartialAIResourceDto | null
   ): Promise<AIResourceEntity> {
-    const aiResourceEntity = await this.aiResourceService.getById(
-      {
-        workspaceId,
-        environmentId,
-        resource,
-        includesUsers: false,
-      },
+    const aiResourceEntity = await this.aiResourceService.getByName(
+      workspaceId,
+      environmentId,
+      resourceName,
       /**
        * If the resource config overrides provides the minimum,
        * we don't need to throw an error if the resource is not found.
@@ -714,9 +716,15 @@ export class CompletionService {
       !resourceConfigOverrides?.model
     );
 
-    return merge(
+    const mergedResource = merge(
       aiResourceEntity || {},
       resourceConfigOverrides || {}
     ) as AIResourceEntity;
+
+    if (!aiResourceEntity) {
+      mergedResource.resourceId = 'ephemeral';
+    }
+
+    return mergedResource;
   }
 }

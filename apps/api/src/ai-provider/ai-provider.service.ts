@@ -51,4 +51,9 @@ export class AIProviderService {
 
     return this.providers[id];
   }
+
+  public async getByIds(ids: string[]): Promise<CompletionProvider[]> {
+    if (ids.length === 0) return [];
+    return await ids.map((id) => this.providers[id]);
+  }
 }

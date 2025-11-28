@@ -50,7 +50,7 @@ export default function AIResourceSecondaryModelsEditForm({
     pathParams: {
       workspaceId,
       environmentId,
-      resourceName: data.resource,
+      resourceId: data.resourceId,
     },
   });
 
@@ -80,7 +80,7 @@ export default function AIResourceSecondaryModelsEditForm({
       )}
       <Grid size={12}>
         <Typography variant="h6">
-          AI Resource Multi-Answer - {data.resource}
+          AI Resource Multi-Answer - {data.name}
         </Typography>
         <Divider />
       </Grid>

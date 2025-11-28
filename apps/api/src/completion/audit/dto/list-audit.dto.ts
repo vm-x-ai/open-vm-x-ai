@@ -47,12 +47,13 @@ export class ListAuditQueryDto {
     type: 'string',
     required: false,
     description: 'The resource to list audits for',
-    example: 'resource-identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
     nullable: true,
   })
-  @IsString()
+  @IsUUID('4')
   @IsOptional()
-  resource?: string | null;
+  resourceId?: string | null;
 
   @ApiProperty({
     type: 'string',

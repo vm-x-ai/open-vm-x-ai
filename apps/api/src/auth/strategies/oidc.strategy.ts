@@ -25,7 +25,7 @@ export class OidcStrategy extends PassportStrategy(Strategy, 'oidc') {
     );
     if (!accessToken) return null;
 
-    const user = await this.usersService.get(accessToken.accountId);
+    const user = await this.usersService.getById(accessToken.accountId);
     if (!user) return null;
 
     const { passwordHash, ...rest } = user;

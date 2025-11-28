@@ -555,64 +555,6 @@ export const updateAiResourceMutation = (options?: Partial<Options<UpdateAiResou
     return mutationOptions;
 };
 
-/**
- * Delete a pool definition
- *
- * Deletes a pool definition by its workspace and environment. You must be a member of the workspace to delete a pool definition.
- */
-export const deletePoolDefinitionMutation = (options?: Partial<Options<DeletePoolDefinitionData>>): UseMutationOptions<unknown, DeletePoolDefinitionError, Options<DeletePoolDefinitionData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DeletePoolDefinitionError, Options<DeletePoolDefinitionData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await deletePoolDefinition({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const getPoolDefinitionQueryKey = (options: Options<GetPoolDefinitionData>) => createQueryKey('getPoolDefinition', options);
-
-/**
- * Get a pool definition by workspace and environment
- *
- * Returns a pool definition by its workspace and environment. Optionally includes user details in the pool definition if `includesUsers` is set to true (default).
- */
-export const getPoolDefinitionOptions = (options: Options<GetPoolDefinitionData>) => queryOptions<GetPoolDefinitionResponse, GetPoolDefinitionError, GetPoolDefinitionResponse, ReturnType<typeof getPoolDefinitionQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getPoolDefinition({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getPoolDefinitionQueryKey(options)
-});
-
-/**
- * Created/updated a pool definition
- *
- * Created/updated a pool definition. You must be a member of the workspace to create/update a pool definition.
- */
-export const updatePoolDefinitionMutation = (options?: Partial<Options<UpdatePoolDefinitionData>>): UseMutationOptions<UpdatePoolDefinitionResponse, UpdatePoolDefinitionError, Options<UpdatePoolDefinitionData>> => {
-    const mutationOptions: UseMutationOptions<UpdatePoolDefinitionResponse, UpdatePoolDefinitionError, Options<UpdatePoolDefinitionData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await updatePoolDefinition({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
 export const getApiKeysQueryKey = (options: Options<GetApiKeysData>) => createQueryKey('getApiKeys', options);
 
 /**
@@ -700,6 +642,64 @@ export const updateApiKeyMutation = (options?: Partial<Options<UpdateApiKeyData>
     const mutationOptions: UseMutationOptions<UpdateApiKeyResponse, UpdateApiKeyError, Options<UpdateApiKeyData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateApiKey({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a pool definition
+ *
+ * Deletes a pool definition by its workspace and environment. You must be a member of the workspace to delete a pool definition.
+ */
+export const deletePoolDefinitionMutation = (options?: Partial<Options<DeletePoolDefinitionData>>): UseMutationOptions<unknown, DeletePoolDefinitionError, Options<DeletePoolDefinitionData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeletePoolDefinitionError, Options<DeletePoolDefinitionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deletePoolDefinition({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getPoolDefinitionQueryKey = (options: Options<GetPoolDefinitionData>) => createQueryKey('getPoolDefinition', options);
+
+/**
+ * Get a pool definition by workspace and environment
+ *
+ * Returns a pool definition by its workspace and environment. Optionally includes user details in the pool definition if `includesUsers` is set to true (default).
+ */
+export const getPoolDefinitionOptions = (options: Options<GetPoolDefinitionData>) => queryOptions<GetPoolDefinitionResponse, GetPoolDefinitionError, GetPoolDefinitionResponse, ReturnType<typeof getPoolDefinitionQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPoolDefinition({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPoolDefinitionQueryKey(options)
+});
+
+/**
+ * Created/updated a pool definition
+ *
+ * Created/updated a pool definition. You must be a member of the workspace to create/update a pool definition.
+ */
+export const updatePoolDefinitionMutation = (options?: Partial<Options<UpdatePoolDefinitionData>>): UseMutationOptions<UpdatePoolDefinitionResponse, UpdatePoolDefinitionError, Options<UpdatePoolDefinitionData>> => {
+    const mutationOptions: UseMutationOptions<UpdatePoolDefinitionResponse, UpdatePoolDefinitionError, Options<UpdatePoolDefinitionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updatePoolDefinition({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

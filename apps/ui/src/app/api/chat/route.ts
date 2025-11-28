@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     messages,
   }: ChatRequest = await req.json();
 
-  const baseURL = `${process.env.API_BASE_URL}/v1/completion/${workspaceId}/${environmentId}/${resourceConfigOverrides.resource}`;
+  const baseURL = `${process.env.API_BASE_URL}/v1/completion/${workspaceId}/${environmentId}`;
   const actionHeaders = await headers();
   const responseMetadata: ResponseMetadata = {};
 
@@ -154,5 +154,5 @@ async function getLanguageModel(
       }
       return resp;
     },
-  }).chat('gpt-4o');
+  }).chat(resourceConfigOverrides.name ?? '');
 }

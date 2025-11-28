@@ -10,5 +10,5 @@ export type FormSchema = z.output<typeof schema>;
 
 export type FormAction = FormActionUpdateState<
   FormSchema,
-  { workspaceId: string; environmentId: string; resourceName: string }
+  { workspaceId: string; environmentId: string; resourceId: string }
 >;

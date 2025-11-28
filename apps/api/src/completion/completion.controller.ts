@@ -22,10 +22,6 @@ import {
   AppGuard,
   IgnoreGlobalGuard,
 } from '../auth/auth.guard';
-import {
-  AIResourceIdParam,
-  ApiAIResourceIdParam,
-} from '../ai-resource/ai-resource.controller';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ApiOperation } from '@nestjs/swagger';
 import { CompletionError } from './completion.types';
@@ -88,12 +84,10 @@ export class CompletionController {
   })
   @ApiWorkspaceIdParam()
   @ApiEnvironmentIdParam()
-  @ApiAIResourceIdParam()
-  @Post(':workspaceId/:environmentId/:resource/chat/completions')
+  @Post(':workspaceId/:environmentId/chat/completions')
   public async completion(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @AIResourceIdParam() resource: string,
     @Body(
       new (class implements PipeTransform {
         async transform(value: unknown, metadata: ArgumentMetadata) {
@@ -115,7 +109,6 @@ export class CompletionController {
       const response = await this.completionService.completion(
         workspaceId,
         environmentId,
-        resource,
         payload,
         apiKey,
         request
@@ -139,7 +132,6 @@ export class CompletionController {
         res.status(200).headers(response.headers).send(response.data);
       }
     } catch (err) {
-      console.log('DEBUG', err);
       return this.handleError(err, sseStarted, res);
     }
   }
@@ -193,8 +185,6 @@ export class CompletionController {
         },
       };
     }
-
-    console.log('errorResponse', errorResponse);
 
     if (sseStarted) {
       res.raw.write(`data: ${JSON.stringify(errorResponse)}\n\n`);

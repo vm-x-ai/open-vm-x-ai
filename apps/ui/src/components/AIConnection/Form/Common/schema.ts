@@ -59,7 +59,6 @@ function addValidationIssue(
       path: [`config.${error.params.missingProperty}`],
     });
   } else if (error.instancePath) {
-    console.log('path', `config${error.instancePath.replace(/\//g, '.')}`);
     ctx.addIssue({
       code: 'custom',
       message: error.message,

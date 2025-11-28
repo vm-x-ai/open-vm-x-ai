@@ -14,7 +14,9 @@ import {
 } from '../../common/api.decorators';
 import { CompletionUsageService } from './usage.service';
 import {
+  CompletionDimensions,
   CompletionUsageDimensionFilterDto,
+  CompletionUsageDimensionOperator,
   CompletionUsageQueryDto,
 } from './dto/completion-query.dto';
 import { WorkspaceMemberGuard } from '../../workspace/workspace.guard';
@@ -53,6 +55,16 @@ export class CompletionUsageController {
     @EnvironmentIdParam() environmentId: string,
     @Body() query: CompletionUsageQueryDto
   ): Promise<CompletionUsageQueryResultDto[]> {
+    query.filter.fields = query.filter.fields ?? {};
+    query.filter.fields[CompletionDimensions.WORKSPACE_ID] = {
+      operator: CompletionUsageDimensionOperator.EQ,
+      value: workspaceId,
+    };
+    query.filter.fields[CompletionDimensions.ENVIRONMENT_ID] = {
+      operator: CompletionUsageDimensionOperator.EQ,
+      value: environmentId,
+    };
+
     return await this.completionUsageService.query(query);
   }
 }

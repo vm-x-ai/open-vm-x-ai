@@ -70,14 +70,14 @@ export default function OpenAIAdapterGuide({
                   const resourceName = "${resourceName}";
 
                   const openai = new OpenAI({
-                    baseURL: \`${baseUrl}/v1/completion/\${workspaceId}/\${environmentId}/\${resourceName}\`,
+                    baseURL: \`${baseUrl}/v1/completion/\${workspaceId}/\${environmentId}\`,
                     apiKey: '<VM_X_API_KEY>',
                   });
 
                   async function main() {
                     const completion = await openai.chat.completions.create({
                       messages: [{ role: "system", content: "You are a helpful assistant." }],
-                      model: "gpt-4o",
+                      model: resourceName, // VM-X Resource Name
                     });
 
                     console.log(completion.choices[0]);
@@ -102,12 +102,12 @@ export default function OpenAIAdapterGuide({
                   resource_name = "${resourceName}"
 
                   client = OpenAI(
-                      base_url=f'${baseUrl}/v1/completion/{workspace_id}/{environment_id}/{resource_name}',
+                      base_url=f'${baseUrl}/v1/completion/{workspace_id}/{environment_id}',
                       api_key='<VM_X_API_KEY>',
                   )
 
                   completion = client.chat.completions.create(
-                      model="gpt-4o",
+                      model=resource_name, # VM-X Resource Name
                       messages=[
                           {"role": "system", "content": "You are a helpful assistant."},
                           {"role": "user", "content": "Hello!"}
@@ -131,11 +131,11 @@ export default function OpenAIAdapterGuide({
                   export RESOURCE_NAME="${resourceName}"
                   export VM_X_API_KEY="<VM_X_API_KEY>"
 
-                  curl ${baseUrl}/v1/completion/$WORKSPACE_ID/$ENVIRONMENT_ID/$RESOURCE_NAME/chat/completions \\
+                  curl ${baseUrl}/v1/completion/$WORKSPACE_ID/$ENVIRONMENT_ID/chat/completions \\
                     -H "Content-Type: application/json" \\
                     -H "Authorization: Bearer $VM_X_API_KEY" \\
                     -d '{
-                      "model": "gpt-4o",
+                      "model": "${resource}",
                       "messages": [
                         {
                           "role": "system",

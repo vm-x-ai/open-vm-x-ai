@@ -59,7 +59,7 @@ export default function AIResourceTable({
               variant="inherit"
               sx={{ color: theme.palette.primary.main, fontWeight: 'bold' }}
             >
-              {row.original.resource}
+              {row.original.name}
             </Typography>
           );
         },
@@ -164,7 +164,7 @@ export default function AIResourceTable({
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
         router.push(
-          `/${workspaceId}/${environmentId}/ai-resources/edit/${row.original.resource}/general`
+          `/${workspaceId}/${environmentId}/ai-resources/edit/${row.original.resourceId}/general`
         );
       },
       sx: (theme) => ({
@@ -182,7 +182,7 @@ export default function AIResourceTable({
         <Tooltip title="Edit">
           <IconButton
             LinkComponent={Link}
-            href={`/${workspaceId}/${environmentId}/ai-resources/edit/${row.original.resource}`}
+            href={`/${workspaceId}/${environmentId}/ai-resources/edit/${row.original.resourceId}`}
           >
             <EditIcon />
           </IconButton>

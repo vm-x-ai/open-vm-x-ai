@@ -44,7 +44,7 @@ const loadSearchParams = createLoader({
   relativeValue: relativeValueParser,
   start: parseAsIsoDateTime,
   end: parseAsIsoDateTime,
-  resource: parseAsString,
+  resourceId: parseAsString,
   connectionId: parseAsString,
   statusCode: parseAsInteger,
 });
@@ -79,7 +79,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         },
         query: {
           connectionId: loadQueryParams.connectionId,
-          resource: loadQueryParams.resource,
+          resourceId: loadQueryParams.resourceId,
           statusCode: loadQueryParams.statusCode,
           startDate: start,
           endDate: end,
@@ -128,7 +128,14 @@ export default async function Page({ params, searchParams }: PageProps) {
           environmentId={environmentId}
           data={auditData.data}
           providersMap={providersMap}
-          resources={resources.data ? resources.data : undefined}
+          resourcesMap={
+            resources.data
+              ? resources.data.reduce(
+                  (acc, item) => ({ ...acc, [item.resourceId]: item }),
+                  {}
+                )
+              : undefined
+          }
           aiConnectionMap={
             connections.data
               ? connections.data.reduce(

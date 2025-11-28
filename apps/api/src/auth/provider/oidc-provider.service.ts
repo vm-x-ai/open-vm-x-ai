@@ -68,7 +68,7 @@ export class OidcProviderService implements OnModuleInit {
     return {
       adapter: this.createAdapterFactory(),
       findAccount: async (ctx, id) => {
-        const user = await this.usersService.get(id);
+        const user = await this.usersService.getById(id);
         if (!user) return undefined;
 
         return {

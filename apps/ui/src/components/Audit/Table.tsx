@@ -38,7 +38,7 @@ export type AuditTableProps = {
   environmentId?: string;
   data?: ListAuditResponseDto;
   loading?: boolean;
-  resources?: AiResourceEntity[];
+  resourcesMap?: Record<string, AiResourceEntity>;
   aiConnectionMap?: Record<string, AiConnectionEntity>;
   providersMap?: Record<string, AiProviderDto>;
   apiKeysMap?: Record<string, ApiKeyEntity>;
@@ -49,7 +49,7 @@ export default function AuditTable({
   workspaceId,
   environmentId,
   data,
-  resources,
+  resourcesMap,
   aiConnectionMap,
   providersMap,
   apiKeysMap,
@@ -88,8 +88,8 @@ export default function AuditTable({
   ) => {
     const newValue =
       typeof updater === 'function' ? updater(pagination) : updater;
-    
-      setPageIndex(newValue.pageIndex);
+
+    setPageIndex(newValue.pageIndex);
     setPagination(newValue);
     setShowProgressBar(true);
   };
@@ -173,17 +173,22 @@ export default function AuditTable({
         header: 'Source IP',
       },
       {
-        accessorKey: 'resource',
+        accessorKey: 'resourceId',
         header: 'Resource',
-        Cell: ({ row: { original: row } }) => (
-          <MUILink
-            component={Link}
-            href={`/${workspaceId}/${environmentId}/ai-resources/edit/${row.resource}/general`}
-            variant="body2"
-          >
-            {row.resource}
-          </MUILink>
-        ),
+        Cell: ({ row: { original: row } }) =>
+          row.resourceId && resourcesMap?.[row.resourceId] ? (
+            <MUILink
+              component={Link}
+              href={`/${workspaceId}/${environmentId}/ai-resources/edit/${row.resourceId}/general`}
+              variant="body2"
+            >
+              {resourcesMap?.[row.resourceId]?.name ?? row.resourceId}
+            </MUILink>
+          ) : (
+            <Typography variant="body2">
+              {row.resourceId ? `${row.resourceId} (Deleted)` : '-'}
+            </Typography>
+          ),
       },
       {
         accessorKey: 'statusCode',
@@ -248,6 +253,7 @@ export default function AuditTable({
       apiKeysMap,
       environmentId,
       providersMap,
+      resourcesMap,
       theme,
       workspaceId,
     ]
@@ -288,7 +294,7 @@ export default function AuditTable({
       >
         <AuditHeader
           providersMap={providersMap}
-          resources={resources}
+          resourcesMap={resourcesMap}
           aiConnectionMap={aiConnectionMap}
         />
       </Box>

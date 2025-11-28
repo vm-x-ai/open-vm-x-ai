@@ -23,13 +23,14 @@ export const migration: Migration = {
       .addColumn('events', 'jsonb')
       .addColumn('batch_id', 'uuid')
       .addColumn('correlation_id', 'text')
-      .addColumn('resource', 'text')
+      .addColumn('resource_id', 'uuid')
       .addColumn('provider', 'text')
       .addColumn('model', 'text')
       .addColumn('source_ip', 'text')
       .addColumn('error_message', 'text')
       .addColumn('failure_reason', 'text')
       .addColumn('api_key_id', 'uuid')
+      .addColumn('user_id', 'uuid')
       .addColumn('request_payload', 'jsonb')
       .addColumn('response_data', 'jsonb')
       .addColumn('response_headers', 'jsonb')
@@ -85,9 +86,15 @@ export const migration: Migration = {
       .execute();
 
     await db.schema
-      .createIndex('idx_completion_audit_resource')
+      .createIndex('idx_completion_audit_resource_id')
       .on('completion_audit')
-      .column('resource')
+      .column('resource_id')
+      .execute();
+
+    await db.schema
+      .createIndex('idx_completion_audit_user_id')
+      .on('completion_audit')
+      .column('user_id')
       .execute();
   },
 
@@ -103,7 +110,8 @@ export const migration: Migration = {
     await db.schema.dropIndex('idx_completion_audit_batch_id').execute();
     await db.schema.dropIndex('idx_completion_audit_correlation_id').execute();
     await db.schema.dropIndex('idx_completion_audit_connection_id').execute();
-    await db.schema.dropIndex('idx_completion_audit_resource').execute();
+    await db.schema.dropIndex('idx_completion_audit_resource_id').execute();
+    await db.schema.dropIndex('idx_completion_audit_user_id').execute();
     await db.schema.dropTable('completion_audit').execute();
     await sql`DROP TYPE COMPLETION_AUDIT_TYPE`.execute(db);
   },

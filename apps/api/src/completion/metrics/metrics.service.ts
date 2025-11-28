@@ -110,7 +110,7 @@ export class CompletionMetricsService {
       const key = `${this.getKeyPrefix(
         payload.workspaceId,
         payload.environmentId,
-        payload.resource,
+        payload.resourceId,
         payload.connectionId,
         payload.model
       )}:${minuteBucket}`;
@@ -205,11 +205,11 @@ export class CompletionMetricsService {
   private getKeyPrefix(
     workspaceId: string,
     environmentId: string,
-    resource: string,
+    resourceId: string,
     aiConnectionId?: string,
     model?: string
   ) {
-    return `{metrics:${workspaceId}:${environmentId}:${resource}:${
+    return `{metrics:${workspaceId}:${environmentId}:${resourceId}:${
       aiConnectionId || 'none'
     }:${model || 'none'}}`;
   }

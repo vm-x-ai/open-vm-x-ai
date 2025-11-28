@@ -117,7 +117,7 @@ export class CapacityService {
     const resourceKeyPrefix = this.getResourceKeyPrefix(
       workspaceId,
       environmentId,
-      resource.resource,
+      resource.resourceId,
       aiConnection.connectionId
     );
     const connectionCapacities =
@@ -125,7 +125,7 @@ export class CapacityService {
     if (connectionCapacities.length === 0) {
       this.logger.info(
         {
-          resource: resource.resource,
+          resourceId: resource.resourceId,
         },
         'No resource limit for the resource'
       );

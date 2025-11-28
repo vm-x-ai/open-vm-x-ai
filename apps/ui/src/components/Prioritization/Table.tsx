@@ -20,7 +20,11 @@ import {
 } from 'material-react-table';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ConfirmDeletePoolDefinitionDialog from './ConfirmDeleteDialog';
-import { PoolDefinitionEntity, PoolDefinitionEntry } from '@/clients/api';
+import {
+  AiResourceEntity,
+  PoolDefinitionEntity,
+  PoolDefinitionEntry,
+} from '@/clients/api';
 import {
   getPoolDefinitionOptions,
   updatePoolDefinitionMutation,
@@ -31,14 +35,14 @@ export type PoolDefinitionTableProps = {
   workspaceId?: string;
   environmentId?: string;
   data?: PoolDefinitionEntity;
-  resources?: string[];
+  resourcesMap?: Record<string, AiResourceEntity>;
   loading?: boolean;
 };
 
 export default function PoolDefinitionTable({
   loading: initialLoading = false,
   data: initialData,
-  resources,
+  resourcesMap,
   workspaceId,
   environmentId,
 }: PoolDefinitionTableProps) {
@@ -55,7 +59,7 @@ export default function PoolDefinitionTable({
   const loading = initialLoading || isLoading;
 
   const [availableResources, setAvailableResources] = useState<string[]>(
-    resources ?? []
+    Object.keys(resourcesMap ?? {}) ?? []
   );
   const [confirmDeleteItem, setConfirmDeleteItem] = useState<
     PoolDefinitionEntry | undefined
@@ -75,15 +79,17 @@ export default function PoolDefinitionTable({
     });
 
   useEffect(() => {
-    if (resources) {
+    if (resourcesMap) {
       setAvailableResources(
-        resources?.filter(
-          (resource) =>
-            !data?.definition?.some((item) => item.resources.includes(resource))
+        Object.keys(resourcesMap).filter(
+          (resourceId) =>
+            !data?.definition?.some((item) =>
+              item.resources.includes(resourceId)
+            )
         ) ?? []
       );
     }
-  }, [data?.definition, resources]);
+  }, [data?.definition, resourcesMap]);
 
   const getPoolColor = useCallback(
     (index: number) => {
@@ -245,7 +251,7 @@ export default function PoolDefinitionTable({
             {row.resources.map((resource) => (
               <Chip
                 key={resource}
-                label={resource}
+                label={resourcesMap?.[resource]?.name ?? resource}
                 color={getPoolColor(index)}
               />
             ))}
@@ -258,6 +264,9 @@ export default function PoolDefinitionTable({
               size="small"
               value={row._valuesCache.resources ?? row.original.resources}
               options={availableResources ?? []}
+              getOptionLabel={(option) =>
+                resourcesMap?.[option]?.name ?? option
+              }
               onChange={async (_, value) => {
                 row._valuesCache.resources = value;
                 setValidationErrors({
@@ -280,7 +289,7 @@ export default function PoolDefinitionTable({
                     <Chip
                       key={key}
                       color={getPoolColor(row.index)}
-                      label={option}
+                      label={resourcesMap?.[option]?.name ?? option}
                       {...tagProps}
                     />
                   );
@@ -296,7 +305,7 @@ export default function PoolDefinitionTable({
                       style={{ marginRight: 8 }}
                       checked={selected}
                     />
-                    {option}
+                    {resourcesMap?.[option]?.name ?? option}
                   </li>
                 );
               }}
@@ -312,7 +321,13 @@ export default function PoolDefinitionTable({
         ),
       },
     ],
-    [availableResources, getPoolColor, onCellUpdate, validationErrors]
+    [
+      availableResources,
+      getPoolColor,
+      onCellUpdate,
+      resourcesMap,
+      validationErrors,
+    ]
   );
 
   const table = useMaterialReactTable({

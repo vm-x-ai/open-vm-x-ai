@@ -306,7 +306,7 @@ export const createAiResource = <ThrowOnError extends boolean = false>(options: 
  */
 export const deleteAiResource = <ThrowOnError extends boolean = false>(options: Options<DeleteAiResourceData, ThrowOnError>) => (options.client ?? client).delete<DeleteAiResourceResponses, DeleteAiResourceErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resource}',
+    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resourceId}',
     ...options
 });
 
@@ -317,7 +317,7 @@ export const deleteAiResource = <ThrowOnError extends boolean = false>(options: 
  */
 export const getAiResourceById = <ThrowOnError extends boolean = false>(options: Options<GetAiResourceByIdData, ThrowOnError>) => (options.client ?? client).get<GetAiResourceByIdResponses, GetAiResourceByIdErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resource}',
+    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resourceId}',
     ...options
 });
 
@@ -328,44 +328,7 @@ export const getAiResourceById = <ThrowOnError extends boolean = false>(options:
  */
 export const updateAiResource = <ThrowOnError extends boolean = false>(options: Options<UpdateAiResourceData, ThrowOnError>) => (options.client ?? client).put<UpdateAiResourceResponses, UpdateAiResourceErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resource}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete a pool definition
- *
- * Deletes a pool definition by its workspace and environment. You must be a member of the workspace to delete a pool definition.
- */
-export const deletePoolDefinition = <ThrowOnError extends boolean = false>(options: Options<DeletePoolDefinitionData, ThrowOnError>) => (options.client ?? client).delete<DeletePoolDefinitionResponses, DeletePoolDefinitionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/pool-definition/{workspaceId}/{environmentId}',
-    ...options
-});
-
-/**
- * Get a pool definition by workspace and environment
- *
- * Returns a pool definition by its workspace and environment. Optionally includes user details in the pool definition if `includesUsers` is set to true (default).
- */
-export const getPoolDefinition = <ThrowOnError extends boolean = false>(options: Options<GetPoolDefinitionData, ThrowOnError>) => (options.client ?? client).get<GetPoolDefinitionResponses, GetPoolDefinitionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/pool-definition/{workspaceId}/{environmentId}',
-    ...options
-});
-
-/**
- * Created/updated a pool definition
- *
- * Created/updated a pool definition. You must be a member of the workspace to create/update a pool definition.
- */
-export const updatePoolDefinition = <ThrowOnError extends boolean = false>(options: Options<UpdatePoolDefinitionData, ThrowOnError>) => (options.client ?? client).post<UpdatePoolDefinitionResponses, UpdatePoolDefinitionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/pool-definition/{workspaceId}/{environmentId}',
+    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resourceId}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -437,13 +400,50 @@ export const updateApiKey = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
+ * Delete a pool definition
+ *
+ * Deletes a pool definition by its workspace and environment. You must be a member of the workspace to delete a pool definition.
+ */
+export const deletePoolDefinition = <ThrowOnError extends boolean = false>(options: Options<DeletePoolDefinitionData, ThrowOnError>) => (options.client ?? client).delete<DeletePoolDefinitionResponses, DeletePoolDefinitionErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/pool-definition/{workspaceId}/{environmentId}',
+    ...options
+});
+
+/**
+ * Get a pool definition by workspace and environment
+ *
+ * Returns a pool definition by its workspace and environment. Optionally includes user details in the pool definition if `includesUsers` is set to true (default).
+ */
+export const getPoolDefinition = <ThrowOnError extends boolean = false>(options: Options<GetPoolDefinitionData, ThrowOnError>) => (options.client ?? client).get<GetPoolDefinitionResponses, GetPoolDefinitionErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/pool-definition/{workspaceId}/{environmentId}',
+    ...options
+});
+
+/**
+ * Created/updated a pool definition
+ *
+ * Created/updated a pool definition. You must be a member of the workspace to create/update a pool definition.
+ */
+export const updatePoolDefinition = <ThrowOnError extends boolean = false>(options: Options<UpdatePoolDefinitionData, ThrowOnError>) => (options.client ?? client).post<UpdatePoolDefinitionResponses, UpdatePoolDefinitionErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/pool-definition/{workspaceId}/{environmentId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * LLM Completion
  *
  * Performs a completion request to the LLM API.
  */
 export const completion = <ThrowOnError extends boolean = false>(options: Options<CompletionData, ThrowOnError>) => (options.client ?? client).post<CompletionResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/completion/{workspaceId}/{environmentId}/{resource}/chat/completions',
+    url: '/v1/completion/{workspaceId}/{environmentId}/chat/completions',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -458,7 +458,7 @@ export const completion = <ThrowOnError extends boolean = false>(options: Option
  */
 export const getCompletionErrorRate = <ThrowOnError extends boolean = false>(options: Options<GetCompletionErrorRateData, ThrowOnError>) => (options.client ?? client).get<GetCompletionErrorRateResponses, GetCompletionErrorRateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/v1/completion-metric/{workspaceId}/{environmentId}/{resource}/error-rate',
+    url: '/v1/completion-metric/{workspaceId}/{environmentId}/{resourceId}/error-rate',
     ...options
 });
 

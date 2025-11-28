@@ -42,17 +42,16 @@ export default function ConfirmDeleteResourceDialog({
         path: {
           workspaceId,
           environmentId,
-          resource: resource.resource,
+          resourceId: resource.resourceId,
         },
       });
 
       router.push(`/${workspaceId}/${environmentId}/ai-resources/overview`);
-      toast.success(`Resource ${resource.resource} has been deleted.`);
+      toast.success(`Resource ${resource.name} has been deleted.`);
       handleClose();
     } catch (error) {
-      console.log(error);
       toast.error(
-        `Failed to delete resource ${resource.resource}: ${
+        `Failed to delete resource ${resource.name}: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
@@ -69,7 +68,7 @@ export default function ConfirmDeleteResourceDialog({
         maxWidth="md"
       >
         <DialogTitle id="confirm-delete-resource-title">
-          Are you sure you want to delete <strong>{resource.resource}</strong>{' '}
+          Are you sure you want to delete <strong>{resource.name}</strong>{' '}
           resource?
         </DialogTitle>
         <DialogContent>

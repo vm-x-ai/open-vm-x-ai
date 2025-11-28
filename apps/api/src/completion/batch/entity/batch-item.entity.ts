@@ -52,11 +52,12 @@ export class CompletionBatchItemEntity {
 
   @ApiProperty({
     description: 'The name of the resource this item references',
-    example: 'openai-gpt4',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
-  @IsString()
+  @IsUUID('4')
   @IsNotEmpty()
-  resource: string;
+  resourceId: string;
 
   @ApiProperty({
     description: 'The status of the batch item',

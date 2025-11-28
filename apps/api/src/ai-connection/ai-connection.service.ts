@@ -190,6 +190,17 @@ export class AIConnectionService implements OnModuleInit {
       : aiConnection;
   }
 
+  public async getByIds(
+    connectionIds: string[]
+  ): Promise<AIConnectionEntity[]> {
+    if (connectionIds.length === 0) return [];
+    return await this.db.reader
+      .selectFrom('aiConnections')
+      .selectAll('aiConnections')
+      .where('connectionId', 'in', connectionIds)
+      .execute();
+  }
+
   public async create(
     workspaceId: string,
     environmentId: string,

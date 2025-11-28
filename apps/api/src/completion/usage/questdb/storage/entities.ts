@@ -22,7 +22,7 @@ export interface Completion {
   workspaceId: string;
   environmentId: string;
   connectionId: string | null;
-  resource: string | null;
+  resourceId: string | null;
   provider: string | null;
   model: string | null;
   requestId: string;
@@ -32,6 +32,7 @@ export interface Completion {
   correlationId: string | null;
   apiKeyId: string | null;
   sourceIp: string;
+  userId: string | null;
 }
 
 export interface DB {

@@ -52,7 +52,7 @@ export default function AIResourceRoutingEditForm({
     pathParams: {
       workspaceId,
       environmentId,
-      resourceName: data.resource,
+      resourceId: data.resourceId,
     },
   });
 
@@ -90,7 +90,7 @@ export default function AIResourceRoutingEditForm({
           {' '}
           <Typography variant="h6">Dynamic Routing</Typography>
           <Typography variant="body2">
-            (for AI Resource: {data.resource})
+            (for AI Resource: {data.name})
           </Typography>
         </Box>
         <Divider />

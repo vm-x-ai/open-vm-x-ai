@@ -306,14 +306,15 @@ export class CompletionAuditEntity {
   @ApiProperty({
     description:
       'The associated resource of the completion audit event (if applicable)',
-    example: 'resource-identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
     nullable: true,
     required: false,
     type: 'string',
   })
-  @IsString()
+  @IsUUID('4')
   @IsOptional()
-  resource?: string | null;
+  resourceId?: string | null;
 
   @ApiProperty({
     description:
@@ -386,6 +387,18 @@ export class CompletionAuditEntity {
   @IsUUID('4')
   @IsOptional()
   apiKeyId?: string | null;
+
+  @ApiProperty({
+    description: 'The user ID related to the completion audit event (if applicable)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: 'string',
+  })
+  @IsUUID('4')
+  @IsOptional()
+  userId?: string | null;
 
   @ApiProperty({
     description: 'The request payload of the completion audit event (openai chat completion request payload)',

@@ -65,10 +65,10 @@ export class AdaptiveTokenScalingStrategy
     pool: PoolDefinitionEntity,
     requestTime: Date,
     requestTokens: number,
-    resource: string,
+    resourceId: string,
     connection: AIConnectionEntity
   ): Promise<GateOutput> {
-    const resourcePool = this.getResourcePool(pool, resource);
+    const resourcePool = this.getResourcePool(pool, resourceId);
     if (!resourcePool) {
       throw new Error('No resource pool found');
     }

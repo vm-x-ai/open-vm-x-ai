@@ -72,6 +72,17 @@ export class EnvironmentService {
     return environment;
   }
 
+  public async getByIds(
+    environmentIds: string[]
+  ): Promise<EnvironmentEntity[]> {
+    if (environmentIds.length === 0) return [];
+    return await this.db.reader
+      .selectFrom('environments')
+      .selectAll('environments')
+      .where('environmentId', 'in', environmentIds)
+      .execute();
+  }
+
   public async create(
     workspaceId: string,
     payload: CreateEnvironmentDto,

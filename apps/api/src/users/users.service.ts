@@ -25,7 +25,7 @@ export class UsersService {
     return users.map(({ passwordHash, ...user }) => user);
   }
 
-  public async get(id: string): Promise<FullUserEntity | undefined> {
+  public async getById(id: string): Promise<FullUserEntity | undefined> {
     const user = await this.cache.wrap(this.getUserCacheKey(id), () =>
       this.db.reader
         .selectFrom('users')
@@ -34,6 +34,16 @@ export class UsersService {
         .executeTakeFirst()
     );
     return user;
+  }
+
+  public async getByIds(ids: string[]): Promise<FullUserEntity[]> {
+    if (ids.length === 0) return [];
+    const users = await this.db.reader
+      .selectFrom('users')
+      .selectAll()
+      .where('id', 'in', ids)
+      .execute();
+    return users.map(({ passwordHash, ...user }) => user);
   }
 
   public async getByUsername(

@@ -252,7 +252,7 @@ export class CompletionBatchQueueService {
   private getItemMemberId(item: CompletionBatchItemEntity) {
     return `${item.workspaceId}|${item.environmentId}|${item.batchId}|${
       item.itemId
-    }|${item.resource}|${new Date(item.createdAt).getTime()}|${
+    }|${item.resourceId}|${new Date(item.createdAt).getTime()}|${
       item.estimatedPromptTokens
     }`;
   }
@@ -330,7 +330,7 @@ export class CompletionBatchQueueService {
     >((acc, item) => {
       return {
         ...acc,
-        [item.resource]: [...(acc[item.resource] ?? []), item],
+        [item.resourceId]: [...(acc[item.resourceId] ?? []), item],
       };
     }, {});
 
@@ -369,7 +369,7 @@ export class CompletionBatchQueueService {
               item.environmentId,
               batch.batchId,
               item.itemId,
-              item.resource
+              item.resourceId
             );
             await this.redis.client
               .multi()
@@ -597,7 +597,7 @@ export class CompletionBatchQueueService {
       this.aiResourceService.getById({
         workspaceId,
         environmentId,
-        resource: resourceId,
+        resourceId,
         includesUsers: false,
       }),
       this.getBatch(workspaceId, environmentId, batchId),
@@ -884,9 +884,9 @@ export class CompletionBatchQueueService {
       item.environmentId,
       item.batchId,
       item.itemId,
-      item.resource
+      item.resourceId
     );
-    const processingQueue = this.processingQueueKey(baseKey, item.resource);
+    const processingQueue = this.processingQueueKey(baseKey, item.resourceId);
     const globalProcessingQueue = this.globalProcessingQueueKey();
     const batchKey = this.batchKey(baseKey, item.batchId);
 
@@ -934,7 +934,7 @@ export class CompletionBatchQueueService {
   ) {
     const timestamp = Date.now() + delay;
     const baseKey = this.baseKey(item.workspaceId, item.environmentId);
-    const processingKey = this.processingQueueKey(baseKey, item.resource);
+    const processingKey = this.processingQueueKey(baseKey, item.resourceId);
     const globalProcessingKey = this.globalProcessingQueueKey();
     const queueMember = this.getItemMemberId(item);
 

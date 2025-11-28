@@ -14,7 +14,7 @@ export const migration: Migration = {
       .addColumn('status', sql`COMPLETION_BATCH_REQUEST_STATUS`, (col) =>
         col.notNull()
       )
-      .addColumn('resource', 'text', (col) => col.notNull())
+      .addColumn('resource_id', 'uuid', (col) => col.notNull())
       .addColumn('request', 'jsonb', (col) => col.notNull())
       .addColumn('response', 'jsonb')
       .addColumn('error_message', 'text')
@@ -65,9 +65,9 @@ export const migration: Migration = {
       .execute();
 
     await db.schema
-      .createIndex('idx_completion_batch_items_resource')
+      .createIndex('idx_completion_batch_items_resource_id')
       .on('completion_batch_items')
-      .column('resource')
+      .column('resource_id')
       .execute();
 
     await db.schema
@@ -91,7 +91,7 @@ export const migration: Migration = {
     await db.schema
       .dropIndex('idx_completion_batch_items_workspace_id_environment_id')
       .execute();
-    await db.schema.dropIndex('idx_completion_batch_items_resource').execute();
+    await db.schema.dropIndex('idx_completion_batch_items_resource_id').execute();
     await db.schema;
     await db.schema.dropIndex('idx_completion_batch_items_batch_id').execute();
     await db.schema.dropIndex('idx_completion_batch_items_status').execute();

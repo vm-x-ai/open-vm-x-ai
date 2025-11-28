@@ -7,6 +7,7 @@ import NextBreadcrumbs from '../NextBreadcrumbs';
 import {
   EnvironmentEntity,
   getAiConnectionById,
+  getAiResourceById,
   getApiKeyById,
   WorkspaceEntity,
 } from '@/clients/api';
@@ -64,6 +65,17 @@ export default function Breadcrumbs({
           });
 
           return `Role [${response.data?.name}]`;
+        },
+        resourceId: async () => {
+          const response = await getAiResourceById({
+            path: {
+              workspaceId: workspace?.workspaceId ?? '',
+              environmentId: environment?.environmentId ?? '',
+              resourceId: params?.resourceId as string,
+            },
+          });
+
+          return `AI Resource [${response.data?.name}]`;
         },
       };
       return resolverMap[param ?? '']?.() ?? null;

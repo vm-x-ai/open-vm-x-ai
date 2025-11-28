@@ -19,7 +19,7 @@ export interface PriorizationStrategy {
     pool: PoolDefinitionEntity,
     requestTime: Date,
     requestTokens: number,
-    resource: string,
+    resourceId: string,
     connection: AIConnectionEntity,
     allocation?: PoolWorkloadAllocation
   ): Promise<GateOutput>;

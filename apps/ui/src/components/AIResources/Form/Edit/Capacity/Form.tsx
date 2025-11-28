@@ -40,7 +40,7 @@ export default function AIResourceCapacityEditForm({
     pathParams: {
       workspaceId,
       environmentId,
-      resourceName: data.resource,
+      resourceId: data.resourceId,
     },
   });
 
@@ -67,7 +67,7 @@ export default function AIResourceCapacityEditForm({
       )}
       <Grid size={12}>
         <Typography variant="h6">
-          AI Resource Capacity - {data.resource}
+          AI Resource Capacity - {data.name}
         </Typography>
         <Divider />
         <Typography variant="caption">

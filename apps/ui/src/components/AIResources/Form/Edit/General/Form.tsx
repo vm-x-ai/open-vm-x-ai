@@ -58,7 +58,7 @@ export default function AIResourceGeneralEditForm({
     pathParams: {
       workspaceId,
       environmentId,
-      resourceName: data.resource,
+      resourceId: data.resourceId,
     },
   });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -78,7 +78,7 @@ export default function AIResourceGeneralEditForm({
   } = useForm<FormSchema>({
     resolver: zodResolver(schema),
     defaultValues: {
-      resource: data.resource,
+      name: data.name ?? '',
       description: data.description ?? '',
       model: data.model,
     },
@@ -126,7 +126,7 @@ export default function AIResourceGeneralEditForm({
               <Grid container size={12}>
                 <Grid size={12}>
                   <Controller
-                    name="resource"
+                    name="name"
                     control={control}
                     render={({ field }) => (
                       <TextField
@@ -135,10 +135,8 @@ export default function AIResourceGeneralEditForm({
                         margin="normal"
                         fullWidth
                         label="Resource Name"
-                        disabled
                         style={{ marginBottom: '12px' }}
-                        error={!!errors.resource?.message}
-                        helperText="You cannot change the resource name after creation."
+                        error={!!errors.name?.message}
                       />
                     )}
                   />

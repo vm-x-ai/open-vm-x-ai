@@ -39,7 +39,7 @@ export class ResourceRoutingService {
 
     this.logger.info(
       {
-        resource: resourceConfig.resource,
+        resourceId: resourceConfig.resourceId,
       },
       `Evaluating routing conditions for resource`
     );
@@ -74,7 +74,7 @@ export class ResourceRoutingService {
             await this.completionMetricsService.getErrorRate(
               workspaceId,
               environmentId,
-              resourceConfig.resource,
+              resourceConfig.resourceId,
               aiConnectionId || resourceConfig.model.connectionId,
               model || resourceConfig.model.model,
               window,

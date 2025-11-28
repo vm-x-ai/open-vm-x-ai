@@ -4,7 +4,7 @@ export const useRoutePattern = () => {
   const pathname = usePathname();
   const routePatterns = [
     '/[workspaceId]/[environmentId]/ai-connections/edit/[connectionId]',
-    '/[workspaceId]/[environmentId]/ai-resources/edit/[resourceName]',
+    '/[workspaceId]/[environmentId]/ai-resources/edit/[resourceId]',
     '/[workspaceId]/[environmentId]/security/auth/role/edit/[roleId]',
     '/[workspaceId]/[environmentId]/insights/benchmark/view/[timestamp]',
     '/[workspaceId]/[environmentId]',

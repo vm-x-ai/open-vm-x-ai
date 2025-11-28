@@ -7,10 +7,15 @@ import { CompletionUsageDto } from './dto/completion-usage.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PinoLogger } from 'nestjs-pino';
 import {
+  CompletionDimensions,
   CompletionUsageQueryDto,
   GranularityUnit,
 } from './dto/completion-query.dto';
-import { CompletionUsageQueryResultDto } from './dto/completion-query-result.dto';
+import {
+  CompletionUsageDimensionValueDto,
+  CompletionUsageQueryRawResultDto,
+  CompletionUsageQueryResultDto,
+} from './dto/completion-query-result.dto';
 import {
   endOfDay,
   endOfHour,
@@ -23,11 +28,23 @@ import {
   startOfSecond,
 } from 'date-fns';
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
+import assert from 'node:assert';
+import { AIConnectionService } from '../../ai-connection/ai-connection.service';
+import { AIProviderService } from '../../ai-provider/ai-provider.service';
+import { ApiKeyService } from '../../api-key/api-key.service';
+import { EnvironmentService } from '../../environment/environment.service';
+import { WorkspaceService } from '../../workspace/workspace.service';
+import { AIResourceService } from '../../ai-resource/ai-resource.service';
+import { UsersService } from '../../users/users.service';
 
 type BufferItem = {
   payload: CompletionUsageDto;
   attempts?: number;
 };
+
+interface GetByIdsService<T> {
+  getByIds(ids: string[]): Promise<T[]>;
+}
 
 @Injectable()
 export class CompletionUsageService {
@@ -37,37 +54,177 @@ export class CompletionUsageService {
   constructor(
     private readonly logger: PinoLogger,
     @Inject(COMPLETION_USAGE_PROVIDER)
-    private readonly completionUsageProvider: CompletionUsageProvider
+    private readonly completionUsageProvider: CompletionUsageProvider,
+    private readonly workspaceService: WorkspaceService,
+    private readonly environmentService: EnvironmentService,
+    private readonly userService: UsersService,
+    private readonly aiResourceService: AIResourceService,
+    private readonly aiConnectionService: AIConnectionService,
+    private readonly aiProviderService: AIProviderService,
+    private readonly apiKeyService: ApiKeyService
   ) {}
 
   async query(
     query: CompletionUsageQueryDto
   ): Promise<CompletionUsageQueryResultDto[]> {
     const providerResults = await this.completionUsageProvider.query(query);
+    let results: CompletionUsageQueryRawResultDto[] = providerResults;
     if (query.granularity === GranularityUnit.DAY) {
-      return this.normalizeResultByDay(query, providerResults);
+      results = this.normalizeResultByDay(query, providerResults);
     } else if (query.granularity === GranularityUnit.WEEK) {
-      return this.normalizeResultByWeek(query, providerResults);
+      results = this.normalizeResultByWeek(query, providerResults);
     } else if (query.granularity === GranularityUnit.MONTH) {
-      return this.normalizeResultByMonth(query, providerResults);
+      results = this.normalizeResultByMonth(query, providerResults);
     } else if (query.granularity === GranularityUnit.YEAR) {
-      return this.normalizeResultByYear(query, providerResults);
+      results = this.normalizeResultByYear(query, providerResults);
     } else if (query.granularity === GranularityUnit.HOUR) {
-      return this.normalizeResultByHour(query, providerResults);
+      results = this.normalizeResultByHour(query, providerResults);
     } else if (query.granularity === GranularityUnit.MINUTE) {
-      return this.normalizeResultByMinute(query, providerResults);
-    } else if (query.granularity.startsWith('second')) {
-      return this.normalizeResultBySecond(query, providerResults);
+      results = this.normalizeResultByMinute(query, providerResults);
+    } else if (query.granularity?.startsWith('second')) {
+      results = this.normalizeResultBySecond(query, providerResults);
     }
 
-    return providerResults;
+    const resolvers = await Promise.all([
+      this.getDimensionValueResult(
+        query,
+        CompletionDimensions.WORKSPACE_ID,
+        providerResults,
+        this.workspaceService,
+        'workspaceId',
+        'Workspace',
+        (workspace) => workspace.name
+      ),
+      this.getDimensionValueResult(
+        query,
+        CompletionDimensions.ENVIRONMENT_ID,
+        providerResults,
+        this.environmentService,
+        'environmentId',
+        'Environment',
+        (environment) => environment.name
+      ),
+      this.getDimensionValueResult(
+        query,
+        CompletionDimensions.CONNECTION_ID,
+        providerResults,
+        this.aiConnectionService,
+        'connectionId',
+        'Connection',
+        (connection) => connection.name
+      ),
+      this.getDimensionValueResult(
+        query,
+        CompletionDimensions.PROVIDER,
+        providerResults,
+        this.aiProviderService,
+        (provider) => provider.provider.id,
+        'Provider',
+        (provider) => provider.provider.name
+      ),
+      this.getDimensionValueResult(
+        query,
+        CompletionDimensions.API_KEY_ID,
+        providerResults,
+        this.apiKeyService,
+        'apiKeyId',
+        'API Key',
+        (apiKey) => apiKey.apiKeyId
+      ),
+      this.getDimensionValueResult(
+        query,
+        CompletionDimensions.RESOURCE_ID,
+        providerResults,
+        this.aiResourceService,
+        'resourceId',
+        'Resource',
+        (resource) => resource.name
+      ),
+      this.getDimensionValueResult(
+        query,
+        CompletionDimensions.USER_ID,
+        providerResults,
+        this.userService,
+        'id',
+        'User',
+        (user) => user.name
+      ),
+    ]);
+
+    const combineResolvers = (
+      row: CompletionUsageQueryRawResultDto
+    ): CompletionUsageQueryResultDto => {
+      const values = resolvers
+        .map((resolver) => resolver(row))
+        .filter(Boolean)
+        .reduce((acc, value) => {
+          assert(value, 'Value is required');
+          Object.entries(value).forEach(([key, value]) => {
+            acc[key] = value;
+          });
+          return acc;
+        }, {} as Record<string, CompletionUsageDimensionValueDto | undefined>);
+
+      return {
+        ...row,
+        ...values,
+      } as CompletionUsageQueryResultDto;
+    };
+
+    return results.map<CompletionUsageQueryResultDto>(combineResolvers);
+  }
+
+  private async getDimensionValueResult<T>(
+    query: CompletionUsageQueryDto,
+    dimension: CompletionDimensions,
+    result: CompletionUsageQueryRawResultDto[],
+    service: GetByIdsService<T>,
+    idKey: keyof T | ((entity: T) => string),
+    label: string,
+    displayName: (entity: T) => string
+  ): Promise<
+    (
+      row: CompletionUsageQueryRawResultDto
+    ) => Record<string, CompletionUsageDimensionValueDto | undefined>
+  > {
+    const uniqValues = query.dimensions.includes(dimension)
+      ? [
+          ...new Set(
+            result
+              .map((result) => result[dimension])
+              .filter(Boolean) as string[]
+          ),
+        ]
+      : [];
+    const values = await service.getByIds(uniqValues);
+    const valuesMap = new Map<string, T>(
+      values.map((item) => [
+        typeof idKey === 'function' ? idKey(item) : (item[idKey] as string),
+        item,
+      ])
+    );
+
+    return function (row: CompletionUsageQueryRawResultDto) {
+      const entity = valuesMap.get(row[dimension] as string);
+      return {
+        [dimension]: row[dimension]
+          ? ({
+              value: row[dimension],
+              label,
+              displayName: entity
+                ? displayName(entity)
+                : `${row[dimension]} (Deleted)`,
+            } as CompletionUsageDimensionValueDto)
+          : undefined,
+      };
+    };
   }
 
   private normalizeResultByDay(
     query: CompletionUsageQueryDto,
-    result: CompletionUsageQueryResultDto[]
+    result: CompletionUsageQueryRawResultDto[]
   ) {
-    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const normalizedResult: CompletionUsageQueryRawResultDto[] = [];
 
     const dateMap = result.reduce((acc, row) => {
       const date = new Date(row.time);
@@ -78,7 +235,7 @@ export class CompletionUsageService {
 
       acc[key].push(row);
       return acc;
-    }, {} as Record<string, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<string, CompletionUsageQueryRawResultDto[]>);
     const startDate = startOfDay(
       toZonedTime(new Date(query.filter.dateRange.start), 'UTC')
     ).getTime();
@@ -97,7 +254,7 @@ export class CompletionUsageService {
           }))
         );
       } else {
-        const item: CompletionUsageQueryResultDto = {
+        const item: CompletionUsageQueryRawResultDto = {
           time: key,
         };
 
@@ -111,9 +268,9 @@ export class CompletionUsageService {
 
   private normalizeResultByWeek(
     query: CompletionUsageQueryDto,
-    result: CompletionUsageQueryResultDto[]
+    result: CompletionUsageQueryRawResultDto[]
   ) {
-    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const normalizedResult: CompletionUsageQueryRawResultDto[] = [];
     const weekMap = result.reduce((acc, row) => {
       const date = new Date(row.time);
       const week = format(date, 'RRRR-ww');
@@ -122,7 +279,7 @@ export class CompletionUsageService {
       }
       acc[week].push(row);
       return acc;
-    }, {} as Record<string, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<string, CompletionUsageQueryRawResultDto[]>);
 
     const startWeek = parseInt(
       format(new Date(query.filter.dateRange.start), 'RRRRww')
@@ -147,7 +304,7 @@ export class CompletionUsageService {
           }))
         );
       } else {
-        const item: CompletionUsageQueryResultDto = {
+        const item: CompletionUsageQueryRawResultDto = {
           time: week,
         };
 
@@ -166,9 +323,9 @@ export class CompletionUsageService {
 
   private normalizeResultByMonth(
     query: CompletionUsageQueryDto,
-    result: CompletionUsageQueryResultDto[]
+    result: CompletionUsageQueryRawResultDto[]
   ) {
-    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const normalizedResult: CompletionUsageQueryRawResultDto[] = [];
     const monthMap = result.reduce((acc, row) => {
       const month = formatInTimeZone(row.time, 'UTC', 'yyyy-MM');
       if (!acc[month]) {
@@ -176,7 +333,7 @@ export class CompletionUsageService {
       }
       acc[month].push(row);
       return acc;
-    }, {} as Record<string, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<string, CompletionUsageQueryRawResultDto[]>);
 
     const startMonth = parseInt(
       formatInTimeZone(new Date(query.filter.dateRange.start), 'UTC', 'yyyyMM')
@@ -202,7 +359,7 @@ export class CompletionUsageService {
           }))
         );
       } else {
-        const item: CompletionUsageQueryResultDto = {
+        const item: CompletionUsageQueryRawResultDto = {
           time: month,
         };
 
@@ -221,9 +378,9 @@ export class CompletionUsageService {
 
   private normalizeResultByYear(
     query: CompletionUsageQueryDto,
-    result: CompletionUsageQueryResultDto[]
+    result: CompletionUsageQueryRawResultDto[]
   ) {
-    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const normalizedResult: CompletionUsageQueryRawResultDto[] = [];
     const yearMap = result.reduce((acc, row) => {
       const date = new Date(row.time);
       const year = date.getUTCFullYear();
@@ -232,7 +389,7 @@ export class CompletionUsageService {
       }
       acc[year].push(row);
       return acc;
-    }, {} as Record<number, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<number, CompletionUsageQueryRawResultDto[]>);
 
     const startYear = new Date(query.filter.dateRange.start).getUTCFullYear();
     const endYear = new Date(query.filter.dateRange.end).getUTCFullYear();
@@ -247,7 +404,7 @@ export class CompletionUsageService {
           }))
         );
       } else {
-        const item: CompletionUsageQueryResultDto = {
+        const item: CompletionUsageQueryRawResultDto = {
           time: currentYear.toString(),
         };
 
@@ -261,9 +418,9 @@ export class CompletionUsageService {
 
   private normalizeResultByHour(
     query: CompletionUsageQueryDto,
-    result: CompletionUsageQueryResultDto[]
+    result: CompletionUsageQueryRawResultDto[]
   ) {
-    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const normalizedResult: CompletionUsageQueryRawResultDto[] = [];
     const dateMap = result.reduce((acc, row) => {
       const date = new Date(row.time).getTime();
       if (!acc[date]) {
@@ -272,7 +429,7 @@ export class CompletionUsageService {
 
       acc[date].push(row);
       return acc;
-    }, {} as Record<number, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<number, CompletionUsageQueryRawResultDto[]>);
 
     const startDate = startOfHour(
       new Date(query.filter.dateRange.start)
@@ -295,7 +452,7 @@ export class CompletionUsageService {
           }))
         );
       } else {
-        const item: CompletionUsageQueryResultDto = {
+        const item: CompletionUsageQueryRawResultDto = {
           time,
         };
 
@@ -309,9 +466,9 @@ export class CompletionUsageService {
 
   private normalizeResultByMinute(
     query: CompletionUsageQueryDto,
-    result: CompletionUsageQueryResultDto[]
+    result: CompletionUsageQueryRawResultDto[]
   ) {
-    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const normalizedResult: CompletionUsageQueryRawResultDto[] = [];
     const dateMap = result.reduce((acc, row) => {
       const date = new Date(row.time).getTime();
       if (!acc[date]) {
@@ -320,7 +477,7 @@ export class CompletionUsageService {
 
       acc[date].push(row);
       return acc;
-    }, {} as Record<number, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<number, CompletionUsageQueryRawResultDto[]>);
     const startDate = startOfMinute(new Date(query.filter.dateRange.start));
     const endDate = endOfMinute(new Date(query.filter.dateRange.end)).getTime();
 
@@ -340,7 +497,7 @@ export class CompletionUsageService {
           }))
         );
       } else {
-        const item: CompletionUsageQueryResultDto = {
+        const item: CompletionUsageQueryRawResultDto = {
           time,
         };
 
@@ -354,13 +511,14 @@ export class CompletionUsageService {
 
   private normalizeResultBySecond(
     query: CompletionUsageQueryDto,
-    result: CompletionUsageQueryResultDto[]
+    result: CompletionUsageQueryRawResultDto[]
   ) {
+    assert(query.granularity, 'Granularity is required');
     const secondInterval = query.granularity.startsWith('second_')
       ? parseInt(query.granularity.split('_')[1])
       : 1;
 
-    const normalizedResult: CompletionUsageQueryResultDto[] = [];
+    const normalizedResult: CompletionUsageQueryRawResultDto[] = [];
     const dateMap = result.reduce((acc, row) => {
       const date = new Date(row.time).getTime();
 
@@ -370,7 +528,7 @@ export class CompletionUsageService {
 
       acc[date].push(row);
       return acc;
-    }, {} as Record<number, CompletionUsageQueryResultDto[]>);
+    }, {} as Record<number, CompletionUsageQueryRawResultDto[]>);
 
     let startDate = startOfSecond(
       new Date(query.filter.dateRange.start)
@@ -402,7 +560,7 @@ export class CompletionUsageService {
           }))
         );
       } else {
-        const item: CompletionUsageQueryResultDto = {
+        const item: CompletionUsageQueryRawResultDto = {
           time,
         };
 

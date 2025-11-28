@@ -127,11 +127,12 @@ export class CompletionUsageDto {
 
   @ApiProperty({
     description: 'AI Resource Identifier',
-    example: 'resource-id-string',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
   @IsOptional()
-  @IsString()
-  resource?: string | null = null;
+  @IsUUID('4')
+  resourceId?: string | null = null;
 
   @ApiProperty({
     description: 'Provider name',
@@ -204,4 +205,13 @@ export class CompletionUsageDto {
   @IsString()
   @IsNotEmpty()
   sourceIp: string;
+
+  @ApiProperty({
+    description: 'User Identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
+  })
+  @IsOptional()
+  @IsUUID('4')
+  userId?: string | null = null;
 }

@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsInt,
   IsNotEmpty,
@@ -6,9 +7,39 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 
-export class CompletionUsageQueryResultDto {
+export class CompletionUsageDimensionValueDto {
+  @ApiProperty({
+    type: 'string',
+    description: 'Dimension value',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsString()
+  @IsNotEmpty()
+  value: string;
+
+  @ApiProperty({
+    type: 'string',
+    description: 'Dimension label',
+    example: 'Workspace ID',
+  })
+  @IsString()
+  @IsNotEmpty()
+  label: string;
+
+  @ApiProperty({
+    type: 'string',
+    description: 'Display name of the dimension',
+    example: 'my-workspace name',
+  })
+  @IsString()
+  @IsNotEmpty()
+  displayName: string;
+}
+
+export class CompletionUsageQueryRawResultDto {
   @ApiProperty({
     type: 'string',
     description: 'Time bucket truncated to the granularity unit',
@@ -187,14 +218,15 @@ export class CompletionUsageQueryResultDto {
 
   @ApiProperty({
     description: 'AI Resource Identifier',
-    example: 'resource-id-string',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
     nullable: true,
     required: false,
     type: 'string',
   })
   @IsOptional()
-  @IsString()
-  resource?: string | null;
+  @IsUUID('4')
+  resourceId?: string | null;
 
   @ApiProperty({
     description: 'Provider name',
@@ -295,4 +327,119 @@ export class CompletionUsageQueryResultDto {
   @IsString()
   @IsOptional()
   sourceIp?: string | null;
+
+  @ApiProperty({
+    description: 'User Identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: 'string',
+  })
+  @IsOptional()
+  @IsUUID('4')
+  userId?: string | null;
+}
+
+export class CompletionUsageQueryResultDto extends OmitType(
+  CompletionUsageQueryRawResultDto,
+  [
+    'workspaceId',
+    'environmentId',
+    'connectionId',
+    'resourceId',
+    'provider',
+    'apiKeyId',
+    'userId',
+  ]
+) {
+  @ApiProperty({
+    description: 'Workspace Identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: CompletionUsageDimensionValueDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompletionUsageDimensionValueDto)
+  workspaceId?: CompletionUsageDimensionValueDto | null;
+
+  @ApiProperty({
+    description: 'Environment Identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: CompletionUsageDimensionValueDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompletionUsageDimensionValueDto)
+  environmentId?: CompletionUsageDimensionValueDto | null;
+
+  @ApiProperty({
+    description: 'AI Connection Identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: CompletionUsageDimensionValueDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompletionUsageDimensionValueDto)
+  connectionId?: CompletionUsageDimensionValueDto | null;
+
+  @ApiProperty({
+    description: 'AI Resource Identifier',
+    example: 'resource-id-string',
+    nullable: true,
+    required: false,
+    type: CompletionUsageDimensionValueDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompletionUsageDimensionValueDto)
+  resourceId?: CompletionUsageDimensionValueDto | null;
+
+  @ApiProperty({
+    description: 'Provider name',
+    example: 'openai',
+    nullable: true,
+    required: false,
+    type: CompletionUsageDimensionValueDto,
+  })
+  @IsOptional()
+  @IsString()
+  @ValidateNested()
+  @Type(() => CompletionUsageDimensionValueDto)
+  provider?: CompletionUsageDimensionValueDto | null;
+
+  @ApiProperty({
+    description: 'API key identifier used for the request',
+    example: 'api_key_123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: CompletionUsageDimensionValueDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompletionUsageDimensionValueDto)
+  apiKeyId?: CompletionUsageDimensionValueDto | null;
+
+  @ApiProperty({
+    description: 'User Identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
+    nullable: true,
+    required: false,
+    type: CompletionUsageDimensionValueDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompletionUsageDimensionValueDto)
+  userId?: CompletionUsageDimensionValueDto | null;
 }

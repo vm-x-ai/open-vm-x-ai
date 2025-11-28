@@ -888,7 +888,7 @@ export type AiResourceEntity = {
     /**
      * Resource unique identifier
      */
-    resource: string;
+    resourceId: string;
     /**
      * Workspace ID associated with the resource
      */
@@ -897,6 +897,10 @@ export type AiResourceEntity = {
      * Environment ID associated with the resource
      */
     environmentId: string;
+    /**
+     * Name of the AI resource
+     */
+    name: string;
     /**
      * Description of the AI resource
      */
@@ -957,9 +961,9 @@ export type AiResourceEntity = {
 
 export type CreateAiResourceDto = {
     /**
-     * Resource unique identifier
+     * Name of the AI resource
      */
-    resource: string;
+    name: string;
     /**
      * Description of the AI resource
      */
@@ -1000,9 +1004,9 @@ export type CreateAiResourceDto = {
 
 export type UpdateAiResourceDto = {
     /**
-     * Resource unique identifier
+     * Name of the AI resource
      */
-    resource?: string;
+    name?: string;
     /**
      * Description of the AI resource
      */
@@ -1039,75 +1043,6 @@ export type UpdateAiResourceDto = {
      * The API keys to assign to the AI resource
      */
     assignApiKeys?: Array<string> | null;
-};
-
-export type PoolDefinitionEntry = {
-    /**
-     * The name of the pool entry
-     */
-    name: string;
-    /**
-     * The rank or priority order of the entry
-     */
-    rank: number;
-    /**
-     * Minimum % of the AI connection capacity that must be reserved for this entry
-     */
-    minReservation: number;
-    /**
-     * Maximum % of the AI connection capacity that can be reserved for this entry
-     */
-    maxReservation: number;
-    /**
-     * Resource identifiers included in this entry
-     */
-    resources: Array<string>;
-};
-
-export type PoolDefinitionEntity = {
-    /**
-     * Workspace UUID
-     */
-    workspaceId: string;
-    /**
-     * Environment UUID
-     */
-    environmentId: string;
-    /**
-     * List of pool definition entries
-     */
-    definition: Array<PoolDefinitionEntry>;
-    /**
-     * Timestamp when the pool definition was created
-     */
-    createdAt: string;
-    /**
-     * Timestamp when the pool definition was last updated
-     */
-    updatedAt: string;
-    /**
-     * User ID who created the pool definition
-     */
-    createdBy: string;
-    /**
-     * User who created the pool definition
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * User ID who last updated the pool definition
-     */
-    updatedBy: string;
-    /**
-     * User who last updated the pool definition
-     */
-    updatedByUser?: UserRelationDto | null;
-};
-
-export type UpsertPoolDefinitionDto = {
-    /**
-     * List of pool definition entries
-     */
-    definition: Array<PoolDefinitionEntry>;
 };
 
 export type ApiKeyEntity = {
@@ -1318,6 +1253,75 @@ export type UpdateApiKeyDto = {
     capacity?: Array<CapacityEntity> | null;
 };
 
+export type PoolDefinitionEntry = {
+    /**
+     * The name of the pool entry
+     */
+    name: string;
+    /**
+     * The rank or priority order of the entry
+     */
+    rank: number;
+    /**
+     * Minimum % of the AI connection capacity that must be reserved for this entry
+     */
+    minReservation: number;
+    /**
+     * Maximum % of the AI connection capacity that can be reserved for this entry
+     */
+    maxReservation: number;
+    /**
+     * Resource identifiers included in this entry
+     */
+    resources: Array<string>;
+};
+
+export type PoolDefinitionEntity = {
+    /**
+     * Workspace UUID
+     */
+    workspaceId: string;
+    /**
+     * Environment UUID
+     */
+    environmentId: string;
+    /**
+     * List of pool definition entries
+     */
+    definition: Array<PoolDefinitionEntry>;
+    /**
+     * Timestamp when the pool definition was created
+     */
+    createdAt: string;
+    /**
+     * Timestamp when the pool definition was last updated
+     */
+    updatedAt: string;
+    /**
+     * User ID who created the pool definition
+     */
+    createdBy: string;
+    /**
+     * User who created the pool definition
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * User ID who last updated the pool definition
+     */
+    updatedBy: string;
+    /**
+     * User who last updated the pool definition
+     */
+    updatedByUser?: UserRelationDto | null;
+};
+
+export type UpsertPoolDefinitionDto = {
+    /**
+     * List of pool definition entries
+     */
+    definition: Array<PoolDefinitionEntry>;
+};
+
 export type MetricDto = {
     /**
      * The error rate of the metric
@@ -1438,7 +1442,7 @@ export type CompletionAuditEntity = {
     /**
      * The associated resource of the completion audit event (if applicable)
      */
-    resource?: string | null;
+    resourceId?: string | null;
     /**
      * The AI Provider of the completion audit event (if applicable)
      */
@@ -1463,6 +1467,10 @@ export type CompletionAuditEntity = {
      * API Key ID related to the completion audit event (if applicable)
      */
     apiKeyId?: string | null;
+    /**
+     * The user ID related to the completion audit event (if applicable)
+     */
+    userId?: string | null;
     /**
      * The request payload of the completion audit event (openai chat completion request payload)
      */
@@ -1513,7 +1521,8 @@ export enum CompletionUsageDimensionOperator {
     GT = 'gt',
     GTE = 'gte',
     LT = 'lt',
-    LTE = 'lte'
+    LTE = 'lte',
+    IS_NOT = 'is_not'
 }
 
 export type CompletionUsageDimensionFilterDto = {
@@ -1524,7 +1533,7 @@ export type CompletionUsageDimensionFilterDto = {
     /**
      * Value or values to compare against
      */
-    value: string | Array<string>;
+    value?: string | Array<string> | unknown | null;
 };
 
 /**
@@ -1551,7 +1560,7 @@ export enum CompletionDimensions {
     WORKSPACE_ID = 'workspaceId',
     ENVIRONMENT_ID = 'environmentId',
     CONNECTION_ID = 'connectionId',
-    RESOURCE = 'resource',
+    RESOURCE_ID = 'resourceId',
     PROVIDER = 'provider',
     MODEL = 'model',
     REQUEST_ID = 'requestId',
@@ -1560,7 +1569,8 @@ export enum CompletionDimensions {
     STATUS_CODE = 'statusCode',
     CORRELATION_ID = 'correlationId',
     API_KEY_ID = 'apiKeyId',
-    SOURCE_IP = 'sourceIp'
+    SOURCE_IP = 'sourceIp',
+    USER_ID = 'userId'
 }
 
 export type CompletionUsageQueryDateRangeDto = {
@@ -1582,11 +1592,12 @@ export type CompletionUsageQueryFilterDto = {
     /**
      * Dimensions and their filters
      */
-    dimensions: {
+    fields: {
+        time?: CompletionUsageDimensionFilterDto;
         workspaceId?: CompletionUsageDimensionFilterDto;
         environmentId?: CompletionUsageDimensionFilterDto;
         connectionId?: CompletionUsageDimensionFilterDto;
-        resource?: CompletionUsageDimensionFilterDto;
+        resourceId?: CompletionUsageDimensionFilterDto;
         provider?: CompletionUsageDimensionFilterDto;
         model?: CompletionUsageDimensionFilterDto;
         requestId?: CompletionUsageDimensionFilterDto;
@@ -1596,6 +1607,19 @@ export type CompletionUsageQueryFilterDto = {
         correlationId?: CompletionUsageDimensionFilterDto;
         apiKeyId?: CompletionUsageDimensionFilterDto;
         sourceIp?: CompletionUsageDimensionFilterDto;
+        userId?: CompletionUsageDimensionFilterDto;
+        promptTokens?: CompletionUsageDimensionFilterDto;
+        completionTokens?: CompletionUsageDimensionFilterDto;
+        totalTokens?: CompletionUsageDimensionFilterDto;
+        tokensPerSecond?: CompletionUsageDimensionFilterDto;
+        timeToFirstToken?: CompletionUsageDimensionFilterDto;
+        requestCount?: CompletionUsageDimensionFilterDto;
+        errorCount?: CompletionUsageDimensionFilterDto;
+        successCount?: CompletionUsageDimensionFilterDto;
+        requestDuration?: CompletionUsageDimensionFilterDto;
+        providerDuration?: CompletionUsageDimensionFilterDto;
+        gateDuration?: CompletionUsageDimensionFilterDto;
+        routingDuration?: CompletionUsageDimensionFilterDto;
     };
 };
 
@@ -1603,7 +1627,7 @@ export type CompletionUsageQueryDto = {
     /**
      * Granularity unit for aggregation (time bucket size)
      */
-    granularity: GranularityUnit;
+    granularity?: GranularityUnit | null;
     /**
      * Time zone to use for the query (defaults to UTC)
      */
@@ -1632,7 +1656,7 @@ export type CompletionUsageQueryDto = {
     /**
      * Maximum number of records to return
      */
-    limit: number;
+    limit?: number | null;
     /**
      * Filter for the query
      */
@@ -1641,10 +1665,11 @@ export type CompletionUsageQueryDto = {
      * Order by the query
      */
     orderBy?: {
+        time?: 'asc' | 'desc';
         workspaceId?: 'asc' | 'desc';
         environmentId?: 'asc' | 'desc';
         connectionId?: 'asc' | 'desc';
-        resource?: 'asc' | 'desc';
+        resourceId?: 'asc' | 'desc';
         provider?: 'asc' | 'desc';
         model?: 'asc' | 'desc';
         requestId?: 'asc' | 'desc';
@@ -1654,7 +1679,35 @@ export type CompletionUsageQueryDto = {
         correlationId?: 'asc' | 'desc';
         apiKeyId?: 'asc' | 'desc';
         sourceIp?: 'asc' | 'desc';
+        userId?: 'asc' | 'desc';
+        promptTokens?: 'asc' | 'desc';
+        completionTokens?: 'asc' | 'desc';
+        totalTokens?: 'asc' | 'desc';
+        tokensPerSecond?: 'asc' | 'desc';
+        timeToFirstToken?: 'asc' | 'desc';
+        requestCount?: 'asc' | 'desc';
+        errorCount?: 'asc' | 'desc';
+        successCount?: 'asc' | 'desc';
+        requestDuration?: 'asc' | 'desc';
+        providerDuration?: 'asc' | 'desc';
+        gateDuration?: 'asc' | 'desc';
+        routingDuration?: 'asc' | 'desc';
     } | null;
+};
+
+export type CompletionUsageDimensionValueDto = {
+    /**
+     * Dimension value
+     */
+    value: string;
+    /**
+     * Dimension label
+     */
+    label: string;
+    /**
+     * Display name of the dimension
+     */
+    displayName: string;
 };
 
 export type CompletionUsageQueryResultDto = {
@@ -1711,26 +1764,6 @@ export type CompletionUsageQueryResultDto = {
      */
     routingDuration?: number | null;
     /**
-     * Workspace Identifier
-     */
-    workspaceId?: string | null;
-    /**
-     * Environment Identifier
-     */
-    environmentId?: string | null;
-    /**
-     * AI Connection Identifier
-     */
-    connectionId?: string | null;
-    /**
-     * AI Resource Identifier
-     */
-    resource?: string | null;
-    /**
-     * Provider name
-     */
-    provider?: string | null;
-    /**
      * Model name
      */
     model?: string | null;
@@ -1755,20 +1788,44 @@ export type CompletionUsageQueryResultDto = {
      */
     correlationId?: string | null;
     /**
-     * API key identifier used for the request
-     */
-    apiKeyId?: string | null;
-    /**
      * Source IP address of the request
      */
     sourceIp?: string | null;
+    /**
+     * Workspace Identifier
+     */
+    workspaceId?: CompletionUsageDimensionValueDto | null;
+    /**
+     * Environment Identifier
+     */
+    environmentId?: CompletionUsageDimensionValueDto | null;
+    /**
+     * AI Connection Identifier
+     */
+    connectionId?: CompletionUsageDimensionValueDto | null;
+    /**
+     * AI Resource Identifier
+     */
+    resourceId?: CompletionUsageDimensionValueDto | null;
+    /**
+     * Provider name
+     */
+    provider?: CompletionUsageDimensionValueDto | null;
+    /**
+     * API key identifier used for the request
+     */
+    apiKeyId?: CompletionUsageDimensionValueDto | null;
+    /**
+     * User Identifier
+     */
+    userId?: CompletionUsageDimensionValueDto | null;
 };
 
 export type CreateCompletionBatchItemDto = {
     /**
      * The name of the resource this item references
      */
-    resource: string;
+    resourceId: string;
     /**
      * The completion request payload (openai chat completion request payload)
      */
@@ -1947,7 +2004,7 @@ export type CompletionBatchItemRelationDto = {
     /**
      * The name of the resource this item references
      */
-    resource: string;
+    resourceId: string;
     /**
      * The status of the batch item
      */
@@ -2125,7 +2182,7 @@ export type CompletionBatchItemEntity = {
     /**
      * The name of the resource this item references
      */
-    resource: string;
+    resourceId: string;
     /**
      * The status of the batch item
      */
@@ -2905,10 +2962,10 @@ export type DeleteAiResourceData = {
          */
         workspaceId: string;
         environmentId: string;
-        resource: string;
+        resourceId: string;
     };
     query?: never;
-    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resource}';
+    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resourceId}';
 };
 
 export type DeleteAiResourceErrors = {
@@ -2941,7 +2998,7 @@ export type GetAiResourceByIdData = {
         /**
          * The unique identifier of the AI resource
          */
-        resource: string;
+        resourceId: string;
     };
     query?: {
         /**
@@ -2949,7 +3006,7 @@ export type GetAiResourceByIdData = {
          */
         includesUsers?: boolean;
     };
-    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resource}';
+    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resourceId}';
 };
 
 export type GetAiResourceByIdErrors = {
@@ -2981,10 +3038,10 @@ export type UpdateAiResourceData = {
          * The ID of the environment
          */
         environmentId: string;
-        resource: string;
+        resourceId: string;
     };
     query?: never;
-    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resource}';
+    url: '/v1/ai-resource/{workspaceId}/{environmentId}/{resourceId}';
 };
 
 export type UpdateAiResourceErrors = {
@@ -3004,108 +3061,6 @@ export type UpdateAiResourceResponses = {
 };
 
 export type UpdateAiResourceResponse = UpdateAiResourceResponses[keyof UpdateAiResourceResponses];
-
-export type DeletePoolDefinitionData = {
-    body?: never;
-    path: {
-        /**
-         * The ID of the workspace
-         */
-        workspaceId: string;
-        environmentId: string;
-    };
-    query?: never;
-    url: '/v1/pool-definition/{workspaceId}/{environmentId}';
-};
-
-export type DeletePoolDefinitionErrors = {
-    /**
-     * Server Error
-     */
-    500: ServiceError;
-};
-
-export type DeletePoolDefinitionError = DeletePoolDefinitionErrors[keyof DeletePoolDefinitionErrors];
-
-export type DeletePoolDefinitionResponses = {
-    /**
-     * Delete a pool definition
-     */
-    200: unknown;
-};
-
-export type GetPoolDefinitionData = {
-    body?: never;
-    path: {
-        /**
-         * The ID of the workspace
-         */
-        workspaceId: string;
-        /**
-         * The ID of the environment
-         */
-        environmentId: string;
-    };
-    query?: {
-        /**
-         * Whether to include users in the response
-         */
-        includesUsers?: boolean;
-    };
-    url: '/v1/pool-definition/{workspaceId}/{environmentId}';
-};
-
-export type GetPoolDefinitionErrors = {
-    /**
-     * Server Error
-     */
-    500: ServiceError;
-};
-
-export type GetPoolDefinitionError = GetPoolDefinitionErrors[keyof GetPoolDefinitionErrors];
-
-export type GetPoolDefinitionResponses = {
-    /**
-     * Get a pool definition by workspace and environment
-     */
-    200: PoolDefinitionEntity;
-};
-
-export type GetPoolDefinitionResponse = GetPoolDefinitionResponses[keyof GetPoolDefinitionResponses];
-
-export type UpdatePoolDefinitionData = {
-    body: UpsertPoolDefinitionDto;
-    path: {
-        /**
-         * The ID of the workspace
-         */
-        workspaceId: string;
-        /**
-         * The ID of the environment
-         */
-        environmentId: string;
-    };
-    query?: never;
-    url: '/v1/pool-definition/{workspaceId}/{environmentId}';
-};
-
-export type UpdatePoolDefinitionErrors = {
-    /**
-     * Server Error
-     */
-    500: ServiceError;
-};
-
-export type UpdatePoolDefinitionError = UpdatePoolDefinitionErrors[keyof UpdatePoolDefinitionErrors];
-
-export type UpdatePoolDefinitionResponses = {
-    /**
-     * Created/updated a pool definition
-     */
-    200: PoolDefinitionEntity;
-};
-
-export type UpdatePoolDefinitionResponse = UpdatePoolDefinitionResponses[keyof UpdatePoolDefinitionResponses];
 
 export type GetApiKeysData = {
     body?: never;
@@ -3288,6 +3243,108 @@ export type UpdateApiKeyResponses = {
 
 export type UpdateApiKeyResponse = UpdateApiKeyResponses[keyof UpdateApiKeyResponses];
 
+export type DeletePoolDefinitionData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the workspace
+         */
+        workspaceId: string;
+        environmentId: string;
+    };
+    query?: never;
+    url: '/v1/pool-definition/{workspaceId}/{environmentId}';
+};
+
+export type DeletePoolDefinitionErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type DeletePoolDefinitionError = DeletePoolDefinitionErrors[keyof DeletePoolDefinitionErrors];
+
+export type DeletePoolDefinitionResponses = {
+    /**
+     * Delete a pool definition
+     */
+    200: unknown;
+};
+
+export type GetPoolDefinitionData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the workspace
+         */
+        workspaceId: string;
+        /**
+         * The ID of the environment
+         */
+        environmentId: string;
+    };
+    query?: {
+        /**
+         * Whether to include users in the response
+         */
+        includesUsers?: boolean;
+    };
+    url: '/v1/pool-definition/{workspaceId}/{environmentId}';
+};
+
+export type GetPoolDefinitionErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type GetPoolDefinitionError = GetPoolDefinitionErrors[keyof GetPoolDefinitionErrors];
+
+export type GetPoolDefinitionResponses = {
+    /**
+     * Get a pool definition by workspace and environment
+     */
+    200: PoolDefinitionEntity;
+};
+
+export type GetPoolDefinitionResponse = GetPoolDefinitionResponses[keyof GetPoolDefinitionResponses];
+
+export type UpdatePoolDefinitionData = {
+    body: UpsertPoolDefinitionDto;
+    path: {
+        /**
+         * The ID of the workspace
+         */
+        workspaceId: string;
+        /**
+         * The ID of the environment
+         */
+        environmentId: string;
+    };
+    query?: never;
+    url: '/v1/pool-definition/{workspaceId}/{environmentId}';
+};
+
+export type UpdatePoolDefinitionErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type UpdatePoolDefinitionError = UpdatePoolDefinitionErrors[keyof UpdatePoolDefinitionErrors];
+
+export type UpdatePoolDefinitionResponses = {
+    /**
+     * Created/updated a pool definition
+     */
+    200: PoolDefinitionEntity;
+};
+
+export type UpdatePoolDefinitionResponse = UpdatePoolDefinitionResponses[keyof UpdatePoolDefinitionResponses];
+
 export type CompletionData = {
     body?: {
         [key: string]: unknown;
@@ -3301,13 +3358,9 @@ export type CompletionData = {
          * The ID of the environment
          */
         environmentId: string;
-        /**
-         * The unique identifier of the AI resource
-         */
-        resource: string;
     };
     query?: never;
-    url: '/v1/completion/{workspaceId}/{environmentId}/{resource}/chat/completions';
+    url: '/v1/completion/{workspaceId}/{environmentId}/chat/completions';
 };
 
 export type CompletionResponses = {
@@ -3328,13 +3381,13 @@ export type GetCompletionErrorRateData = {
         /**
          * The unique identifier of the AI resource
          */
-        resource: string;
+        resourceId: string;
     };
     query: {
         aiConnectionId: string;
         model: string;
     };
-    url: '/v1/completion-metric/{workspaceId}/{environmentId}/{resource}/error-rate';
+    url: '/v1/completion-metric/{workspaceId}/{environmentId}/{resourceId}/error-rate';
 };
 
 export type GetCompletionErrorRateErrors = {
@@ -3379,7 +3432,7 @@ export type GetCompletionAuditData = {
         /**
          * The resource to list audits for
          */
-        resource?: string | null;
+        resourceId?: string | null;
         /**
          * The model to list audits for
          */
@@ -3421,7 +3474,7 @@ export type GetCompletionAuditResponses = {
     /**
      * List all completion audits associated with an environment
      */
-    200: Array<ListAuditResponseDto>;
+    200: ListAuditResponseDto;
 };
 
 export type GetCompletionAuditResponse = GetCompletionAuditResponses[keyof GetCompletionAuditResponses];

@@ -51,7 +51,7 @@ export default function AIResourceFallbackEditForm({
     pathParams: {
       workspaceId,
       environmentId,
-      resourceName: data.resource,
+      resourceId: data.resourceId,
     },
   });
 
@@ -82,7 +82,7 @@ export default function AIResourceFallbackEditForm({
       )}
       <Grid size={12}>
         <Typography variant="h6">
-          AI Resource Fallback - {data.resource}
+          AI Resource Fallback - {data.name}
         </Typography>
         <Divider />
       </Grid>

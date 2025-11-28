@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -41,16 +42,17 @@ import { ServiceError } from '../types';
 export function ApiAIResourceIdParam() {
   return applyDecorators(
     ApiParam({
-      name: 'resource',
+      name: 'resourceId',
       type: String,
       required: true,
+      format: 'uuid',
       description: 'The unique identifier of the AI resource',
     })
   );
 }
 
 export function AIResourceIdParam() {
-  return Param('resource');
+  return Param('resourceId', new ParseUUIDPipe({ version: '4' }));
 }
 
 @UseGuards(WorkspaceMemberGuard())
@@ -101,7 +103,7 @@ export class AIResourceController {
     });
   }
 
-  @Get(':workspaceId/:environmentId/:resource')
+  @Get(':workspaceId/:environmentId/:resourceId')
   @ApiOkResponse({
     type: AIResourceEntity,
     description: 'Get an AI resource by ID',
@@ -119,14 +121,14 @@ export class AIResourceController {
   public async getById(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @AIResourceIdParam() resource: string,
+    @AIResourceIdParam() resourceId: string,
     @IncludesUsersQuery()
     includesUsers: boolean
   ): Promise<AIResourceEntity> {
     return this.aiResourceService.getById({
       workspaceId,
       environmentId,
-      resource,
+      resourceId,
       includesUsers,
     });
   }
@@ -158,7 +160,7 @@ export class AIResourceController {
     );
   }
 
-  @Put(':workspaceId/:environmentId/:resource')
+  @Put(':workspaceId/:environmentId/:resourceId')
   @ApiWorkspaceIdParam()
   @ApiEnvironmentIdParam()
   @ApiOkResponse({
@@ -174,20 +176,20 @@ export class AIResourceController {
   public async update(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @AIResourceIdParam() resource: string,
+    @AIResourceIdParam() resourceId: string,
     @Body() payload: UpdateAIResourceDto,
     @AuthenticatedUser() user: UserEntity
   ): Promise<AIResourceEntity> {
     return this.aiResourceService.update(
       workspaceId,
       environmentId,
-      resource,
+      resourceId,
       payload,
       user
     );
   }
 
-  @Delete(':workspaceId/:environmentId/:resource')
+  @Delete(':workspaceId/:environmentId/:resourceId')
   @ApiWorkspaceIdParam()
   @ApiOkResponse({
     description: 'Delete an AI resource',
@@ -201,8 +203,9 @@ export class AIResourceController {
   public async delete(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @AIResourceIdParam() resource: string
+    @AIResourceIdParam() resourceId: string,
+    @AuthenticatedUser() user: UserEntity
   ): Promise<void> {
-    await this.aiResourceService.delete(workspaceId, environmentId, resource);
+    await this.aiResourceService.delete(workspaceId, environmentId, resourceId, user);
   }
 }

@@ -72,7 +72,6 @@ export default function ConfirmDeleteAIConnectionDialog({
       toast.success(`Connection ${aiConnection.name} has been deleted.`);
       handleClose();
     } catch (error) {
-      console.log(error);
       toast.error(
         `Failed to delete connection ${aiConnection.name}: ${
           error instanceof Error ? error.message : 'Unknown error'
@@ -125,9 +124,9 @@ export default function ConfirmDeleteAIConnectionDialog({
                       marginLeft: '2rem',
                       fontWeight: 'bold',
                     }}
-                    key={resource.resource}
+                    key={resource.resourceId}
                   >
-                    {resource.resource}
+                    {resource.name}
                   </li>
                 ))}
               </ul>

@@ -1,7 +1,6 @@
 'use client';
 
 import { Logout as LogoutIcon } from '@mui/icons-material';
-import KeyIcon from '@mui/icons-material/Key';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
@@ -11,7 +10,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { signOutAction } from './actions';
 import { stringToColor } from '@/utils/color';
@@ -112,13 +110,6 @@ export default function AccountMenu({ user }: AccountMenuProps) {
             </Box>
           </MenuItem>,
           <Divider key="divider-1" />,
-          <MenuItem key="user-profile" component={Link} href="/account/profile">
-            <ListItemIcon>
-              <KeyIcon fontSize="small" />
-            </ListItemIcon>
-            Personal Access Tokens
-          </MenuItem>,
-          <Divider key="divider-2" />,
         ]}
         <MenuItem
           onClick={async (event) => {

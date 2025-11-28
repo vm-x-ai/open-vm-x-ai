@@ -7,14 +7,21 @@ export const migration: Migration = {
       .createTable('ai_resources')
       .addColumn('workspace_id', 'uuid', (col) => col.notNull())
       .addColumn('environment_id', 'uuid', (col) => col.notNull())
-      .addColumn('resource', 'text', (col) => col.notNull())
+      .addColumn('resource_id', 'uuid', (col) =>
+        col.notNull().defaultTo(sql`gen_random_uuid()`)
+      )
+      .addColumn('name', 'text', (col) => col.notNull())
       .addColumn('description', 'text')
       .addColumn('model', 'jsonb', (col) => col.notNull())
       .addColumn('routing', 'jsonb')
       .addColumn('secondary_models', 'jsonb')
-      .addColumn('use_fallback', 'boolean', (col) => col.notNull().defaultTo(false))
+      .addColumn('use_fallback', 'boolean', (col) =>
+        col.notNull().defaultTo(false)
+      )
       .addColumn('fallback_models', 'jsonb')
-      .addColumn('enforce_capacity', 'boolean', (col) => col.notNull().defaultTo(false))
+      .addColumn('enforce_capacity', 'boolean', (col) =>
+        col.notNull().defaultTo(false)
+      )
       .addColumn('capacity', 'jsonb')
       .addColumn('created_at', 'timestamp', (col) =>
         col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
@@ -35,9 +42,14 @@ export const migration: Migration = {
         ['workspace_id', 'environment_id']
       )
       .addPrimaryKeyConstraint('pk_ai_resources', [
-        'resource',
+        'resource_id',
         'workspace_id',
         'environment_id',
+      ])
+      .addUniqueConstraint('uq_ai_resources_workspace_id_environment_id_name', [
+        'workspace_id',
+        'environment_id',
+        'name',
       ])
       .execute();
 
@@ -52,6 +64,14 @@ export const migration: Migration = {
       .on('ai_resources')
       .column('workspace_id')
       .column('environment_id')
+      .execute();
+
+    await db.schema
+      .createIndex('idx_ai_resources_workspace_id_environment_id_name')
+      .on('ai_resources')
+      .column('workspace_id')
+      .column('environment_id')
+      .column('name')
       .execute();
 
     await db.schema
@@ -74,6 +94,9 @@ export const migration: Migration = {
     await db.schema.dropIndex('idx_ai_resources_workspace_id').execute();
     await db.schema
       .dropIndex('idx_ai_resources_workspace_id_environment_id')
+      .execute();
+    await db.schema
+      .dropIndex('idx_ai_resources_workspace_id_environment_id_name')
       .execute();
     await db.schema.dropTable('ai_resources').execute();
   },

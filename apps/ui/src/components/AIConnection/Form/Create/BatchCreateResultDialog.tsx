@@ -144,13 +144,13 @@ export default function BatchCreateResultDialog({
       header: 'AI Resource',
       Cell: ({ row: { original: row } }) =>
         row.resource ? (
-          'resource' in row.resource ? (
+          'resourceId' in row.resource ? (
             <MUILink
               component={Link}
-              href={`/${workspaceId}/${environmentId}/ai-resources/edit/${row.resource.resource}/general`}
+              href={`/${workspaceId}/${environmentId}/ai-resources/edit/${row.resource.resourceId}/general`}
               variant="body2"
             >
-              {row.resource.resource}
+              {row.resource.name}
             </MUILink>
           ) : (
             row.resource.name
@@ -222,7 +222,7 @@ export default function BatchCreateResultDialog({
                       return (
                         <Tab
                           key={index}
-                          label={item.resource.resource}
+                          label={item.resource.name}
                           value={`${index + 1}`}
                         />
                       );
@@ -230,7 +230,7 @@ export default function BatchCreateResultDialog({
                   </TabList>
                 </Box>
                 {data.map((item, index) => {
-                  if (!item.resource || !('resource' in item.resource)) {
+                  if (!item.resource || !('resourceId' in item.resource)) {
                     return <></>;
                   }
 
@@ -243,7 +243,7 @@ export default function BatchCreateResultDialog({
                             environmentId={environmentId}
                             baseUrl={baseUrl}
                             showEnvironmentDetails={false}
-                            resource={item.resource.resource}
+                            resource={item.resource.name}
                           />
                         </Grid>
                         <Grid size={4}>

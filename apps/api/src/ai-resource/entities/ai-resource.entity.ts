@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDate, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { CapacityEntity } from '../../capacity/capacity.entity';
 import { UserRelationDto } from '../../users/dto/user.dto';
 import { AIResourceModelConfigEntity } from '../common/model.entity';
@@ -9,10 +9,12 @@ import { AIResourceModelRoutingEntity } from '../common/routing.entity';
 export class AIResourceEntity {
   @ApiProperty({
     description: 'Resource unique identifier',
-    example: 'resource-id-string',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid'
   })
-  @IsString()
-  resource: string;
+  @IsUUID('4')
+  @IsNotEmpty()
+  resourceId: string;
 
   @ApiProperty({
     description: 'Workspace ID associated with the resource',
@@ -29,6 +31,14 @@ export class AIResourceEntity {
   })
   @IsUUID('4')
   environmentId: string;
+
+  @ApiProperty({
+    description: 'Name of the AI resource',
+    example: 'My GPT-4O Resource',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
   @ApiPropertyOptional({
     description: 'Description of the AI resource',

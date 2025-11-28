@@ -118,6 +118,15 @@ export class WorkspaceService {
     return workspace;
   }
 
+  public async getByIds(workspaceIds: string[]): Promise<WorkspaceEntity[]> {
+    if (workspaceIds.length === 0) return [];
+    return await this.db.reader
+      .selectFrom('workspaces')
+      .selectAll('workspaces')
+      .where('workspaceId', 'in', workspaceIds)
+      .execute();
+  }
+
   public async create(
     payload: CreateWorkspaceDto,
     user: UserEntity

@@ -97,7 +97,7 @@ export class GateService {
     );
 
     const pool = poolDefinition?.definition?.find((pool) =>
-      pool.resources.includes(resource.resource)
+      pool.resources.includes(resource.resourceId)
     );
     const connectionMinuteCapacity = connectionCapacities.find(
       (capacity) =>
@@ -118,7 +118,7 @@ export class GateService {
         poolDefinition,
         requestTime,
         requestTokens,
-        resource.resource,
+        resource.resourceId,
         aiConnection
       );
       this.logger.info(
@@ -163,7 +163,7 @@ export class GateService {
         keyPrefix: this.capacityService.getResourceKeyPrefix(
           workspaceId,
           environmentId,
-          resource.resource,
+          resource.resourceId,
           aiConnection.connectionId
         ),
       })) ?? []),
@@ -173,7 +173,7 @@ export class GateService {
         keyPrefix: this.capacityService.getResourceKeyPrefix(
           workspaceId,
           environmentId,
-          resource.resource,
+          resource.resourceId,
           aiConnection.connectionId
         ),
       })) ?? []),

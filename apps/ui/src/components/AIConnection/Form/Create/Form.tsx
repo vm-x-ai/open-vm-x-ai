@@ -460,13 +460,13 @@ export default function CreateAIConnectionForm({
               </>
             )}
             {formType === 'advanced' && (
-              <>
+              <Grid container size={6}>
                 <Grid size={12} marginTop="1rem">
                   <Typography variant="h6">Create New AI Connection</Typography>
                   <Divider />
                 </Grid>
                 <Grid container size={12}>
-                  <Grid size={7}>
+                  <Grid size={12}>
                     <Controller
                       name="name"
                       control={advancedForm.control}
@@ -488,7 +488,7 @@ export default function CreateAIConnectionForm({
                   </Grid>
                 </Grid>
                 <Grid container size={12}>
-                  <Grid size={7}>
+                  <Grid size={12}>
                     <Controller
                       name="description"
                       control={advancedForm.control}
@@ -541,7 +541,7 @@ export default function CreateAIConnectionForm({
                   </Typography>
                 </Grid>
                 <Grid container size={12} marginTop="1rem">
-                  <Grid size={7}>
+                  <Grid size={12}>
                     <Controller
                       name="assignApiKeys"
                       control={advancedForm.control}
@@ -561,7 +561,7 @@ export default function CreateAIConnectionForm({
                     />
                   </Grid>
                 </Grid>
-              </>
+              </Grid>
             )}
             {state && state.success === false && (
               <Grid size={12} marginTop="1rem">

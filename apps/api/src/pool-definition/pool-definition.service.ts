@@ -7,6 +7,8 @@ import { throwServiceError } from '../error';
 import { UserEntity } from '../users/entities/user.entity';
 import { UpsertPoolDefinitionDto } from './dto/upsert-pool-definition.dto';
 import { GetPoolDefinitionDto } from './dto/get-pool-definition.dto';
+import { Transaction } from 'kysely';
+import { DB } from '../storage/entities.generated';
 
 @Injectable()
 export class PoolDefinitionService {
@@ -79,9 +81,10 @@ export class PoolDefinitionService {
     workspaceId: string,
     environmentId: string,
     payload: UpsertPoolDefinitionDto,
-    user: UserEntity
+    user: UserEntity,
+    tx?: Transaction<DB>
   ): Promise<PoolDefinitionEntity> {
-    const poolDefinition = await this.db.writer
+    const poolDefinition = await (tx ?? this.db.writer)
       .insertInto('poolDefinitions')
       .values({
         ...payload,

@@ -6,17 +6,12 @@ import { z } from 'zod';
 export const schema = z.object({
   workspaceId: z.string(),
   environmentId: z.string(),
-  resource: z
+  name: z
     .string({
       error: 'Resource name is required.',
     })
     .trim()
-    .describe(
-      'Resource name needs to be unique, cannot contain special characters or spaces.'
-    )
-    .regex(/^[a-zA-Z0-9_-]+$/, {
-      message: 'Cannot contain special characters or spaces.',
-    }),
+    .describe('Resource name needs to be unique within the environment.'),
   description: z.string({
     error: 'Description is required.',
   }),

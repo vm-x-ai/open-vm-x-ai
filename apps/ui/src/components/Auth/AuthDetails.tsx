@@ -1,7 +1,7 @@
 import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Grid';
 import APIKeysTable from '@/components/Auth/APIKeys/Table';
-import { getAiResources, getApiKeys } from '@/clients/api';
+import { AiResourceEntity, getAiResources, getApiKeys } from '@/clients/api';
 
 type AuthDetailsProps = {
   workspaceId: string;
@@ -40,12 +40,17 @@ export default async function AuthDetails({
     );
   }
 
+  const resourcesMap = resources.data.reduce((acc, item) => {
+    acc[item.resourceId] = item;
+    return acc;
+  }, {} as Record<string, AiResourceEntity>);
+
   return (
     <Grid container spacing={3}>
       <Grid size={12}>
         <APIKeysTable
           data={apiKeys.data}
-          resources={resources.data.map((item) => item.resource)}
+          resourcesMap={resourcesMap}
           environmentId={environmentId}
           workspaceId={workspaceId}
         />

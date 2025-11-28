@@ -1,6 +1,10 @@
 import Alert from '@mui/material/Alert';
 import PoolDefinitionTable from '@/components/Prioritization/Table';
-import { getAiResources, getPoolDefinition } from '@/clients/api';
+import {
+  AiResourceEntity,
+  getAiResources,
+  getPoolDefinition,
+} from '@/clients/api';
 
 export type PageProps = {
   params: Promise<{
@@ -37,7 +41,10 @@ export default async function Page({ params }: PageProps) {
         data={poolDefinition.data}
         workspaceId={workspaceId}
         environmentId={environmentId}
-        resources={resources.data.map((item) => item.resource)}
+        resourcesMap={resources.data.reduce((acc, item) => {
+          acc[item.resourceId] = item;
+          return acc;
+        }, {} as Record<string, AiResourceEntity>)}
       />
     </>
   );

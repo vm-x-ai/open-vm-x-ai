@@ -48,7 +48,6 @@ export class CompletionAuditController {
   @Get(':workspaceId/:environmentId')
   @ApiOkResponse({
     type: ListAuditResponseDto,
-    isArray: true,
     description: 'List all completion audits associated with an environment',
   })
   @ApiWorkspaceIdParam()

@@ -117,7 +117,7 @@ export class CompletionBatchService {
       .executeTakeFirst();
 
     if (throwOnNotFound && !batch) {
-      throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.AI_RESOURCE_NOT_FOUND, {
+      throwServiceError(HttpStatus.NOT_FOUND, ErrorCode.COMPLETION_BATCH_NOT_FOUND, {
         batchId,
       });
     }

@@ -12,7 +12,7 @@ import {
   GranularityUnit,
 } from '../dto/completion-query.dto';
 import { sql } from 'kysely';
-import { CompletionUsageQueryResultDto } from '../dto/completion-query-result.dto';
+import { CompletionUsageQueryRawResultDto } from '../dto/completion-query-result.dto';
 
 const OPERATOR_MAP = {
   [CompletionUsageDimensionOperator.EQ]: '=',
@@ -23,6 +23,7 @@ const OPERATOR_MAP = {
   [CompletionUsageDimensionOperator.GTE]: '>=',
   [CompletionUsageDimensionOperator.LT]: '<',
   [CompletionUsageDimensionOperator.LTE]: '<=',
+  [CompletionUsageDimensionOperator.IS_NOT]: 'is not',
 } as const;
 
 @Injectable()
@@ -31,57 +32,62 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
 
   async query(
     query: CompletionUsageQueryDto
-  ): Promise<CompletionUsageQueryResultDto[]> {
-    let dbQuery = this.db.instance.selectFrom('completions').limit(query.limit);
-
-    let timeExpression = sql`ts as time`;
-
-    switch (query.granularity) {
-      case GranularityUnit.SECOND:
-      case GranularityUnit.SECOND_5:
-      case GranularityUnit.SECOND_10:
-      case GranularityUnit.SECOND_15:
-      case GranularityUnit.SECOND_30: {
-        const secondInterval = parseInt(query.granularity.split('_')[1]) || 1;
-        timeExpression = sql`timestamp_floor('${sql.lit(
-          secondInterval
-        )}s', ts)`;
-        break;
-      }
-      case GranularityUnit.MINUTE:
-        timeExpression = sql`date_trunc('minute', ts)`;
-        break;
-      case GranularityUnit.HOUR:
-        timeExpression = sql`date_trunc('hour', ts)`;
-        break;
-      case GranularityUnit.DAY:
-        timeExpression = sql`date_trunc('day', ts)`;
-        break;
-      case GranularityUnit.WEEK:
-        timeExpression = sql`date_trunc('week', ts)`;
-        break;
-      case GranularityUnit.MONTH:
-        timeExpression = sql`date_trunc('month', ts)`;
-        break;
-      case GranularityUnit.YEAR:
-        timeExpression = sql`date_trunc('year', ts)`;
-        break;
+  ): Promise<CompletionUsageQueryRawResultDto[]> {
+    let dbQuery = this.db.instance.selectFrom('completions');
+    if (query.limit) {
+      dbQuery = dbQuery.limit(query.limit);
     }
 
-    dbQuery = dbQuery.select([
-      sql`cast(${timeExpression} as string)`.as('time'),
-      ...query.dimensions,
-    ]);
+    let timeExpression = sql`ts as time`;
+    if (query.granularity) {
+      switch (query.granularity) {
+        case GranularityUnit.SECOND:
+        case GranularityUnit.SECOND_5:
+        case GranularityUnit.SECOND_10:
+        case GranularityUnit.SECOND_15:
+        case GranularityUnit.SECOND_30: {
+          const secondInterval = parseInt(query.granularity.split('_')[1]) || 1;
+          timeExpression = sql`timestamp_floor('${sql.lit(
+            secondInterval
+          )}s', ts)`;
+          break;
+        }
+        case GranularityUnit.MINUTE:
+          timeExpression = sql`date_trunc('minute', ts)`;
+          break;
+        case GranularityUnit.HOUR:
+          timeExpression = sql`date_trunc('hour', ts)`;
+          break;
+        case GranularityUnit.DAY:
+          timeExpression = sql`date_trunc('day', ts)`;
+          break;
+        case GranularityUnit.WEEK:
+          timeExpression = sql`date_trunc('week', ts)`;
+          break;
+        case GranularityUnit.MONTH:
+          timeExpression = sql`date_trunc('month', ts)`;
+          break;
+        case GranularityUnit.YEAR:
+          timeExpression = sql`date_trunc('year', ts)`;
+          break;
+      }
+      dbQuery = dbQuery.select([
+        sql`cast(${timeExpression} as string)`.as('time'),
+        ...query.dimensions,
+      ]);
+    } else {
+      dbQuery = dbQuery.select([...query.dimensions]);
+    }
 
     for (const [metric, agg] of Object.entries(query.agg)) {
       const approxPercentileMatch = /p(\d+)/g.exec(agg);
 
       if (approxPercentileMatch) {
-        const percentile = parseInt(approxPercentileMatch[1]);
+        const percentile = parseInt(approxPercentileMatch[1]) / 100;
         dbQuery = dbQuery.select(
-          sql`cast(approx_percentile(${sql.lit(metric)}, ${sql.lit(
-            percentile
-          )}) as double)`.as(metric)
+          sql`approx_percentile(${sql.ref(metric)}, ${sql.lit(percentile)})`.as(
+            metric
+          )
         );
       } else {
         dbQuery = dbQuery.select(
@@ -100,18 +106,32 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
       .where('ts', '>=', new Date(query.filter.dateRange.start))
       .where('ts', '<', new Date(query.filter.dateRange.end));
 
-    for (const [dimension, filter] of Object.entries(
-      query.filter.dimensions ?? {}
-    )) {
+    for (const [field, filter] of Object.entries(query.filter.fields ?? {})) {
+      if (
+        [
+          CompletionUsageDimensionOperator.IN,
+          CompletionUsageDimensionOperator.NIN,
+        ].includes(filter.operator) &&
+        (!filter.value ||
+          !Array.isArray(filter.value) ||
+          filter.value.length === 0)
+      ) {
+        continue;
+      }
+
       dbQuery = dbQuery.where(
-        sql.ref(dimension),
+        sql.ref(field),
         OPERATOR_MAP[filter.operator],
         filter.value
       );
     }
 
-    dbQuery = dbQuery.groupBy([timeExpression, ...query.dimensions]);
-    return (await dbQuery.execute()) as CompletionUsageQueryResultDto[];
+    dbQuery = dbQuery.groupBy(
+      query.granularity
+        ? [timeExpression, ...query.dimensions]
+        : [...query.dimensions]
+    );
+    return (await dbQuery.execute()) as CompletionUsageQueryRawResultDto[];
   }
 
   async push(...usage: CompletionUsageDto[]): Promise<void> {

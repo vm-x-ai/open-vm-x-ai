@@ -8,6 +8,7 @@ import { IsOptional } from 'class-validator';
 export class CreateAIResourceDto extends OmitType(AIResourceEntity, [
   'workspaceId',
   'environmentId',
+  'resourceId',
   'createdAt',
   'updatedAt',
   'createdBy',

@@ -824,7 +824,7 @@ export const zAiResourceModelRoutingEntity = z.object({
 export type AiResourceModelRoutingEntityZodType = z.infer<typeof zAiResourceModelRoutingEntity>;
 
 export const zAiResourceEntity = z.object({
-    resource: z.string().register(z.globalRegistry, {
+    resourceId: z.uuid().register(z.globalRegistry, {
         description: 'Resource unique identifier'
     }),
     workspaceId: z.uuid().register(z.globalRegistry, {
@@ -832,6 +832,9 @@ export const zAiResourceEntity = z.object({
     }),
     environmentId: z.uuid().register(z.globalRegistry, {
         description: 'Environment ID associated with the resource'
+    }),
+    name: z.string().register(z.globalRegistry, {
+        description: 'Name of the AI resource'
     }),
     description: z.optional(z.union([
         z.string(),
@@ -885,8 +888,8 @@ export const zAiResourceEntity = z.object({
 export type AiResourceEntityZodType = z.infer<typeof zAiResourceEntity>;
 
 export const zCreateAiResourceDto = z.object({
-    resource: z.string().register(z.globalRegistry, {
-        description: 'Resource unique identifier'
+    name: z.string().register(z.globalRegistry, {
+        description: 'Name of the AI resource'
     }),
     description: z.optional(z.union([
         z.string(),
@@ -924,8 +927,8 @@ export const zCreateAiResourceDto = z.object({
 export type CreateAiResourceDtoZodType = z.infer<typeof zCreateAiResourceDto>;
 
 export const zUpdateAiResourceDto = z.object({
-    resource: z.optional(z.string().register(z.globalRegistry, {
-        description: 'Resource unique identifier'
+    name: z.optional(z.string().register(z.globalRegistry, {
+        description: 'Name of the AI resource'
     })),
     description: z.optional(z.union([
         z.string(),
@@ -961,68 +964,6 @@ export const zUpdateAiResourceDto = z.object({
 });
 
 export type UpdateAiResourceDtoZodType = z.infer<typeof zUpdateAiResourceDto>;
-
-export const zPoolDefinitionEntry = z.object({
-    name: z.string().register(z.globalRegistry, {
-        description: 'The name of the pool entry'
-    }),
-    rank: z.number().register(z.globalRegistry, {
-        description: 'The rank or priority order of the entry'
-    }),
-    minReservation: z.number().register(z.globalRegistry, {
-        description: 'Minimum % of the AI connection capacity that must be reserved for this entry'
-    }),
-    maxReservation: z.number().register(z.globalRegistry, {
-        description: 'Maximum % of the AI connection capacity that can be reserved for this entry'
-    }),
-    resources: z.array(z.string()).register(z.globalRegistry, {
-        description: 'Resource identifiers included in this entry'
-    })
-});
-
-export type PoolDefinitionEntryZodType = z.infer<typeof zPoolDefinitionEntry>;
-
-export const zPoolDefinitionEntity = z.object({
-    workspaceId: z.string().register(z.globalRegistry, {
-        description: 'Workspace UUID'
-    }),
-    environmentId: z.string().register(z.globalRegistry, {
-        description: 'Environment UUID'
-    }),
-    definition: z.array(zPoolDefinitionEntry).register(z.globalRegistry, {
-        description: 'List of pool definition entries'
-    }),
-    createdAt: z.iso.datetime().register(z.globalRegistry, {
-        description: 'Timestamp when the pool definition was created'
-    }),
-    updatedAt: z.iso.datetime().register(z.globalRegistry, {
-        description: 'Timestamp when the pool definition was last updated'
-    }),
-    createdBy: z.string().register(z.globalRegistry, {
-        description: 'User ID who created the pool definition'
-    }),
-    createdByUser: z.optional(z.union([
-        zUserRelationDto,
-        z.null()
-    ])),
-    updatedBy: z.string().register(z.globalRegistry, {
-        description: 'User ID who last updated the pool definition'
-    }),
-    updatedByUser: z.optional(z.union([
-        zUserRelationDto,
-        z.null()
-    ]))
-});
-
-export type PoolDefinitionEntityZodType = z.infer<typeof zPoolDefinitionEntity>;
-
-export const zUpsertPoolDefinitionDto = z.object({
-    definition: z.array(zPoolDefinitionEntry).register(z.globalRegistry, {
-        description: 'List of pool definition entries'
-    })
-});
-
-export type UpsertPoolDefinitionDtoZodType = z.infer<typeof zUpsertPoolDefinitionDto>;
 
 export const zApiKeyEntity = z.object({
     apiKeyId: z.uuid().register(z.globalRegistry, {
@@ -1207,6 +1148,68 @@ export const zUpdateApiKeyDto = z.object({
 
 export type UpdateApiKeyDtoZodType = z.infer<typeof zUpdateApiKeyDto>;
 
+export const zPoolDefinitionEntry = z.object({
+    name: z.string().register(z.globalRegistry, {
+        description: 'The name of the pool entry'
+    }),
+    rank: z.number().register(z.globalRegistry, {
+        description: 'The rank or priority order of the entry'
+    }),
+    minReservation: z.number().register(z.globalRegistry, {
+        description: 'Minimum % of the AI connection capacity that must be reserved for this entry'
+    }),
+    maxReservation: z.number().register(z.globalRegistry, {
+        description: 'Maximum % of the AI connection capacity that can be reserved for this entry'
+    }),
+    resources: z.array(z.string()).register(z.globalRegistry, {
+        description: 'Resource identifiers included in this entry'
+    })
+});
+
+export type PoolDefinitionEntryZodType = z.infer<typeof zPoolDefinitionEntry>;
+
+export const zPoolDefinitionEntity = z.object({
+    workspaceId: z.string().register(z.globalRegistry, {
+        description: 'Workspace UUID'
+    }),
+    environmentId: z.string().register(z.globalRegistry, {
+        description: 'Environment UUID'
+    }),
+    definition: z.array(zPoolDefinitionEntry).register(z.globalRegistry, {
+        description: 'List of pool definition entries'
+    }),
+    createdAt: z.iso.datetime().register(z.globalRegistry, {
+        description: 'Timestamp when the pool definition was created'
+    }),
+    updatedAt: z.iso.datetime().register(z.globalRegistry, {
+        description: 'Timestamp when the pool definition was last updated'
+    }),
+    createdBy: z.string().register(z.globalRegistry, {
+        description: 'User ID who created the pool definition'
+    }),
+    createdByUser: z.optional(z.union([
+        zUserRelationDto,
+        z.null()
+    ])),
+    updatedBy: z.string().register(z.globalRegistry, {
+        description: 'User ID who last updated the pool definition'
+    }),
+    updatedByUser: z.optional(z.union([
+        zUserRelationDto,
+        z.null()
+    ]))
+});
+
+export type PoolDefinitionEntityZodType = z.infer<typeof zPoolDefinitionEntity>;
+
+export const zUpsertPoolDefinitionDto = z.object({
+    definition: z.array(zPoolDefinitionEntry).register(z.globalRegistry, {
+        description: 'List of pool definition entries'
+    })
+});
+
+export type UpsertPoolDefinitionDtoZodType = z.infer<typeof zUpsertPoolDefinitionDto>;
+
 export const zMetricDto = z.object({
     errorRate: z.number().register(z.globalRegistry, {
         description: 'The error rate of the metric'
@@ -1302,8 +1305,8 @@ export const zCompletionAuditEntity = z.object({
         z.string(),
         z.null()
     ])),
-    resource: z.optional(z.union([
-        z.string(),
+    resourceId: z.optional(z.union([
+        z.uuid(),
         z.null()
     ])),
     provider: z.optional(z.union([
@@ -1327,6 +1330,10 @@ export const zCompletionAuditEntity = z.object({
         z.null()
     ])),
     apiKeyId: z.optional(z.union([
+        z.uuid(),
+        z.null()
+    ])),
+    userId: z.optional(z.union([
         z.uuid(),
         z.null()
     ])),
@@ -1374,7 +1381,8 @@ export const zCompletionUsageDimensionOperator = z.enum([
     'gt',
     'gte',
     'lt',
-    'lte'
+    'lte',
+    'is_not'
 ]).register(z.globalRegistry, {
     description: 'Operator for the filter'
 });
@@ -1383,10 +1391,12 @@ export type CompletionUsageDimensionOperatorZodType = z.infer<typeof zCompletion
 
 export const zCompletionUsageDimensionFilterDto = z.object({
     operator: zCompletionUsageDimensionOperator,
-    value: z.union([
+    value: z.optional(z.union([
         z.string(),
-        z.array(z.string())
-    ])
+        z.array(z.string()),
+        z.unknown(),
+        z.null()
+    ]))
 });
 
 export type CompletionUsageDimensionFilterDtoZodType = z.infer<typeof zCompletionUsageDimensionFilterDto>;
@@ -1419,7 +1429,7 @@ export const zCompletionDimensions = z.enum([
     'workspaceId',
     'environmentId',
     'connectionId',
-    'resource',
+    'resourceId',
     'provider',
     'model',
     'requestId',
@@ -1428,7 +1438,8 @@ export const zCompletionDimensions = z.enum([
     'statusCode',
     'correlationId',
     'apiKeyId',
-    'sourceIp'
+    'sourceIp',
+    'userId'
 ]).register(z.globalRegistry, {
     description: 'Dimensions to group results by'
 });
@@ -1448,11 +1459,12 @@ export type CompletionUsageQueryDateRangeDtoZodType = z.infer<typeof zCompletion
 
 export const zCompletionUsageQueryFilterDto = z.object({
     dateRange: zCompletionUsageQueryDateRangeDto,
-    dimensions: z.object({
+    fields: z.object({
+        time: z.optional(zCompletionUsageDimensionFilterDto),
         workspaceId: z.optional(zCompletionUsageDimensionFilterDto),
         environmentId: z.optional(zCompletionUsageDimensionFilterDto),
         connectionId: z.optional(zCompletionUsageDimensionFilterDto),
-        resource: z.optional(zCompletionUsageDimensionFilterDto),
+        resourceId: z.optional(zCompletionUsageDimensionFilterDto),
         provider: z.optional(zCompletionUsageDimensionFilterDto),
         model: z.optional(zCompletionUsageDimensionFilterDto),
         requestId: z.optional(zCompletionUsageDimensionFilterDto),
@@ -1461,7 +1473,20 @@ export const zCompletionUsageQueryFilterDto = z.object({
         statusCode: z.optional(zCompletionUsageDimensionFilterDto),
         correlationId: z.optional(zCompletionUsageDimensionFilterDto),
         apiKeyId: z.optional(zCompletionUsageDimensionFilterDto),
-        sourceIp: z.optional(zCompletionUsageDimensionFilterDto)
+        sourceIp: z.optional(zCompletionUsageDimensionFilterDto),
+        userId: z.optional(zCompletionUsageDimensionFilterDto),
+        promptTokens: z.optional(zCompletionUsageDimensionFilterDto),
+        completionTokens: z.optional(zCompletionUsageDimensionFilterDto),
+        totalTokens: z.optional(zCompletionUsageDimensionFilterDto),
+        tokensPerSecond: z.optional(zCompletionUsageDimensionFilterDto),
+        timeToFirstToken: z.optional(zCompletionUsageDimensionFilterDto),
+        requestCount: z.optional(zCompletionUsageDimensionFilterDto),
+        errorCount: z.optional(zCompletionUsageDimensionFilterDto),
+        successCount: z.optional(zCompletionUsageDimensionFilterDto),
+        requestDuration: z.optional(zCompletionUsageDimensionFilterDto),
+        providerDuration: z.optional(zCompletionUsageDimensionFilterDto),
+        gateDuration: z.optional(zCompletionUsageDimensionFilterDto),
+        routingDuration: z.optional(zCompletionUsageDimensionFilterDto)
     }).register(z.globalRegistry, {
         description: 'Dimensions and their filters'
     })
@@ -1470,7 +1495,10 @@ export const zCompletionUsageQueryFilterDto = z.object({
 export type CompletionUsageQueryFilterDtoZodType = z.infer<typeof zCompletionUsageQueryFilterDto>;
 
 export const zCompletionUsageQueryDto = z.object({
-    granularity: zGranularityUnit,
+    granularity: z.optional(z.union([
+        zGranularityUnit,
+        z.null()
+    ])),
     timeZone: z.optional(z.union([
         z.string(),
         z.null()
@@ -1590,16 +1618,18 @@ export const zCompletionUsageQueryDto = z.object({
     dimensions: z.array(zCompletionDimensions).register(z.globalRegistry, {
         description: 'Dimensions to group results by'
     }),
-    limit: z.number().register(z.globalRegistry, {
-        description: 'Maximum number of records to return'
-    }),
+    limit: z.optional(z.union([
+        z.number(),
+        z.null()
+    ])),
     filter: zCompletionUsageQueryFilterDto,
     orderBy: z.optional(z.union([
         z.object({
+            time: z.optional(z.enum(['asc', 'desc'])),
             workspaceId: z.optional(z.enum(['asc', 'desc'])),
             environmentId: z.optional(z.enum(['asc', 'desc'])),
             connectionId: z.optional(z.enum(['asc', 'desc'])),
-            resource: z.optional(z.enum(['asc', 'desc'])),
+            resourceId: z.optional(z.enum(['asc', 'desc'])),
             provider: z.optional(z.enum(['asc', 'desc'])),
             model: z.optional(z.enum(['asc', 'desc'])),
             requestId: z.optional(z.enum(['asc', 'desc'])),
@@ -1608,13 +1638,40 @@ export const zCompletionUsageQueryDto = z.object({
             statusCode: z.optional(z.enum(['asc', 'desc'])),
             correlationId: z.optional(z.enum(['asc', 'desc'])),
             apiKeyId: z.optional(z.enum(['asc', 'desc'])),
-            sourceIp: z.optional(z.enum(['asc', 'desc']))
+            sourceIp: z.optional(z.enum(['asc', 'desc'])),
+            userId: z.optional(z.enum(['asc', 'desc'])),
+            promptTokens: z.optional(z.enum(['asc', 'desc'])),
+            completionTokens: z.optional(z.enum(['asc', 'desc'])),
+            totalTokens: z.optional(z.enum(['asc', 'desc'])),
+            tokensPerSecond: z.optional(z.enum(['asc', 'desc'])),
+            timeToFirstToken: z.optional(z.enum(['asc', 'desc'])),
+            requestCount: z.optional(z.enum(['asc', 'desc'])),
+            errorCount: z.optional(z.enum(['asc', 'desc'])),
+            successCount: z.optional(z.enum(['asc', 'desc'])),
+            requestDuration: z.optional(z.enum(['asc', 'desc'])),
+            providerDuration: z.optional(z.enum(['asc', 'desc'])),
+            gateDuration: z.optional(z.enum(['asc', 'desc'])),
+            routingDuration: z.optional(z.enum(['asc', 'desc']))
         }),
         z.null()
     ]))
 });
 
 export type CompletionUsageQueryDtoZodType = z.infer<typeof zCompletionUsageQueryDto>;
+
+export const zCompletionUsageDimensionValueDto = z.object({
+    value: z.string().register(z.globalRegistry, {
+        description: 'Dimension value'
+    }),
+    label: z.string().register(z.globalRegistry, {
+        description: 'Dimension label'
+    }),
+    displayName: z.string().register(z.globalRegistry, {
+        description: 'Display name of the dimension'
+    })
+});
+
+export type CompletionUsageDimensionValueDtoZodType = z.infer<typeof zCompletionUsageDimensionValueDto>;
 
 export const zCompletionUsageQueryResultDto = z.object({
     time: z.string().register(z.globalRegistry, {
@@ -1668,26 +1725,6 @@ export const zCompletionUsageQueryResultDto = z.object({
         z.number(),
         z.null()
     ])),
-    workspaceId: z.optional(z.union([
-        z.uuid(),
-        z.null()
-    ])),
-    environmentId: z.optional(z.union([
-        z.uuid(),
-        z.null()
-    ])),
-    connectionId: z.optional(z.union([
-        z.uuid(),
-        z.null()
-    ])),
-    resource: z.optional(z.union([
-        z.string(),
-        z.null()
-    ])),
-    provider: z.optional(z.union([
-        z.string(),
-        z.null()
-    ])),
     model: z.optional(z.union([
         z.string(),
         z.null()
@@ -1712,12 +1749,36 @@ export const zCompletionUsageQueryResultDto = z.object({
         z.string(),
         z.null()
     ])),
-    apiKeyId: z.optional(z.union([
-        z.uuid(),
-        z.null()
-    ])),
     sourceIp: z.optional(z.union([
         z.string(),
+        z.null()
+    ])),
+    workspaceId: z.optional(z.union([
+        zCompletionUsageDimensionValueDto,
+        z.null()
+    ])),
+    environmentId: z.optional(z.union([
+        zCompletionUsageDimensionValueDto,
+        z.null()
+    ])),
+    connectionId: z.optional(z.union([
+        zCompletionUsageDimensionValueDto,
+        z.null()
+    ])),
+    resourceId: z.optional(z.union([
+        zCompletionUsageDimensionValueDto,
+        z.null()
+    ])),
+    provider: z.optional(z.union([
+        zCompletionUsageDimensionValueDto,
+        z.null()
+    ])),
+    apiKeyId: z.optional(z.union([
+        zCompletionUsageDimensionValueDto,
+        z.null()
+    ])),
+    userId: z.optional(z.union([
+        zCompletionUsageDimensionValueDto,
         z.null()
     ]))
 });
@@ -1725,7 +1786,7 @@ export const zCompletionUsageQueryResultDto = z.object({
 export type CompletionUsageQueryResultDtoZodType = z.infer<typeof zCompletionUsageQueryResultDto>;
 
 export const zCreateCompletionBatchItemDto = z.object({
-    resource: z.string().register(z.globalRegistry, {
+    resourceId: z.uuid().register(z.globalRegistry, {
         description: 'The name of the resource this item references'
     }),
     request: z.record(z.string(), z.unknown()).register(z.globalRegistry, {
@@ -1884,7 +1945,7 @@ export const zCompletionBatchItemRelationDto = z.object({
     itemId: z.uuid().register(z.globalRegistry, {
         description: 'The unique identifier for the batch item (UUID)'
     }),
-    resource: z.string().register(z.globalRegistry, {
+    resourceId: z.uuid().register(z.globalRegistry, {
         description: 'The name of the resource this item references'
     }),
     status: zCompletionBatchRequestStatus,
@@ -2027,7 +2088,7 @@ export const zCompletionBatchItemEntity = z.object({
     itemId: z.uuid().register(z.globalRegistry, {
         description: 'The unique identifier for the batch item (UUID)'
     }),
-    resource: z.string().register(z.globalRegistry, {
+    resourceId: z.uuid().register(z.globalRegistry, {
         description: 'The name of the resource this item references'
     }),
     status: zCompletionBatchRequestStatus,
@@ -2539,7 +2600,7 @@ export const zDeleteAiResourceData = z.object({
             description: 'The ID of the workspace'
         }),
         environmentId: z.string(),
-        resource: z.string()
+        resourceId: z.string()
     }),
     query: z.optional(z.never())
 });
@@ -2555,7 +2616,7 @@ export const zGetAiResourceByIdData = z.object({
         environmentId: z.string().register(z.globalRegistry, {
             description: 'The ID of the environment'
         }),
-        resource: z.string().register(z.globalRegistry, {
+        resourceId: z.uuid().register(z.globalRegistry, {
             description: 'The unique identifier of the AI resource'
         })
     }),
@@ -2584,7 +2645,7 @@ export const zUpdateAiResourceData = z.object({
         environmentId: z.string().register(z.globalRegistry, {
             description: 'The ID of the environment'
         }),
-        resource: z.string()
+        resourceId: z.string()
     }),
     query: z.optional(z.never())
 });
@@ -2597,67 +2658,6 @@ export type UpdateAiResourceDataZodType = z.infer<typeof zUpdateAiResourceData>;
 export const zUpdateAiResourceResponse = zAiResourceEntity;
 
 export type UpdateAiResourceResponseZodType = z.infer<typeof zUpdateAiResourceResponse>;
-
-export const zDeletePoolDefinitionData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        workspaceId: z.string().register(z.globalRegistry, {
-            description: 'The ID of the workspace'
-        }),
-        environmentId: z.string()
-    }),
-    query: z.optional(z.never())
-});
-
-export type DeletePoolDefinitionDataZodType = z.infer<typeof zDeletePoolDefinitionData>;
-
-export const zGetPoolDefinitionData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        workspaceId: z.string().register(z.globalRegistry, {
-            description: 'The ID of the workspace'
-        }),
-        environmentId: z.string().register(z.globalRegistry, {
-            description: 'The ID of the environment'
-        })
-    }),
-    query: z.optional(z.object({
-        includesUsers: z.optional(z.boolean().register(z.globalRegistry, {
-            description: 'Whether to include users in the response'
-        }))
-    }))
-});
-
-export type GetPoolDefinitionDataZodType = z.infer<typeof zGetPoolDefinitionData>;
-
-/**
- * Get a pool definition by workspace and environment
- */
-export const zGetPoolDefinitionResponse = zPoolDefinitionEntity;
-
-export type GetPoolDefinitionResponseZodType = z.infer<typeof zGetPoolDefinitionResponse>;
-
-export const zUpdatePoolDefinitionData = z.object({
-    body: zUpsertPoolDefinitionDto,
-    path: z.object({
-        workspaceId: z.string().register(z.globalRegistry, {
-            description: 'The ID of the workspace'
-        }),
-        environmentId: z.string().register(z.globalRegistry, {
-            description: 'The ID of the environment'
-        })
-    }),
-    query: z.optional(z.never())
-});
-
-export type UpdatePoolDefinitionDataZodType = z.infer<typeof zUpdatePoolDefinitionData>;
-
-/**
- * Created/updated a pool definition
- */
-export const zUpdatePoolDefinitionResponse = zPoolDefinitionEntity;
-
-export type UpdatePoolDefinitionResponseZodType = z.infer<typeof zUpdatePoolDefinitionResponse>;
 
 export const zGetApiKeysData = z.object({
     body: z.optional(z.never()),
@@ -2775,6 +2775,67 @@ export const zUpdateApiKeyResponse = zApiKeyEntity;
 
 export type UpdateApiKeyResponseZodType = z.infer<typeof zUpdateApiKeyResponse>;
 
+export const zDeletePoolDefinitionData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        workspaceId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the workspace'
+        }),
+        environmentId: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+export type DeletePoolDefinitionDataZodType = z.infer<typeof zDeletePoolDefinitionData>;
+
+export const zGetPoolDefinitionData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        workspaceId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the workspace'
+        }),
+        environmentId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the environment'
+        })
+    }),
+    query: z.optional(z.object({
+        includesUsers: z.optional(z.boolean().register(z.globalRegistry, {
+            description: 'Whether to include users in the response'
+        }))
+    }))
+});
+
+export type GetPoolDefinitionDataZodType = z.infer<typeof zGetPoolDefinitionData>;
+
+/**
+ * Get a pool definition by workspace and environment
+ */
+export const zGetPoolDefinitionResponse = zPoolDefinitionEntity;
+
+export type GetPoolDefinitionResponseZodType = z.infer<typeof zGetPoolDefinitionResponse>;
+
+export const zUpdatePoolDefinitionData = z.object({
+    body: zUpsertPoolDefinitionDto,
+    path: z.object({
+        workspaceId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the workspace'
+        }),
+        environmentId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the environment'
+        })
+    }),
+    query: z.optional(z.never())
+});
+
+export type UpdatePoolDefinitionDataZodType = z.infer<typeof zUpdatePoolDefinitionData>;
+
+/**
+ * Created/updated a pool definition
+ */
+export const zUpdatePoolDefinitionResponse = zPoolDefinitionEntity;
+
+export type UpdatePoolDefinitionResponseZodType = z.infer<typeof zUpdatePoolDefinitionResponse>;
+
 export const zCompletionData = z.object({
     body: z.optional(z.record(z.string(), z.unknown())),
     path: z.object({
@@ -2783,9 +2844,6 @@ export const zCompletionData = z.object({
         }),
         environmentId: z.string().register(z.globalRegistry, {
             description: 'The ID of the environment'
-        }),
-        resource: z.string().register(z.globalRegistry, {
-            description: 'The unique identifier of the AI resource'
         })
     }),
     query: z.optional(z.never())
@@ -2802,7 +2860,7 @@ export const zGetCompletionErrorRateData = z.object({
         environmentId: z.string().register(z.globalRegistry, {
             description: 'The ID of the environment'
         }),
-        resource: z.string().register(z.globalRegistry, {
+        resourceId: z.uuid().register(z.globalRegistry, {
             description: 'The unique identifier of the AI resource'
         })
     }),
@@ -2837,8 +2895,8 @@ export const zGetCompletionAuditData = z.object({
             z.uuid(),
             z.null()
         ])),
-        resource: z.optional(z.union([
-            z.string(),
+        resourceId: z.optional(z.union([
+            z.uuid(),
             z.null()
         ])),
         model: z.optional(z.union([
@@ -2873,9 +2931,7 @@ export type GetCompletionAuditDataZodType = z.infer<typeof zGetCompletionAuditDa
 /**
  * List all completion audits associated with an environment
  */
-export const zGetCompletionAuditResponse = z.array(zListAuditResponseDto).register(z.globalRegistry, {
-    description: 'List all completion audits associated with an environment'
-});
+export const zGetCompletionAuditResponse = zListAuditResponseDto;
 
 export type GetCompletionAuditResponseZodType = z.infer<typeof zGetCompletionAuditResponse>;
 

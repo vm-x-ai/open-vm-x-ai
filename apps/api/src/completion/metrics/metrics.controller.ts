@@ -25,7 +25,7 @@ export class CompletionMetricsController {
     private readonly completionMetricsService: CompletionMetricsService
   ) {}
 
-  @Get('/:workspaceId/:environmentId/:resource/error-rate')
+  @Get('/:workspaceId/:environmentId/:resourceId/error-rate')
   @ApiOkResponse({
     type: MetricDto,
     description: 'Get the error rate for an AI resource',
@@ -42,7 +42,7 @@ export class CompletionMetricsController {
   async getErrorRate(
     @WorkspaceIdParam() workspaceId: string,
     @EnvironmentIdParam() environmentId: string,
-    @AIResourceIdParam() resource: string,
+    @AIResourceIdParam() resourceId: string,
     @Query('aiConnectionId') aiConnectionId?: string,
     @Query('model') model?: string,
     @Query('window', ParseIntPipe) window = 10,
@@ -51,7 +51,7 @@ export class CompletionMetricsController {
     return await this.completionMetricsService.getErrorRate(
       workspaceId,
       environmentId,
-      resource,
+      resourceId,
       aiConnectionId,
       model,
       window,

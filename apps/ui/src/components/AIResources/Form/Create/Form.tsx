@@ -62,7 +62,7 @@ export default function CreateAIResourceForm({
       toast.success(state.message);
 
       router.push(
-        `/${workspaceId}/${environmentId}/ai-resources/edit/${state.response?.resource}/general`
+        `/${workspaceId}/${environmentId}/ai-resources/edit/${state.response?.resourceId}/general`
       );
     }
   }, [environmentId, router, state, workspaceId]);
@@ -76,7 +76,7 @@ export default function CreateAIResourceForm({
     defaultValues: {
       workspaceId,
       environmentId,
-      resource: '',
+      name: '',
       description: '',
       assignApiKeys: [apiKeys[0].apiKeyId],
     },
@@ -108,7 +108,7 @@ export default function CreateAIResourceForm({
             <Grid container size={12}>
               <Grid size={12}>
                 <Controller
-                  name="resource"
+                  name="name"
                   control={control}
                   render={({ field }) => (
                     <TextField
@@ -119,8 +119,8 @@ export default function CreateAIResourceForm({
                       label="Resource Name"
                       disabled={!!data}
                       style={{ marginBottom: '12px' }}
-                      error={!!errors.resource?.message}
-                      helperText={errors.resource?.message}
+                      error={!!errors.name?.message}
+                      helperText={errors.name?.message}
                     />
                   )}
                 />

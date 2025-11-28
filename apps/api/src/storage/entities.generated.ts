@@ -78,7 +78,8 @@ export interface AiResource {
   environmentId: string;
   fallbackModels: ColumnType<any[] | null, string | null, string | null>;
   model: ColumnType<any, string, string | null>;
-  resource: string;
+  name: string;
+  resourceId: Generated<string>;
   routing: ColumnType<any | null, string | null, string | null>;
   secondaryModels: ColumnType<any[] | null, string | null, string | null>;
   updatedAt: Generated<Timestamp>;
@@ -121,7 +122,7 @@ export interface CompletionAudit {
   provider: string | null;
   requestId: string;
   requestPayload: ColumnType<any | null, string | null, string | null>;
-  resource: string | null;
+  resourceId: string | null;
   responseData: ColumnType<any | null, string | null, string | null>;
   responseHeaders: ColumnType<any | null, string | null, string | null>;
   sourceIp: string | null;
@@ -167,7 +168,7 @@ export interface CompletionBatchItem {
   itemId: Generated<string>;
   promptTokens: Generated<number>;
   request: ColumnType<any | null, string | null, string | null>;
-  resource: string;
+  resourceId: string;
   response: ColumnType<any | null, string | null, string | null>;
   retryCount: Generated<number>;
   status: PublicCompletionBatchRequestStatus;

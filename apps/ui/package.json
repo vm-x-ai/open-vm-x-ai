@@ -8,6 +8,17 @@
       "ui"
     ],
     "targets": {
+      "build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "next build",
+          "cwd": "{projectRoot}"
+        },
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      },
       "gen-client": {
         "executor": "nx:run-commands",
         "options": {
@@ -27,6 +38,10 @@
     "@mui/material": "^7.3.5",
     "@mui/material-nextjs": "^7.3.5",
     "@mui/x-date-pickers": "^8.19.0",
+    "@nivo/core": "^0.99.0",
+    "@nivo/line": "^0.99.0",
+    "@nivo/scales": "^0.99.0",
+    "@nivo/theming": "^0.99.0",
     "@tanstack/react-query": "^5.90.10",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@vm-x-ai/shared-ai-provider": "workspace:*",
@@ -69,6 +84,7 @@
     "@types/ejs": "^3.1.5",
     "@types/json-schema": "^7.0.15",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/shade-blend-color": "^1.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

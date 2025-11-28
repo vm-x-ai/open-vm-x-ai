@@ -71,8 +71,6 @@ export default function AdvancedEditor({ route, onChange }: AdvancedEditorProps)
   const [compilationError, setCompilationError] = useState<string | null>(null);
   const [input, setInput] = useState<string>(defaultInput);
 
-  console.log('compilationError', compilationError);
-
   return (
     <Box
       sx={{
