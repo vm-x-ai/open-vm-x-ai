@@ -14,6 +14,7 @@ import { EnvironmentService } from '../environment/environment.service';
 import { AIConnectionService } from '../ai-connection/ai-connection.service';
 import { AIResourceService } from '../ai-resource/ai-resource.service';
 import { ApiKeyService } from '../api-key/api-key.service';
+import { UsersService } from '../users/users.service';
 
 export const RoleGuard = (
   action: string,
@@ -38,7 +39,13 @@ export const RoleGuard = (
         string,
         string
       >;
-      const variables: Record<string, unknown> = {};
+      const variables: Record<string, unknown> = {
+        auth: {
+          user: user?.user,
+          apiKey: apiKey,
+        }
+      };
+
       if (params.workspaceId) {
         const workspaceService = this.moduleRef.get(WorkspaceService, {
           strict: false,
@@ -114,6 +121,13 @@ export const RoleGuard = (
           false,
           false
         );
+      }
+
+      if (params.userId) {
+        const usersService = this.moduleRef.get(UsersService, {
+          strict: false,
+        });
+        variables.user = await usersService.getById(params.userId, false);
       }
 
       resource = _.template(resource)(variables);

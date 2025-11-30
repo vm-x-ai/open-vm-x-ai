@@ -19,6 +19,7 @@ export class WorkspaceUserEntity {
 
   @ApiProperty({
     description: 'The role of the user in the workspace',
+    enumName: 'WorkspaceUserRole',
     enum: PublicWorkspaceUserRole,
     example: PublicWorkspaceUserRole.OWNER,
   })

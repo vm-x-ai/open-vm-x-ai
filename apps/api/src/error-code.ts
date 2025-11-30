@@ -1,5 +1,11 @@
 export enum ErrorCode {
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+
+  // User errors
+  USER_EMAIL_IN_USE = 'USER_EMAIL_IN_USE',
+  USER_USERNAME_IN_USE = 'USER_USERNAME_IN_USE',
+  USER_NOT_FOUND = 'USER_NOT_FOUND',
+
   // OIDC errors
   OIDC_NOT_CONFIGURED = 'OIDC_NOT_CONFIGURED',
   OIDC_RESPONSE_ERROR = 'OIDC_RESPONSE_ERROR',
@@ -50,6 +56,11 @@ export enum ErrorCode {
 
 export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.INTERNAL_SERVER_ERROR]: 'Internal Server Error',
+
+  // User errors
+  [ErrorCode.USER_EMAIL_IN_USE]: 'Email ${email} is already in use',
+  [ErrorCode.USER_USERNAME_IN_USE]: 'Username ${username} is already in use',
+  [ErrorCode.USER_NOT_FOUND]: 'User ${userId} not found',
 
   // OIDC errors
   [ErrorCode.OIDC_NOT_CONFIGURED]: 'OIDC is not configured',

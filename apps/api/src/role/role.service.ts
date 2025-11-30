@@ -11,6 +11,7 @@ import { UserRoleEntity } from './entities/user-role.entity';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { modules } from './modules';
 import { PermissionsDto } from './dto/permissions.dto';
+import { UnassignRoleDto } from './dto/unassign-role.dto';
 
 @Injectable()
 export class RoleService {
@@ -173,7 +174,7 @@ export class RoleService {
     return role;
   }
 
-  public async assignRoleToUser(
+  public async assignUsersToRole(
     roleId: string,
     payload: AssignRoleDto,
     user: UserEntity
@@ -196,6 +197,21 @@ export class RoleService {
     );
 
     return userRole;
+  }
+
+  public async unassignUsersFromRole(
+    roleId: string,
+    payload: UnassignRoleDto
+  ): Promise<void> {
+    await this.db.writer
+      .deleteFrom('userRoles')
+      .where('roleId', '=', roleId)
+      .where('userId', 'in', payload.userIds)
+      .execute();
+
+    await this.cache.mdel(
+      payload.userIds.map((userId) => this.getUserRoleCacheKey(userId))
+    );
   }
 
   public async delete(roleId: string): Promise<void> {

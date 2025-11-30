@@ -28,9 +28,14 @@ import {
 } from '../common/api.decorators';
 import { ServiceError } from '../types';
 import { AssignRoleDto } from './dto/assign-role.dto';
-import { ROLE_BASE_RESOURCE, ROLE_RESOURCE_ITEM, RoleActions } from './permissions/actions';
+import {
+  ROLE_BASE_RESOURCE,
+  ROLE_RESOURCE_ITEM,
+  RoleActions,
+} from './permissions/actions';
 import { RoleGuard } from './role.guard';
 import { PermissionsDto } from './dto/permissions.dto';
+import { UnassignRoleDto } from './dto/unassign-role.dto';
 
 export function ApiRoleIdParam() {
   return applyDecorators(
@@ -136,16 +141,34 @@ export class RoleController {
   })
   @ApiRoleIdParam()
   @ApiOperation({
-    operationId: 'assignRoleToUsers',
+    operationId: 'assignUsersToRole',
     summary: 'Assign a role to users',
     description: 'Assigns a role to users by their IDs.',
   })
-  public async assignRoleToUsers(
+  public async assignUsersToRole(
     @RoleIdParam() roleId: string,
     @Body() payload: AssignRoleDto,
     @AuthenticatedUser() user: UserEntity
   ): Promise<void> {
-    await this.roleService.assignRoleToUser(roleId, payload, user);
+    await this.roleService.assignUsersToRole(roleId, payload, user);
+  }
+
+  @Post(':roleId/unassign')
+  @UseGuards(RoleGuard(RoleActions.UNASSIGN, ROLE_RESOURCE_ITEM))
+  @ApiRoleIdParam()
+  @ApiOkResponse({
+    description: 'Unassign users from a role',
+  })
+  @ApiOperation({
+    operationId: 'unassignUsersFromRole',
+    summary: 'Unassign users from a role',
+    description: 'Unassigns users from a role by their IDs.',
+  })
+  public async unassignUsersFromRole(
+    @RoleIdParam() roleId: string,
+    @Body() payload: UnassignRoleDto
+  ): Promise<void> {
+    await this.roleService.unassignUsersFromRole(roleId, payload);
   }
 
   @Put(':roleId')

@@ -37,6 +37,8 @@ import {
   WORKSPACE_RESOURCE_ITEM,
   WorkspaceActions,
 } from './permissions/actions';
+import { AssignWorkspaceUsersDto } from './dto/assign-user.dto';
+import { UnassignWorkspaceUsersDto } from './dto/unassign-user.dto';
 
 @Controller('workspace')
 @ApiInternalServerErrorResponse({
@@ -150,6 +152,43 @@ export class WorkspaceController {
     @AuthenticatedUser() user: UserEntity
   ): Promise<WorkspaceEntity> {
     return this.workspaceService.update(workspaceId, payload, user);
+  }
+
+  @Post(':workspaceId/assign')
+  @UseGuards(RoleGuard(WorkspaceActions.ASSIGN, WORKSPACE_RESOURCE_ITEM))
+  @ApiWorkspaceIdParam()
+  @ApiOkResponse({
+    description: 'Assign users to a workspace',
+  })
+  @ApiOperation({
+    operationId: 'assignUsersToWorkspace',
+    summary: 'Assign users to a workspace',
+    description: 'Assigns users to a workspace by their IDs.',
+  })
+  public async assignUsers(
+    @WorkspaceIdParam() workspaceId: string,
+    @Body() payload: AssignWorkspaceUsersDto,
+    @AuthenticatedUser() user: UserEntity
+  ): Promise<void> {
+    await this.workspaceService.assignUsers(workspaceId, payload, user);
+  }
+
+  @Post(':workspaceId/unassign')
+  @UseGuards(RoleGuard(WorkspaceActions.UNASSIGN, WORKSPACE_RESOURCE_ITEM))
+  @ApiWorkspaceIdParam()
+  @ApiOkResponse({
+    description: 'Unassign users from a workspace',
+  })
+  @ApiOperation({
+    operationId: 'unassignUsersFromWorkspace',
+    summary: 'Unassign users from a workspace',
+    description: 'Unassigns users from a workspace by their IDs.',
+  })
+  public async unassignUsers(
+    @WorkspaceIdParam() workspaceId: string,
+    @Body() payload: UnassignWorkspaceUsersDto
+  ): Promise<void> {
+    await this.workspaceService.unassignUsers(workspaceId, payload);
   }
 
   @Delete(':workspaceId')

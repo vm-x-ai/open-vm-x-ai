@@ -128,18 +128,24 @@ export class UserEntity {
   @ApiProperty({
     description: 'The user who created the user',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    nullable: true,
+    required: false,
+    type: String
   })
   @IsUUID('4')
   @IsNotEmpty()
-  createdBy?: string;
+  createdBy?: string | null;
 
   @ApiProperty({
     description: 'The user who last updated the user',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    nullable: true,
+    required: false,
+    type: String
   })
   @IsUUID('4')
   @IsNotEmpty()
-  updatedBy?: string;
+  updatedBy?: string | null;
 }
 
 export class FullUserEntity extends UserEntity {

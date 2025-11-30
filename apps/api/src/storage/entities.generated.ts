@@ -238,6 +238,7 @@ export interface UserRole {
 
 export interface User {
   createdAt: Generated<Timestamp>;
+  createdBy: string | null;
   email: string;
   emailVerified: Generated<boolean>;
   firstName: string;
@@ -250,6 +251,7 @@ export interface User {
   providerMetadata: Json | null;
   providerType: PublicProviderType;
   updatedAt: Generated<Timestamp>;
+  updatedBy: string | null;
   username: string;
 }
 

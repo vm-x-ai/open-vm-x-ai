@@ -6,6 +6,8 @@ export enum WorkspaceActions {
   CREATE = `${WORKSPACE_MODULE_NAME}:create`,
   UPDATE = `${WORKSPACE_MODULE_NAME}:update`,
   DELETE = `${WORKSPACE_MODULE_NAME}:delete`,
+  ASSIGN = `${WORKSPACE_MODULE_NAME}:assign`,
+  UNASSIGN = `${WORKSPACE_MODULE_NAME}:unassign`,
 }
 
 export const WORKSPACE_BASE_RESOURCE = 'workspace'

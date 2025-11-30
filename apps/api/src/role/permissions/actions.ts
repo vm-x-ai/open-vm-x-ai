@@ -7,6 +7,7 @@ export enum RoleActions {
   UPDATE = `${ROLE_MODULE_NAME}:update`,
   DELETE = `${ROLE_MODULE_NAME}:delete`,
   ASSIGN = `${ROLE_MODULE_NAME}:assign`,
+  UNASSIGN = `${ROLE_MODULE_NAME}:unassign`,
 }
 
 export const ROLE_BASE_RESOURCE = 'role'

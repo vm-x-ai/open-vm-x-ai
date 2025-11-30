@@ -11,6 +11,8 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ListWorkspaceDto } from './dto/list-workspace.dto';
 import { Expression } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/postgres';
+import { AssignWorkspaceUsersDto } from './dto/assign-user.dto';
+import { UnassignWorkspaceUsersDto } from './dto/unassign-user.dto';
 
 @Injectable()
 export class WorkspaceService {
@@ -150,6 +152,41 @@ export class WorkspaceService {
 
       return workspace;
     });
+  }
+
+  public async assignUsers(
+    workspaceId: string,
+    payload: AssignWorkspaceUsersDto,
+    user: UserEntity
+  ): Promise<void> {
+    await this.db.writer
+      .insertInto('workspaceUsers')
+      .values(
+        payload.userIds.map((userId) => ({
+          workspaceId,
+          userId,
+          addedBy: user.id,
+          role: payload.role,
+        }))
+      )
+      .execute();
+  }
+
+  public async unassignUsers(
+    workspaceId: string,
+    payload: UnassignWorkspaceUsersDto
+  ): Promise<void> {
+    await this.db.writer
+      .deleteFrom('workspaceUsers')
+      .where('workspaceId', '=', workspaceId)
+      .where('userId', 'in', payload.userIds)
+      .execute();
+
+    await this.cache.mdel(
+      payload.userIds.map((userId) =>
+        this.getWorkspaceMemberCacheKey(workspaceId, userId)
+      )
+    );
   }
 
   public async update(
