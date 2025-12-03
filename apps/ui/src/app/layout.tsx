@@ -11,6 +11,7 @@ import ReactQueryClientProvider from '@/providers/query-client.provider';
 import { ensureServerClientsInitialized } from '@/clients/server-api-utils';
 import { SessionProvider } from 'next-auth/react';
 import { ToastContainer } from 'react-toastify';
+import { ZustandStoreProvider } from '@/store/provider';
 
 export const metadata = {
   title: 'VM-X AI Console',
@@ -34,20 +35,24 @@ export default async function RootLayout({
       >
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <NuqsAdapter>
-            <OpenAPIClientProvider apiUrl={process.env.API_BASE_URL as string}>
-              <ReactQueryClientProvider>
-                <ToastContainer
-                  position="top-center"
-                  theme="light"
-                  closeOnClick
-                />
-                <ThemeProvider theme={theme}>
-                  <SessionProvider>
-                    <main>{children}</main>
-                  </SessionProvider>
-                </ThemeProvider>
-              </ReactQueryClientProvider>
-            </OpenAPIClientProvider>
+            <ZustandStoreProvider>
+              <OpenAPIClientProvider
+                apiUrl={process.env.API_BASE_URL as string}
+              >
+                <ReactQueryClientProvider>
+                  <ToastContainer
+                    position="top-center"
+                    theme="light"
+                    closeOnClick
+                  />
+                  <ThemeProvider theme={theme}>
+                    <SessionProvider>
+                      <main>{children}</main>
+                    </SessionProvider>
+                  </ThemeProvider>
+                </ReactQueryClientProvider>
+              </OpenAPIClientProvider>
+            </ZustandStoreProvider>
           </NuqsAdapter>
         </AppRouterCacheProvider>
       </body>

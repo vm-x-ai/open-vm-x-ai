@@ -1,4 +1,4 @@
-import Header from '@/components/Header/Header';
+import Layout from '@/components/Layout/Layout';
 
 export const metadata = {
   title: 'VM-X AI Console - Getting Started',
@@ -9,11 +9,10 @@ type LayoutProps = {
   children: React.ReactNode;
 };
 
-export default async function Layout({ children }: LayoutProps) {
+export default async function GettingStartedLayout({ children }: LayoutProps) {
   return (
-    <>
-      <Header />
-      <div className="mt-20 p-6">{children}</div>
-    </>
+    <Layout>
+      <div className="mt-18">{children}</div>
+    </Layout>
   );
 }

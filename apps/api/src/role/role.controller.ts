@@ -36,6 +36,7 @@ import {
 import { RoleGuard } from './role.guard';
 import { PermissionsDto } from './dto/permissions.dto';
 import { UnassignRoleDto } from './dto/unassign-role.dto';
+import { RoleDto } from './dto/role-dto';
 
 export function ApiRoleIdParam() {
   return applyDecorators(
@@ -77,7 +78,7 @@ export class RoleController {
   @Get()
   @UseGuards(RoleGuard(RoleActions.LIST, ROLE_BASE_RESOURCE))
   @ApiOkResponse({
-    type: RoleEntity,
+    type: RoleDto,
     isArray: true,
     description: 'List all roles',
   })
@@ -90,7 +91,7 @@ export class RoleController {
   public async getAll(
     @IncludesUsersQuery()
     includesUsers: boolean
-  ): Promise<RoleEntity[]> {
+  ): Promise<RoleDto[]> {
     return this.roleService.getAll(includesUsers);
   }
 

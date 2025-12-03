@@ -194,7 +194,7 @@ const ConnectionModelSelector = forwardRef<
                   Click{' '}
                   <MUILink
                     component={Link}
-                    href={`/${workspaceId}/${environmentId}/ai-connections/new`}
+                    href={`/dashboard/${workspaceId}/${environmentId}/ai-connections/new`}
                     target="_blank"
                     variant="body2"
                   >

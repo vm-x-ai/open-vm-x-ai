@@ -179,7 +179,7 @@ export default function AuditTable({
           row.resourceId && resourcesMap?.[row.resourceId] ? (
             <MUILink
               component={Link}
-              href={`/${workspaceId}/${environmentId}/ai-resources/edit/${row.resourceId}/general`}
+              href={`/dashboard/${workspaceId}/${environmentId}/ai-resources/edit/${row.resourceId}/general`}
               variant="body2"
             >
               {resourcesMap?.[row.resourceId]?.name ?? row.resourceId}
@@ -215,7 +215,7 @@ export default function AuditTable({
             >
               <MUILink
                 component={Link}
-                href={`/${workspaceId}/${environmentId}/security/auth/role/edit/${row.apiKeyId}/general`}
+                href={`/dashboard/${workspaceId}/${environmentId}/security/auth/role/edit/${row.apiKeyId}/general`}
                 variant="body2"
               >
                 {apiKeysMap?.[row.apiKeyId]?.name}

@@ -149,7 +149,7 @@ export default function AIConnectionTable({
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
         router.push(
-          `/${workspaceId}/${environmentId}/ai-connections/edit/${row.original.connectionId}/general`
+          `/dashboard/${workspaceId}/${environmentId}/ai-connections/edit/${row.original.connectionId}/general`
         );
       },
       sx: (theme) => ({
@@ -167,7 +167,7 @@ export default function AIConnectionTable({
         <Tooltip title="Edit">
           <IconButton
             LinkComponent={Link}
-            href={`/${workspaceId}/${environmentId}/ai-connections/edit/${row.original.connectionId}`}
+            href={`/dashboard/${workspaceId}/${environmentId}/ai-connections/edit/${row.original.connectionId}`}
           >
             <EditIcon />
           </IconButton>
@@ -186,7 +186,7 @@ export default function AIConnectionTable({
       <Button
         variant="outlined"
         LinkComponent={Link}
-        href={`/${workspaceId}/${environmentId}/ai-connections/new`}
+        href={`/dashboard/${workspaceId}/${environmentId}/ai-connections/new`}
       >
         Add new AI Connection
       </Button>

@@ -68,7 +68,7 @@ export default function APIKeysTable({
         Cell: ({ row }) => (
           <MUILink
             component={Link}
-            href={`/${workspaceId}/${environmentId}/security/auth/role/edit/${row.original.apiKeyId}/general`}
+            href={`/dashboard/${workspaceId}/${environmentId}/security/auth/role/edit/${row.original.apiKeyId}/general`}
             variant="body2"
           >
             {row.original.name}
@@ -172,7 +172,7 @@ export default function APIKeysTable({
           color="primary"
           variant="outlined"
           LinkComponent={Link}
-          href={`/${workspaceId}/${environmentId}/security/auth/role/new`}
+          href={`/dashboard/${workspaceId}/${environmentId}/security/auth/role/new`}
           startIcon={<AddIcon />}
         >
           Add Role
@@ -184,7 +184,7 @@ export default function APIKeysTable({
         <Tooltip title="Edit">
           <IconButton
             LinkComponent={Link}
-            href={`/${workspaceId}/${environmentId}/security/auth/role/edit/${row.original.apiKeyId}/general`}
+            href={`/dashboard/${workspaceId}/${environmentId}/security/auth/role/edit/${row.original.apiKeyId}/general`}
           >
             <EditIcon />
           </IconButton>

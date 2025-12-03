@@ -2,7 +2,7 @@
 
 import { type Client, type Options as Options2, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { CancelCompletionBatchData, CancelCompletionBatchErrors, CancelCompletionBatchResponses, CompletionData, CompletionResponses, CreateAiConnectionData, CreateAiConnectionErrors, CreateAiConnectionResponses, CreateAiResourceData, CreateAiResourceErrors, CreateAiResourceResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateCompletionBatchData, CreateCompletionBatchErrors, CreateCompletionBatchResponses, CreateEnvironmentData, CreateEnvironmentErrors, CreateEnvironmentResponses, CreateWorkspaceData, CreateWorkspaceErrors, CreateWorkspaceResponses, DeleteAiConnectionData, DeleteAiConnectionErrors, DeleteAiConnectionResponses, DeleteAiResourceData, DeleteAiResourceErrors, DeleteAiResourceResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteEnvironmentData, DeleteEnvironmentErrors, DeleteEnvironmentResponses, DeletePoolDefinitionData, DeletePoolDefinitionErrors, DeletePoolDefinitionResponses, DeleteWorkspaceData, DeleteWorkspaceErrors, DeleteWorkspaceResponses, GetAiConnectionByIdData, GetAiConnectionByIdErrors, GetAiConnectionByIdResponses, GetAiConnectionsData, GetAiConnectionsErrors, GetAiConnectionsResponses, GetAiProvidersData, GetAiProvidersErrors, GetAiProvidersResponses, GetAiResourceByIdData, GetAiResourceByIdErrors, GetAiResourceByIdResponses, GetAiResourcesData, GetAiResourcesErrors, GetAiResourcesResponses, GetApiKeyByIdData, GetApiKeyByIdErrors, GetApiKeyByIdResponses, GetApiKeysData, GetApiKeysErrors, GetApiKeysResponses, GetCompletionAuditData, GetCompletionAuditErrors, GetCompletionAuditResponses, GetCompletionBatchData, GetCompletionBatchErrors, GetCompletionBatchItemData, GetCompletionBatchItemErrors, GetCompletionBatchItemResponses, GetCompletionBatchResponses, GetCompletionErrorRateData, GetCompletionErrorRateErrors, GetCompletionErrorRateResponses, GetCompletionUsageData, GetCompletionUsageErrors, GetCompletionUsageResponses, GetEnvironmentByIdData, GetEnvironmentByIdErrors, GetEnvironmentByIdResponses, GetEnvironmentsData, GetEnvironmentsErrors, GetEnvironmentsResponses, GetOauth2AuthorizeData, GetOauth2UserinfoData, GetOauth2UserinfoResponses, GetOauth2WellKnownOpenidConfigurationData, GetOauth2WellKnownOpenidConfigurationResponses, GetPoolDefinitionData, GetPoolDefinitionErrors, GetPoolDefinitionResponses, GetUsersData, GetUsersErrors, GetUsersResponses, GetWorkspaceByIdData, GetWorkspaceByIdErrors, GetWorkspaceByIdResponses, GetWorkspacesData, GetWorkspacesErrors, GetWorkspacesResponses, HealthcheckControllerHealthcheckData, HealthcheckControllerHealthcheckResponses, OidcInteractionControllerConsentData, OidcInteractionControllerConsentResponses, OidcInteractionControllerFederatedCallbackData, OidcInteractionControllerFederatedCallbackResponses, OidcInteractionControllerFederatedInteractionData, OidcInteractionControllerFederatedInteractionResponses, OidcInteractionControllerLoginData, OidcInteractionControllerLoginResponses, OidcInteractionControllerShowInteractionData, OidcInteractionControllerShowInteractionResponses, PostOauth2RevokeData, PostOauth2RevokeResponses, PostOauth2TokenData, PostOauth2TokenResponses, UpdateAiConnectionData, UpdateAiConnectionErrors, UpdateAiConnectionResponses, UpdateAiResourceData, UpdateAiResourceErrors, UpdateAiResourceResponses, UpdateApiKeyData, UpdateApiKeyErrors, UpdateApiKeyResponses, UpdateEnvironmentData, UpdateEnvironmentErrors, UpdateEnvironmentResponses, UpdatePoolDefinitionData, UpdatePoolDefinitionErrors, UpdatePoolDefinitionResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses } from './types.gen';
+import type { AssignUsersToRoleData, AssignUsersToRoleErrors, AssignUsersToRoleResponses, AssignUsersToWorkspaceData, AssignUsersToWorkspaceErrors, AssignUsersToWorkspaceResponses, CancelCompletionBatchData, CancelCompletionBatchErrors, CancelCompletionBatchResponses, CompletionData, CompletionResponses, CreateAiConnectionData, CreateAiConnectionErrors, CreateAiConnectionResponses, CreateAiResourceData, CreateAiResourceErrors, CreateAiResourceResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateCompletionBatchData, CreateCompletionBatchErrors, CreateCompletionBatchResponses, CreateEnvironmentData, CreateEnvironmentErrors, CreateEnvironmentResponses, CreateRoleData, CreateRoleErrors, CreateRoleResponses, CreateUserData, CreateUserErrors, CreateUserResponses, CreateWorkspaceData, CreateWorkspaceErrors, CreateWorkspaceResponses, DeleteAiConnectionData, DeleteAiConnectionErrors, DeleteAiConnectionResponses, DeleteAiResourceData, DeleteAiResourceErrors, DeleteAiResourceResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteEnvironmentData, DeleteEnvironmentErrors, DeleteEnvironmentResponses, DeletePoolDefinitionData, DeletePoolDefinitionErrors, DeletePoolDefinitionResponses, DeleteRoleData, DeleteRoleErrors, DeleteRoleResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, DeleteWorkspaceData, DeleteWorkspaceErrors, DeleteWorkspaceResponses, GetAiConnectionByIdData, GetAiConnectionByIdErrors, GetAiConnectionByIdResponses, GetAiConnectionsData, GetAiConnectionsErrors, GetAiConnectionsResponses, GetAiProvidersData, GetAiProvidersErrors, GetAiProvidersResponses, GetAiResourceByIdData, GetAiResourceByIdErrors, GetAiResourceByIdResponses, GetAiResourcesData, GetAiResourcesErrors, GetAiResourcesResponses, GetApiKeyByIdData, GetApiKeyByIdErrors, GetApiKeyByIdResponses, GetApiKeysData, GetApiKeysErrors, GetApiKeysResponses, GetCompletionAuditData, GetCompletionAuditErrors, GetCompletionAuditResponses, GetCompletionBatchData, GetCompletionBatchErrors, GetCompletionBatchItemData, GetCompletionBatchItemErrors, GetCompletionBatchItemResponses, GetCompletionBatchResponses, GetCompletionErrorRateData, GetCompletionErrorRateErrors, GetCompletionErrorRateResponses, GetCompletionUsageData, GetCompletionUsageErrors, GetCompletionUsageResponses, GetEnvironmentByIdData, GetEnvironmentByIdErrors, GetEnvironmentByIdResponses, GetEnvironmentsData, GetEnvironmentsErrors, GetEnvironmentsResponses, GetOauth2AuthorizeData, GetOauth2UserinfoData, GetOauth2UserinfoResponses, GetOauth2WellKnownOpenidConfigurationData, GetOauth2WellKnownOpenidConfigurationResponses, GetPermissionsData, GetPermissionsErrors, GetPermissionsResponses, GetPoolDefinitionData, GetPoolDefinitionErrors, GetPoolDefinitionResponses, GetRoleByIdData, GetRoleByIdErrors, GetRoleByIdResponses, GetRolesData, GetRolesErrors, GetRolesResponses, GetUserByIdData, GetUserByIdErrors, GetUserByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, GetWorkspaceByIdData, GetWorkspaceByIdErrors, GetWorkspaceByIdResponses, GetWorkspacesData, GetWorkspacesErrors, GetWorkspacesResponses, HealthcheckControllerHealthcheckData, HealthcheckControllerHealthcheckResponses, OidcInteractionControllerConsentData, OidcInteractionControllerConsentResponses, OidcInteractionControllerFederatedCallbackData, OidcInteractionControllerFederatedCallbackResponses, OidcInteractionControllerFederatedInteractionData, OidcInteractionControllerFederatedInteractionResponses, OidcInteractionControllerLoginData, OidcInteractionControllerLoginResponses, OidcInteractionControllerShowInteractionData, OidcInteractionControllerShowInteractionResponses, PostOauth2RevokeData, PostOauth2RevokeResponses, PostOauth2TokenData, PostOauth2TokenResponses, UnassignUsersFromRoleData, UnassignUsersFromRoleErrors, UnassignUsersFromRoleResponses, UnassignUsersFromWorkspaceData, UnassignUsersFromWorkspaceErrors, UnassignUsersFromWorkspaceResponses, UpdateAiConnectionData, UpdateAiConnectionErrors, UpdateAiConnectionResponses, UpdateAiResourceData, UpdateAiResourceErrors, UpdateAiResourceResponses, UpdateApiKeyData, UpdateApiKeyErrors, UpdateApiKeyResponses, UpdateEnvironmentData, UpdateEnvironmentErrors, UpdateEnvironmentResponses, UpdatePoolDefinitionData, UpdatePoolDefinitionErrors, UpdatePoolDefinitionResponses, UpdateRoleData, UpdateRoleErrors, UpdateRoleResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -33,6 +33,162 @@ export const getUsers = <ThrowOnError extends boolean = false>(options?: Options
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/user',
     ...options
+});
+
+/**
+ * Create a new user
+ *
+ * Creates a new user.
+ */
+export const createUser = <ThrowOnError extends boolean = false>(options: Options<CreateUserData, ThrowOnError>) => (options.client ?? client).post<CreateUserResponses, CreateUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/user',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a user
+ *
+ * Deletes a user by its ID.
+ */
+export const deleteUser = <ThrowOnError extends boolean = false>(options: Options<DeleteUserData, ThrowOnError>) => (options.client ?? client).delete<DeleteUserResponses, DeleteUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/user/{userId}',
+    ...options
+});
+
+/**
+ * Get a user by ID
+ *
+ * Returns a user by ID.
+ */
+export const getUserById = <ThrowOnError extends boolean = false>(options: Options<GetUserByIdData, ThrowOnError>) => (options.client ?? client).get<GetUserByIdResponses, GetUserByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/user/{userId}',
+    ...options
+});
+
+/**
+ * Update a user
+ *
+ * Updates a user by its ID.
+ */
+export const updateUser = <ThrowOnError extends boolean = false>(options: Options<UpdateUserData, ThrowOnError>) => (options.client ?? client).put<UpdateUserResponses, UpdateUserErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/user/{userId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List all available actions for each module
+ *
+ * Returns a list of all available actions for each module.
+ */
+export const getPermissions = <ThrowOnError extends boolean = false>(options?: Options<GetPermissionsData, ThrowOnError>) => (options?.client ?? client).get<GetPermissionsResponses, GetPermissionsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role/permissions',
+    ...options
+});
+
+/**
+ * List all roles
+ *
+ * Returns a list of all roles.
+ */
+export const getRoles = <ThrowOnError extends boolean = false>(options?: Options<GetRolesData, ThrowOnError>) => (options?.client ?? client).get<GetRolesResponses, GetRolesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role',
+    ...options
+});
+
+/**
+ * Create a new role
+ *
+ * Creates a new role.
+ */
+export const createRole = <ThrowOnError extends boolean = false>(options: Options<CreateRoleData, ThrowOnError>) => (options.client ?? client).post<CreateRoleResponses, CreateRoleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a role
+ *
+ * Deletes a role by its ID.
+ */
+export const deleteRole = <ThrowOnError extends boolean = false>(options: Options<DeleteRoleData, ThrowOnError>) => (options.client ?? client).delete<DeleteRoleResponses, DeleteRoleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role/{roleId}',
+    ...options
+});
+
+/**
+ * Get a role by ID
+ *
+ * Returns a role by its ID. Optionally includes user details in the role if `includesUsers` is set to true (default).
+ */
+export const getRoleById = <ThrowOnError extends boolean = false>(options: Options<GetRoleByIdData, ThrowOnError>) => (options.client ?? client).get<GetRoleByIdResponses, GetRoleByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role/{roleId}',
+    ...options
+});
+
+/**
+ * Update a role
+ *
+ * Updates a role by its ID.
+ */
+export const updateRole = <ThrowOnError extends boolean = false>(options: Options<UpdateRoleData, ThrowOnError>) => (options.client ?? client).put<UpdateRoleResponses, UpdateRoleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role/{roleId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Assign a role to users
+ *
+ * Assigns a role to users by their IDs.
+ */
+export const assignUsersToRole = <ThrowOnError extends boolean = false>(options: Options<AssignUsersToRoleData, ThrowOnError>) => (options.client ?? client).post<AssignUsersToRoleResponses, AssignUsersToRoleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role/{roleId}/assign',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Unassign users from a role
+ *
+ * Unassigns users from a role by their IDs.
+ */
+export const unassignUsersFromRole = <ThrowOnError extends boolean = false>(options: Options<UnassignUsersFromRoleData, ThrowOnError>) => (options.client ?? client).post<UnassignUsersFromRoleResponses, UnassignUsersFromRoleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/role/{roleId}/unassign',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 export const oidcInteractionControllerShowInteraction = <ThrowOnError extends boolean = false>(options: Options<OidcInteractionControllerShowInteractionData, ThrowOnError>) => (options.client ?? client).get<OidcInteractionControllerShowInteractionResponses, unknown, ThrowOnError>({
@@ -129,6 +285,36 @@ export const getWorkspaceById = <ThrowOnError extends boolean = false>(options: 
 export const updateWorkspace = <ThrowOnError extends boolean = false>(options: Options<UpdateWorkspaceData, ThrowOnError>) => (options.client ?? client).put<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/workspace/{workspaceId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Assign users to a workspace
+ *
+ * Assigns users to a workspace by their IDs.
+ */
+export const assignUsersToWorkspace = <ThrowOnError extends boolean = false>(options: Options<AssignUsersToWorkspaceData, ThrowOnError>) => (options.client ?? client).post<AssignUsersToWorkspaceResponses, AssignUsersToWorkspaceErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/workspace/{workspaceId}/assign',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Unassign users from a workspace
+ *
+ * Unassigns users from a workspace by their IDs.
+ */
+export const unassignUsersFromWorkspace = <ThrowOnError extends boolean = false>(options: Options<UnassignUsersFromWorkspaceData, ThrowOnError>) => (options.client ?? client).post<UnassignUsersFromWorkspaceResponses, UnassignUsersFromWorkspaceErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/workspace/{workspaceId}/unassign',
     ...options,
     headers: {
         'Content-Type': 'application/json',

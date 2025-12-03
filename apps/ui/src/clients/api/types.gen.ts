@@ -16,6 +16,9 @@ export type HealthcheckResponseDto = {
  */
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+    USER_EMAIL_IN_USE = 'USER_EMAIL_IN_USE',
+    USER_USERNAME_IN_USE = 'USER_USERNAME_IN_USE',
+    USER_NOT_FOUND = 'USER_NOT_FOUND',
     OIDC_NOT_CONFIGURED = 'OIDC_NOT_CONFIGURED',
     OIDC_RESPONSE_ERROR = 'OIDC_RESPONSE_ERROR',
     OIDC_CLAIMS_NOT_AVAILABLE = 'OIDC_CLAIMS_NOT_AVAILABLE',
@@ -38,7 +41,9 @@ export enum ErrorCode {
     API_KEY_RESOURCE_NOT_AUTHORIZED = 'API_KEY_RESOURCE_NOT_AUTHORIZED',
     COMPLETION_SECONDARY_MODEL_NOT_FOUND = 'COMPLETION_SECONDARY_MODEL_NOT_FOUND',
     COMPLETION_BATCH_NOT_FOUND = 'COMPLETION_BATCH_NOT_FOUND',
-    COMPLETION_BATCH_ITEM_NOT_FOUND = 'COMPLETION_BATCH_ITEM_NOT_FOUND'
+    COMPLETION_BATCH_ITEM_NOT_FOUND = 'COMPLETION_BATCH_ITEM_NOT_FOUND',
+    ROLE_NOT_FOUND = 'ROLE_NOT_FOUND',
+    NOT_AUTHORIZED = 'NOT_AUTHORIZED'
 }
 
 export type ServiceError = {
@@ -100,6 +105,12 @@ export type UserEntity = {
      */
     providerId: string;
     /**
+     * The provider specific metadata for the user (e.g claims)
+     */
+    providerMetadata?: {
+        [key: string]: unknown;
+    } | null;
+    /**
      * The date and time the user was created
      */
     createdAt: string;
@@ -108,29 +119,108 @@ export type UserEntity = {
      */
     updatedAt: string;
     /**
-     * The provider specific metadata for the user (e.g claims)
+     * The user who created the user
      */
-    providerMetadata?: {
-        [key: string]: unknown;
-    } | null;
+    createdBy?: string | null;
+    /**
+     * The user who last updated the user
+     */
+    updatedBy?: string | null;
 };
 
-export type LoginDto = {
+export type CreateUserDto = {
     /**
-     * The username or email address of the user
+     * The name of the user
+     */
+    name: string;
+    /**
+     * The first name of the user
+     */
+    firstName: string;
+    /**
+     * The last name of the user
+     */
+    lastName: string;
+    /**
+     * The username of the user, by default it is the email address
      */
     username: string;
+    /**
+     * The email address of the user
+     */
+    email: string;
     /**
      * The password of the user
      */
     password: string;
 };
 
-export type ConsentDto = {
+export type UpdateUserDto = {
     /**
-     * The consent value
+     * The name of the user
      */
-    consent: 'yes' | 'no';
+    name?: string;
+    /**
+     * The first name of the user
+     */
+    firstName?: string;
+    /**
+     * The last name of the user
+     */
+    lastName?: string;
+    /**
+     * The username of the user, by default it is the email address
+     */
+    username?: string;
+    /**
+     * The email address of the user
+     */
+    email?: string;
+    /**
+     * The password of the user
+     */
+    password?: string;
+};
+
+export type PolicyExampleDto = {
+    /**
+     * The value of the policy example
+     */
+    value: string;
+    /**
+     * The description of the policy example
+     */
+    description: string;
+};
+
+export type ModulePermissionsDto = {
+    /**
+     * The name of the module
+     */
+    name: string;
+    /**
+     * The actions of the module
+     */
+    actions: Array<string>;
+    /**
+     * The base resource of the module
+     */
+    baseResource: string;
+    /**
+     * The item resource of the module
+     */
+    itemResource: string;
+    /**
+     * The policy example of the module
+     */
+    policyExample: PolicyExampleDto;
+};
+
+export type PermissionsDto = {
+    /**
+     * All available actions for each module
+     */
+    modules: Array<ModulePermissionsDto>;
 };
 
 export type UserRelationDto = {
@@ -181,6 +271,14 @@ export type UserRelationDto = {
         [key: string]: unknown;
     } | null;
     /**
+     * The user who created the user
+     */
+    createdBy?: string | null;
+    /**
+     * The user who last updated the user
+     */
+    updatedBy?: string | null;
+    /**
      * The date and time the user was created
      */
     createdAt: string;
@@ -190,7 +288,209 @@ export type UserRelationDto = {
     updatedAt: string;
 };
 
+/**
+ * The effect of the statement
+ */
+export enum RolePolicyEffect {
+    ALLOW = 'allow',
+    DENY = 'deny'
+}
+
+export type RolePolicyStatement = {
+    /**
+     * The effect of the statement
+     */
+    effect: RolePolicyEffect;
+    /**
+     * The actions of the statement
+     */
+    actions: Array<string>;
+    /**
+     * The resources of the statement
+     */
+    resources: Array<string>;
+};
+
+export type RolePolicy = {
+    /**
+     * The schema of the policy
+     */
+    $schema: 'https://vm-x.ai/schema/role-policy.json';
+    /**
+     * The statements of the policy
+     */
+    statements: Array<RolePolicyStatement>;
+};
+
+export type RoleDto = {
+    /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
+     * The unique identifier for the role (UUID)
+     */
+    roleId: string;
+    /**
+     * The name of the role
+     */
+    name: string;
+    /**
+     * The description of the role
+     */
+    description?: string | null;
+    /**
+     * The policy of the role
+     */
+    policy: RolePolicy;
+    /**
+     * The number of members in the role
+     */
+    membersCount: number;
+};
+
+export type RoleEntity = {
+    /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
+     * The unique identifier for the role (UUID)
+     */
+    roleId: string;
+    /**
+     * The name of the role
+     */
+    name: string;
+    /**
+     * The description of the role
+     */
+    description?: string | null;
+    /**
+     * The policy of the role
+     */
+    policy: RolePolicy;
+};
+
+export type CreateRoleDto = {
+    /**
+     * The name of the role
+     */
+    name: string;
+    /**
+     * The description of the role
+     */
+    description?: string | null;
+    /**
+     * The policy of the role
+     */
+    policy: RolePolicy;
+};
+
+export type AssignRoleDto = {
+    /**
+     * The user IDs to assign the role to
+     */
+    userIds: Array<string>;
+};
+
+export type UnassignRoleDto = {
+    /**
+     * The user IDs to unassign the role from
+     */
+    userIds: Array<string>;
+};
+
+export type UpdateRoleDto = {
+    /**
+     * The name of the role
+     */
+    name?: string;
+    /**
+     * The description of the role
+     */
+    description?: string | null;
+    /**
+     * The policy of the role
+     */
+    policy?: RolePolicy;
+};
+
+export type LoginDto = {
+    /**
+     * The username or email address of the user
+     */
+    username: string;
+    /**
+     * The password of the user
+     */
+    password: string;
+};
+
+export type ConsentDto = {
+    /**
+     * The consent value
+     */
+    consent: 'yes' | 'no';
+};
+
 export type EnvironmentRelationDto = {
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
     /**
      * The unique identifier for the environment (UUID)
      */
@@ -208,22 +508,6 @@ export type EnvironmentRelationDto = {
      */
     description?: string | null;
     /**
-     * The user who created the workspace
-     */
-    createdBy: string;
-    /**
-     * The user who created the workspace
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * The user who last updated the workspace
-     */
-    updatedBy: string;
-    /**
-     * The user who last updated the workspace
-     */
-    updatedByUser?: UserRelationDto | null;
-    /**
      * The date and time the environment was created
      */
     createdAt: string;
@@ -234,6 +518,30 @@ export type EnvironmentRelationDto = {
 };
 
 export type WorkspaceEntity = {
+    /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
     /**
      * The unique identifier for the workspace (UUID)
      */
@@ -246,30 +554,6 @@ export type WorkspaceEntity = {
      * The description of the workspace
      */
     description?: string | null;
-    /**
-     * The date and time the workspace was created
-     */
-    createdAt: string;
-    /**
-     * The date and time the workspace was last updated
-     */
-    updatedAt: string;
-    /**
-     * The user who created the workspace
-     */
-    createdBy: string;
-    /**
-     * The user who created the workspace
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * The user who last updated the workspace
-     */
-    updatedBy: string;
-    /**
-     * The user who last updated the workspace
-     */
-    updatedByUser?: UserRelationDto | null;
     /**
      * The environments in the workspace
      */
@@ -298,7 +582,57 @@ export type UpdateWorkspaceDto = {
     description?: string | null;
 };
 
+/**
+ * The role to assign to the users
+ */
+export enum WorkspaceUserRole {
+    MEMBER = 'MEMBER',
+    OWNER = 'OWNER'
+}
+
+export type AssignWorkspaceUsersDto = {
+    /**
+     * The user IDs to assign to the workspace
+     */
+    userIds: Array<string>;
+    /**
+     * The role to assign to the users
+     */
+    role: WorkspaceUserRole;
+};
+
+export type UnassignWorkspaceUsersDto = {
+    /**
+     * The user IDs to assign to the workspace
+     */
+    userIds: Array<string>;
+};
+
 export type EnvironmentEntity = {
+    /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
     /**
      * The unique identifier for the environment (UUID)
      */
@@ -315,30 +649,6 @@ export type EnvironmentEntity = {
      * The description of the environment
      */
     description?: string | null;
-    /**
-     * The date and time the workspace was created
-     */
-    createdAt: string;
-    /**
-     * The date and time the workspace was last updated
-     */
-    updatedAt: string;
-    /**
-     * The user who created the workspace
-     */
-    createdBy: string;
-    /**
-     * The user who created the workspace
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * The user who last updated the workspace
-     */
-    updatedBy: string;
-    /**
-     * The user who last updated the workspace
-     */
-    updatedByUser?: UserRelationDto | null;
 };
 
 export type CreateEnvironmentDto = {
@@ -416,6 +726,30 @@ export type DiscoveredCapacityEntity = {
 
 export type AiConnectionEntity = {
     /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
      * The unique identifier for the AI connection (UUID)
      */
     connectionId: string;
@@ -457,30 +791,6 @@ export type AiConnectionEntity = {
     config?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * The date and time the AI connection was created
-     */
-    createdAt: string;
-    /**
-     * The date and time the AI connection was last updated
-     */
-    updatedAt: string;
-    /**
-     * The user who created the AI connection
-     */
-    createdBy: string;
-    /**
-     * The user who created the AI connection
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * The user who last updated the AI connection
-     */
-    updatedBy: string;
-    /**
-     * The user who last updated the AI connection
-     */
-    updatedByUser?: UserRelationDto | null;
 };
 
 export type CreateAiConnectionDto = {
@@ -886,6 +1196,30 @@ export type AiResourceModelRoutingEntity = {
 
 export type AiResourceEntity = {
     /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
      * Resource unique identifier
      */
     resourceId: string;
@@ -933,30 +1267,6 @@ export type AiResourceEntity = {
      * Whether capacity is enforced for requests to this resource
      */
     enforceCapacity: boolean;
-    /**
-     * Timestamp when the resource was created
-     */
-    createdAt: string;
-    /**
-     * Timestamp when the resource was last updated
-     */
-    updatedAt: string;
-    /**
-     * User ID who created the resource
-     */
-    createdBy: string;
-    /**
-     * User details of who created the resource
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * User ID who last updated the resource
-     */
-    updatedBy: string;
-    /**
-     * User details of who last updated the resource
-     */
-    updatedByUser?: UserRelationDto | null;
 };
 
 export type CreateAiResourceDto = {
@@ -1047,6 +1357,30 @@ export type UpdateAiResourceDto = {
 
 export type ApiKeyEntity = {
     /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
      * The unique identifier for the API key (UUID)
      */
     apiKeyId: string;
@@ -1090,30 +1424,6 @@ export type ApiKeyEntity = {
      * The masked key of the API key
      */
     maskedKey: string;
-    /**
-     * The date and time the API key was created
-     */
-    createdAt: string;
-    /**
-     * The date and time the API key was last updated
-     */
-    updatedAt: string;
-    /**
-     * The user who created the API key
-     */
-    createdBy: string;
-    /**
-     * The user who created the API key
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * The user who last updated the API key
-     */
-    updatedBy: string;
-    /**
-     * The user who last updated the API key
-     */
-    updatedByUser?: UserRelationDto | null;
 };
 
 export type CreateApiKeyDto = {
@@ -1149,6 +1459,30 @@ export type CreateApiKeyDto = {
 
 export type CreatedApiKeyDto = {
     /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
      * The unique identifier for the API key (UUID)
      */
     apiKeyId: string;
@@ -1192,30 +1526,6 @@ export type CreatedApiKeyDto = {
      * The masked key of the API key
      */
     maskedKey: string;
-    /**
-     * The date and time the API key was created
-     */
-    createdAt: string;
-    /**
-     * The date and time the API key was last updated
-     */
-    updatedAt: string;
-    /**
-     * The user who created the API key
-     */
-    createdBy: string;
-    /**
-     * The user who created the API key
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * The user who last updated the API key
-     */
-    updatedBy: string;
-    /**
-     * The user who last updated the API key
-     */
-    updatedByUser?: UserRelationDto | null;
     /**
      * The full API key value, this is only returned once during creation
      */
@@ -1278,6 +1588,30 @@ export type PoolDefinitionEntry = {
 
 export type PoolDefinitionEntity = {
     /**
+     * The date and time the entity was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the entity was last updated
+     */
+    updatedAt: string;
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
      * Workspace UUID
      */
     workspaceId: string;
@@ -1289,30 +1623,6 @@ export type PoolDefinitionEntity = {
      * List of pool definition entries
      */
     definition: Array<PoolDefinitionEntry>;
-    /**
-     * Timestamp when the pool definition was created
-     */
-    createdAt: string;
-    /**
-     * Timestamp when the pool definition was last updated
-     */
-    updatedAt: string;
-    /**
-     * User ID who created the pool definition
-     */
-    createdBy: string;
-    /**
-     * User who created the pool definition
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * User ID who last updated the pool definition
-     */
-    updatedBy: string;
-    /**
-     * User who last updated the pool definition
-     */
-    updatedByUser?: UserRelationDto | null;
 };
 
 export type UpsertPoolDefinitionDto = {
@@ -1915,6 +2225,22 @@ export enum CompletionBatchRequestStatus {
 
 export type ApiKeyRelationDto = {
     /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
      * The unique identifier for the API key (UUID)
      */
     apiKeyId: string;
@@ -1958,22 +2284,6 @@ export type ApiKeyRelationDto = {
      * The masked key of the API key
      */
     maskedKey: string;
-    /**
-     * The user who created the API key
-     */
-    createdBy: string;
-    /**
-     * The user who created the API key
-     */
-    createdByUser?: UserRelationDto | null;
-    /**
-     * The user who last updated the API key
-     */
-    updatedBy: string;
-    /**
-     * The user who last updated the API key
-     */
-    updatedByUser?: UserRelationDto | null;
     /**
      * The date and time the API key was created
      */
@@ -2274,6 +2584,348 @@ export type GetUsersResponses = {
 
 export type GetUsersResponse = GetUsersResponses[keyof GetUsersResponses];
 
+export type CreateUserData = {
+    body: CreateUserDto;
+    path?: never;
+    query?: never;
+    url: '/v1/user';
+};
+
+export type CreateUserErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type CreateUserError = CreateUserErrors[keyof CreateUserErrors];
+
+export type CreateUserResponses = {
+    /**
+     * Create a new user
+     */
+    200: UserEntity;
+};
+
+export type CreateUserResponse = CreateUserResponses[keyof CreateUserResponses];
+
+export type DeleteUserData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/v1/user/{userId}';
+};
+
+export type DeleteUserErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type DeleteUserError = DeleteUserErrors[keyof DeleteUserErrors];
+
+export type DeleteUserResponses = {
+    /**
+     * Delete a user
+     */
+    200: unknown;
+};
+
+export type GetUserByIdData = {
+    body?: never;
+    path: {
+        /**
+         * The unique identifier of the user
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/v1/user/{userId}';
+};
+
+export type GetUserByIdErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type GetUserByIdError = GetUserByIdErrors[keyof GetUserByIdErrors];
+
+export type GetUserByIdResponses = {
+    /**
+     * Get a user by ID
+     */
+    200: UserEntity;
+};
+
+export type GetUserByIdResponse = GetUserByIdResponses[keyof GetUserByIdResponses];
+
+export type UpdateUserData = {
+    body: UpdateUserDto;
+    path: {
+        /**
+         * The unique identifier of the user
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/v1/user/{userId}';
+};
+
+export type UpdateUserErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type UpdateUserError = UpdateUserErrors[keyof UpdateUserErrors];
+
+export type UpdateUserResponses = {
+    /**
+     * Update a user
+     */
+    200: UserEntity;
+};
+
+export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];
+
+export type GetPermissionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/role/permissions';
+};
+
+export type GetPermissionsErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type GetPermissionsError = GetPermissionsErrors[keyof GetPermissionsErrors];
+
+export type GetPermissionsResponses = {
+    /**
+     * List all available actions for each module
+     */
+    200: PermissionsDto;
+};
+
+export type GetPermissionsResponse = GetPermissionsResponses[keyof GetPermissionsResponses];
+
+export type GetRolesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Whether to include users in the response
+         */
+        includesUsers?: boolean;
+    };
+    url: '/v1/role';
+};
+
+export type GetRolesErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type GetRolesError = GetRolesErrors[keyof GetRolesErrors];
+
+export type GetRolesResponses = {
+    /**
+     * List all roles
+     */
+    200: Array<RoleDto>;
+};
+
+export type GetRolesResponse = GetRolesResponses[keyof GetRolesResponses];
+
+export type CreateRoleData = {
+    body: CreateRoleDto;
+    path?: never;
+    query?: never;
+    url: '/v1/role';
+};
+
+export type CreateRoleErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type CreateRoleError = CreateRoleErrors[keyof CreateRoleErrors];
+
+export type CreateRoleResponses = {
+    /**
+     * Create a new role
+     */
+    200: RoleEntity;
+};
+
+export type CreateRoleResponse = CreateRoleResponses[keyof CreateRoleResponses];
+
+export type DeleteRoleData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the role
+         */
+        roleId: string;
+    };
+    query?: never;
+    url: '/v1/role/{roleId}';
+};
+
+export type DeleteRoleErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type DeleteRoleError = DeleteRoleErrors[keyof DeleteRoleErrors];
+
+export type DeleteRoleResponses = {
+    /**
+     * Delete a role
+     */
+    200: unknown;
+};
+
+export type GetRoleByIdData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the role
+         */
+        roleId: string;
+    };
+    query?: {
+        /**
+         * Whether to include users in the response
+         */
+        includesUsers?: boolean;
+    };
+    url: '/v1/role/{roleId}';
+};
+
+export type GetRoleByIdErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type GetRoleByIdError = GetRoleByIdErrors[keyof GetRoleByIdErrors];
+
+export type GetRoleByIdResponses = {
+    /**
+     * Get a role by ID
+     */
+    200: RoleEntity;
+};
+
+export type GetRoleByIdResponse = GetRoleByIdResponses[keyof GetRoleByIdResponses];
+
+export type UpdateRoleData = {
+    body: UpdateRoleDto;
+    path: {
+        /**
+         * The ID of the role
+         */
+        roleId: string;
+    };
+    query?: never;
+    url: '/v1/role/{roleId}';
+};
+
+export type UpdateRoleErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type UpdateRoleError = UpdateRoleErrors[keyof UpdateRoleErrors];
+
+export type UpdateRoleResponses = {
+    /**
+     * Update a role
+     */
+    200: RoleEntity;
+};
+
+export type UpdateRoleResponse = UpdateRoleResponses[keyof UpdateRoleResponses];
+
+export type AssignUsersToRoleData = {
+    body: AssignRoleDto;
+    path: {
+        /**
+         * The ID of the role
+         */
+        roleId: string;
+    };
+    query?: never;
+    url: '/v1/role/{roleId}/assign';
+};
+
+export type AssignUsersToRoleErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type AssignUsersToRoleError = AssignUsersToRoleErrors[keyof AssignUsersToRoleErrors];
+
+export type AssignUsersToRoleResponses = {
+    /**
+     * Assign a role to users
+     */
+    200: unknown;
+};
+
+export type UnassignUsersFromRoleData = {
+    body: UnassignRoleDto;
+    path: {
+        /**
+         * The ID of the role
+         */
+        roleId: string;
+    };
+    query?: never;
+    url: '/v1/role/{roleId}/unassign';
+};
+
+export type UnassignUsersFromRoleErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type UnassignUsersFromRoleError = UnassignUsersFromRoleErrors[keyof UnassignUsersFromRoleErrors];
+
+export type UnassignUsersFromRoleResponses = {
+    /**
+     * Unassign users from a role
+     */
+    200: unknown;
+};
+
 export type OidcInteractionControllerShowInteractionData = {
     body?: never;
     path: {
@@ -2503,6 +3155,62 @@ export type UpdateWorkspaceResponses = {
 };
 
 export type UpdateWorkspaceResponse = UpdateWorkspaceResponses[keyof UpdateWorkspaceResponses];
+
+export type AssignUsersToWorkspaceData = {
+    body: AssignWorkspaceUsersDto;
+    path: {
+        /**
+         * The ID of the workspace
+         */
+        workspaceId: string;
+    };
+    query?: never;
+    url: '/v1/workspace/{workspaceId}/assign';
+};
+
+export type AssignUsersToWorkspaceErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type AssignUsersToWorkspaceError = AssignUsersToWorkspaceErrors[keyof AssignUsersToWorkspaceErrors];
+
+export type AssignUsersToWorkspaceResponses = {
+    /**
+     * Assign users to a workspace
+     */
+    200: unknown;
+};
+
+export type UnassignUsersFromWorkspaceData = {
+    body: UnassignWorkspaceUsersDto;
+    path: {
+        /**
+         * The ID of the workspace
+         */
+        workspaceId: string;
+    };
+    query?: never;
+    url: '/v1/workspace/{workspaceId}/unassign';
+};
+
+export type UnassignUsersFromWorkspaceErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type UnassignUsersFromWorkspaceError = UnassignUsersFromWorkspaceErrors[keyof UnassignUsersFromWorkspaceErrors];
+
+export type UnassignUsersFromWorkspaceResponses = {
+    /**
+     * Unassign users from a workspace
+     */
+    200: unknown;
+};
 
 export type GetEnvironmentsData = {
     body?: never;

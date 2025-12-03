@@ -116,7 +116,7 @@ const APIKeySelector = forwardRef(function APIKeySelector<
                 Click{' '}
                 <MUILink
                   component={Link}
-                  href={`/${workspaceId}/${environmentId}/security/auth/role/new`}
+                  href={`/dashboard/${workspaceId}/${environmentId}/security/auth/role/new`}
                   target="_blank"
                   variant="body2"
                 >

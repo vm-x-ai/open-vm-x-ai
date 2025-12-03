@@ -193,7 +193,7 @@ export default function CreateAPIKeyForm({
             setShowApiKey(undefined);
 
             router.push(
-              `/${workspaceId}/${environmentId}/security/auth/role/edit/${state.response?.apiKeyId}/general`
+              `/dashboard/${workspaceId}/${environmentId}/security/auth/role/edit/${state.response?.apiKeyId}/general`
             );
           }}
         />

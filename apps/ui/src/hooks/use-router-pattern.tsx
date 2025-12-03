@@ -3,12 +3,12 @@ import { usePathname } from 'next/navigation';
 export const useRoutePattern = () => {
   const pathname = usePathname();
   const routePatterns = [
-    '/[workspaceId]/[environmentId]/ai-connections/edit/[connectionId]',
-    '/[workspaceId]/[environmentId]/ai-resources/edit/[resourceId]',
-    '/[workspaceId]/[environmentId]/security/auth/role/edit/[roleId]',
-    '/[workspaceId]/[environmentId]/insights/benchmark/view/[timestamp]',
-    '/[workspaceId]/[environmentId]',
-    '/[workspaceId]',
+    '/getting-started',
+    '/dashboard/[workspaceId]/[environmentId]/ai-connections/edit/[connectionId]',
+    '/dashboard/[workspaceId]/[environmentId]/ai-resources/edit/[resourceId]',
+    '/dashboard/[workspaceId]/[environmentId]/security/auth/role/edit/[roleId]',
+    '/dashboard/[workspaceId]/[environmentId]',
+    '/dashboard/[workspaceId]',
   ];
 
   for (const pattern of routePatterns) {

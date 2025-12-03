@@ -6,6 +6,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUrl,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
@@ -51,6 +52,17 @@ export class RolePolicyStatement {
 
 export class RolePolicy {
   @ApiProperty({
+    description: 'The schema of the policy',
+    example: 'https://vm-x.ai/schema/role-policy.json',
+    default: 'https://vm-x.ai/schema/role-policy.json',
+    enum: ['https://vm-x.ai/schema/role-policy.json'],
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  $schema = 'https://vm-x.ai/schema/role-policy.json';
+
+  @ApiProperty({
     description: 'The statements of the policy',
     example: [
       {
@@ -89,6 +101,9 @@ export class RoleEntity extends BaseEntity {
   @ApiProperty({
     description: 'The description of the role',
     example: 'Admin role',
+    nullable: true,
+    required: false,
+    type: String,
   })
   @IsString()
   @IsOptional()

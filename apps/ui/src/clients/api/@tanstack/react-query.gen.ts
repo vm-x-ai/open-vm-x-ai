@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { cancelCompletionBatch, completion, createAiConnection, createAiResource, createApiKey, createCompletionBatch, createEnvironment, createWorkspace, deleteAiConnection, deleteAiResource, deleteApiKey, deleteEnvironment, deletePoolDefinition, deleteWorkspace, getAiConnectionById, getAiConnections, getAiProviders, getAiResourceById, getAiResources, getApiKeyById, getApiKeys, getCompletionAudit, getCompletionBatch, getCompletionBatchItem, getCompletionErrorRate, getCompletionUsage, getEnvironmentById, getEnvironments, getOauth2Authorize, getOauth2Userinfo, getOauth2WellKnownOpenidConfiguration, getPoolDefinition, getUsers, getWorkspaceById, getWorkspaces, healthcheckControllerHealthcheck, oidcInteractionControllerConsent, oidcInteractionControllerFederatedCallback, oidcInteractionControllerFederatedInteraction, oidcInteractionControllerLogin, oidcInteractionControllerShowInteraction, type Options, postOauth2Revoke, postOauth2Token, updateAiConnection, updateAiResource, updateApiKey, updateEnvironment, updatePoolDefinition, updateWorkspace } from '../sdk.gen';
-import type { CancelCompletionBatchData, CancelCompletionBatchError, CancelCompletionBatchResponse, CompletionData, CreateAiConnectionData, CreateAiConnectionError, CreateAiConnectionResponse, CreateAiResourceData, CreateAiResourceError, CreateAiResourceResponse, CreateApiKeyData, CreateApiKeyError, CreateApiKeyResponse, CreateCompletionBatchData, CreateCompletionBatchError, CreateCompletionBatchResponse, CreateEnvironmentData, CreateEnvironmentError, CreateEnvironmentResponse, CreateWorkspaceData, CreateWorkspaceError, CreateWorkspaceResponse, DeleteAiConnectionData, DeleteAiConnectionError, DeleteAiResourceData, DeleteAiResourceError, DeleteApiKeyData, DeleteApiKeyError, DeleteEnvironmentData, DeleteEnvironmentError, DeletePoolDefinitionData, DeletePoolDefinitionError, DeleteWorkspaceData, DeleteWorkspaceError, GetAiConnectionByIdData, GetAiConnectionByIdError, GetAiConnectionByIdResponse, GetAiConnectionsData, GetAiConnectionsError, GetAiConnectionsResponse, GetAiProvidersData, GetAiProvidersError, GetAiProvidersResponse, GetAiResourceByIdData, GetAiResourceByIdError, GetAiResourceByIdResponse, GetAiResourcesData, GetAiResourcesError, GetAiResourcesResponse, GetApiKeyByIdData, GetApiKeyByIdError, GetApiKeyByIdResponse, GetApiKeysData, GetApiKeysError, GetApiKeysResponse, GetCompletionAuditData, GetCompletionAuditError, GetCompletionAuditResponse, GetCompletionBatchData, GetCompletionBatchError, GetCompletionBatchItemData, GetCompletionBatchItemError, GetCompletionBatchItemResponse, GetCompletionBatchResponse, GetCompletionErrorRateData, GetCompletionErrorRateError, GetCompletionErrorRateResponse, GetCompletionUsageData, GetCompletionUsageError, GetCompletionUsageResponse, GetEnvironmentByIdData, GetEnvironmentByIdError, GetEnvironmentByIdResponse, GetEnvironmentsData, GetEnvironmentsError, GetEnvironmentsResponse, GetOauth2AuthorizeData, GetOauth2UserinfoData, GetOauth2UserinfoResponse, GetOauth2WellKnownOpenidConfigurationData, GetOauth2WellKnownOpenidConfigurationResponse, GetPoolDefinitionData, GetPoolDefinitionError, GetPoolDefinitionResponse, GetUsersData, GetUsersError, GetUsersResponse, GetWorkspaceByIdData, GetWorkspaceByIdError, GetWorkspaceByIdResponse, GetWorkspacesData, GetWorkspacesError, GetWorkspacesResponse, HealthcheckControllerHealthcheckData, HealthcheckControllerHealthcheckResponse, OidcInteractionControllerConsentData, OidcInteractionControllerFederatedCallbackData, OidcInteractionControllerFederatedInteractionData, OidcInteractionControllerLoginData, OidcInteractionControllerShowInteractionData, PostOauth2RevokeData, PostOauth2TokenData, PostOauth2TokenResponse, UpdateAiConnectionData, UpdateAiConnectionError, UpdateAiConnectionResponse, UpdateAiResourceData, UpdateAiResourceError, UpdateAiResourceResponse, UpdateApiKeyData, UpdateApiKeyError, UpdateApiKeyResponse, UpdateEnvironmentData, UpdateEnvironmentError, UpdateEnvironmentResponse, UpdatePoolDefinitionData, UpdatePoolDefinitionError, UpdatePoolDefinitionResponse, UpdateWorkspaceData, UpdateWorkspaceError, UpdateWorkspaceResponse } from '../types.gen';
+import { assignUsersToRole, assignUsersToWorkspace, cancelCompletionBatch, completion, createAiConnection, createAiResource, createApiKey, createCompletionBatch, createEnvironment, createRole, createUser, createWorkspace, deleteAiConnection, deleteAiResource, deleteApiKey, deleteEnvironment, deletePoolDefinition, deleteRole, deleteUser, deleteWorkspace, getAiConnectionById, getAiConnections, getAiProviders, getAiResourceById, getAiResources, getApiKeyById, getApiKeys, getCompletionAudit, getCompletionBatch, getCompletionBatchItem, getCompletionErrorRate, getCompletionUsage, getEnvironmentById, getEnvironments, getOauth2Authorize, getOauth2Userinfo, getOauth2WellKnownOpenidConfiguration, getPermissions, getPoolDefinition, getRoleById, getRoles, getUserById, getUsers, getWorkspaceById, getWorkspaces, healthcheckControllerHealthcheck, oidcInteractionControllerConsent, oidcInteractionControllerFederatedCallback, oidcInteractionControllerFederatedInteraction, oidcInteractionControllerLogin, oidcInteractionControllerShowInteraction, type Options, postOauth2Revoke, postOauth2Token, unassignUsersFromRole, unassignUsersFromWorkspace, updateAiConnection, updateAiResource, updateApiKey, updateEnvironment, updatePoolDefinition, updateRole, updateUser, updateWorkspace } from '../sdk.gen';
+import type { AssignUsersToRoleData, AssignUsersToRoleError, AssignUsersToWorkspaceData, AssignUsersToWorkspaceError, CancelCompletionBatchData, CancelCompletionBatchError, CancelCompletionBatchResponse, CompletionData, CreateAiConnectionData, CreateAiConnectionError, CreateAiConnectionResponse, CreateAiResourceData, CreateAiResourceError, CreateAiResourceResponse, CreateApiKeyData, CreateApiKeyError, CreateApiKeyResponse, CreateCompletionBatchData, CreateCompletionBatchError, CreateCompletionBatchResponse, CreateEnvironmentData, CreateEnvironmentError, CreateEnvironmentResponse, CreateRoleData, CreateRoleError, CreateRoleResponse, CreateUserData, CreateUserError, CreateUserResponse, CreateWorkspaceData, CreateWorkspaceError, CreateWorkspaceResponse, DeleteAiConnectionData, DeleteAiConnectionError, DeleteAiResourceData, DeleteAiResourceError, DeleteApiKeyData, DeleteApiKeyError, DeleteEnvironmentData, DeleteEnvironmentError, DeletePoolDefinitionData, DeletePoolDefinitionError, DeleteRoleData, DeleteRoleError, DeleteUserData, DeleteUserError, DeleteWorkspaceData, DeleteWorkspaceError, GetAiConnectionByIdData, GetAiConnectionByIdError, GetAiConnectionByIdResponse, GetAiConnectionsData, GetAiConnectionsError, GetAiConnectionsResponse, GetAiProvidersData, GetAiProvidersError, GetAiProvidersResponse, GetAiResourceByIdData, GetAiResourceByIdError, GetAiResourceByIdResponse, GetAiResourcesData, GetAiResourcesError, GetAiResourcesResponse, GetApiKeyByIdData, GetApiKeyByIdError, GetApiKeyByIdResponse, GetApiKeysData, GetApiKeysError, GetApiKeysResponse, GetCompletionAuditData, GetCompletionAuditError, GetCompletionAuditResponse, GetCompletionBatchData, GetCompletionBatchError, GetCompletionBatchItemData, GetCompletionBatchItemError, GetCompletionBatchItemResponse, GetCompletionBatchResponse, GetCompletionErrorRateData, GetCompletionErrorRateError, GetCompletionErrorRateResponse, GetCompletionUsageData, GetCompletionUsageError, GetCompletionUsageResponse, GetEnvironmentByIdData, GetEnvironmentByIdError, GetEnvironmentByIdResponse, GetEnvironmentsData, GetEnvironmentsError, GetEnvironmentsResponse, GetOauth2AuthorizeData, GetOauth2UserinfoData, GetOauth2UserinfoResponse, GetOauth2WellKnownOpenidConfigurationData, GetOauth2WellKnownOpenidConfigurationResponse, GetPermissionsData, GetPermissionsError, GetPermissionsResponse, GetPoolDefinitionData, GetPoolDefinitionError, GetPoolDefinitionResponse, GetRoleByIdData, GetRoleByIdError, GetRoleByIdResponse, GetRolesData, GetRolesError, GetRolesResponse, GetUserByIdData, GetUserByIdError, GetUserByIdResponse, GetUsersData, GetUsersError, GetUsersResponse, GetWorkspaceByIdData, GetWorkspaceByIdError, GetWorkspaceByIdResponse, GetWorkspacesData, GetWorkspacesError, GetWorkspacesResponse, HealthcheckControllerHealthcheckData, HealthcheckControllerHealthcheckResponse, OidcInteractionControllerConsentData, OidcInteractionControllerFederatedCallbackData, OidcInteractionControllerFederatedInteractionData, OidcInteractionControllerLoginData, OidcInteractionControllerShowInteractionData, PostOauth2RevokeData, PostOauth2TokenData, PostOauth2TokenResponse, UnassignUsersFromRoleData, UnassignUsersFromRoleError, UnassignUsersFromWorkspaceData, UnassignUsersFromWorkspaceError, UpdateAiConnectionData, UpdateAiConnectionError, UpdateAiConnectionResponse, UpdateAiResourceData, UpdateAiResourceError, UpdateAiResourceResponse, UpdateApiKeyData, UpdateApiKeyError, UpdateApiKeyResponse, UpdateEnvironmentData, UpdateEnvironmentError, UpdateEnvironmentResponse, UpdatePoolDefinitionData, UpdatePoolDefinitionError, UpdatePoolDefinitionResponse, UpdateRoleData, UpdateRoleError, UpdateRoleResponse, UpdateUserData, UpdateUserError, UpdateUserResponse, UpdateWorkspaceData, UpdateWorkspaceError, UpdateWorkspaceResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -73,6 +73,238 @@ export const getUsersOptions = (options?: Options<GetUsersData>) => queryOptions
     },
     queryKey: getUsersQueryKey(options)
 });
+
+/**
+ * Create a new user
+ *
+ * Creates a new user.
+ */
+export const createUserMutation = (options?: Partial<Options<CreateUserData>>): UseMutationOptions<CreateUserResponse, CreateUserError, Options<CreateUserData>> => {
+    const mutationOptions: UseMutationOptions<CreateUserResponse, CreateUserError, Options<CreateUserData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createUser({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a user
+ *
+ * Deletes a user by its ID.
+ */
+export const deleteUserMutation = (options?: Partial<Options<DeleteUserData>>): UseMutationOptions<unknown, DeleteUserError, Options<DeleteUserData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteUserError, Options<DeleteUserData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteUser({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getUserByIdQueryKey = (options: Options<GetUserByIdData>) => createQueryKey('getUserById', options);
+
+/**
+ * Get a user by ID
+ *
+ * Returns a user by ID.
+ */
+export const getUserByIdOptions = (options: Options<GetUserByIdData>) => queryOptions<GetUserByIdResponse, GetUserByIdError, GetUserByIdResponse, ReturnType<typeof getUserByIdQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getUserById({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getUserByIdQueryKey(options)
+});
+
+/**
+ * Update a user
+ *
+ * Updates a user by its ID.
+ */
+export const updateUserMutation = (options?: Partial<Options<UpdateUserData>>): UseMutationOptions<UpdateUserResponse, UpdateUserError, Options<UpdateUserData>> => {
+    const mutationOptions: UseMutationOptions<UpdateUserResponse, UpdateUserError, Options<UpdateUserData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateUser({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getPermissionsQueryKey = (options?: Options<GetPermissionsData>) => createQueryKey('getPermissions', options);
+
+/**
+ * List all available actions for each module
+ *
+ * Returns a list of all available actions for each module.
+ */
+export const getPermissionsOptions = (options?: Options<GetPermissionsData>) => queryOptions<GetPermissionsResponse, GetPermissionsError, GetPermissionsResponse, ReturnType<typeof getPermissionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPermissions({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPermissionsQueryKey(options)
+});
+
+export const getRolesQueryKey = (options?: Options<GetRolesData>) => createQueryKey('getRoles', options);
+
+/**
+ * List all roles
+ *
+ * Returns a list of all roles.
+ */
+export const getRolesOptions = (options?: Options<GetRolesData>) => queryOptions<GetRolesResponse, GetRolesError, GetRolesResponse, ReturnType<typeof getRolesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getRoles({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getRolesQueryKey(options)
+});
+
+/**
+ * Create a new role
+ *
+ * Creates a new role.
+ */
+export const createRoleMutation = (options?: Partial<Options<CreateRoleData>>): UseMutationOptions<CreateRoleResponse, CreateRoleError, Options<CreateRoleData>> => {
+    const mutationOptions: UseMutationOptions<CreateRoleResponse, CreateRoleError, Options<CreateRoleData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a role
+ *
+ * Deletes a role by its ID.
+ */
+export const deleteRoleMutation = (options?: Partial<Options<DeleteRoleData>>): UseMutationOptions<unknown, DeleteRoleError, Options<DeleteRoleData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DeleteRoleError, Options<DeleteRoleData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getRoleByIdQueryKey = (options: Options<GetRoleByIdData>) => createQueryKey('getRoleById', options);
+
+/**
+ * Get a role by ID
+ *
+ * Returns a role by its ID. Optionally includes user details in the role if `includesUsers` is set to true (default).
+ */
+export const getRoleByIdOptions = (options: Options<GetRoleByIdData>) => queryOptions<GetRoleByIdResponse, GetRoleByIdError, GetRoleByIdResponse, ReturnType<typeof getRoleByIdQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getRoleById({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getRoleByIdQueryKey(options)
+});
+
+/**
+ * Update a role
+ *
+ * Updates a role by its ID.
+ */
+export const updateRoleMutation = (options?: Partial<Options<UpdateRoleData>>): UseMutationOptions<UpdateRoleResponse, UpdateRoleError, Options<UpdateRoleData>> => {
+    const mutationOptions: UseMutationOptions<UpdateRoleResponse, UpdateRoleError, Options<UpdateRoleData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Assign a role to users
+ *
+ * Assigns a role to users by their IDs.
+ */
+export const assignUsersToRoleMutation = (options?: Partial<Options<AssignUsersToRoleData>>): UseMutationOptions<unknown, AssignUsersToRoleError, Options<AssignUsersToRoleData>> => {
+    const mutationOptions: UseMutationOptions<unknown, AssignUsersToRoleError, Options<AssignUsersToRoleData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await assignUsersToRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Unassign users from a role
+ *
+ * Unassigns users from a role by their IDs.
+ */
+export const unassignUsersFromRoleMutation = (options?: Partial<Options<UnassignUsersFromRoleData>>): UseMutationOptions<unknown, UnassignUsersFromRoleError, Options<UnassignUsersFromRoleData>> => {
+    const mutationOptions: UseMutationOptions<unknown, UnassignUsersFromRoleError, Options<UnassignUsersFromRoleData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await unassignUsersFromRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const oidcInteractionControllerShowInteractionQueryKey = (options: Options<OidcInteractionControllerShowInteractionData>) => createQueryKey('oidcInteractionControllerShowInteraction', options);
 
@@ -234,6 +466,44 @@ export const updateWorkspaceMutation = (options?: Partial<Options<UpdateWorkspac
     const mutationOptions: UseMutationOptions<UpdateWorkspaceResponse, UpdateWorkspaceError, Options<UpdateWorkspaceData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateWorkspace({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Assign users to a workspace
+ *
+ * Assigns users to a workspace by their IDs.
+ */
+export const assignUsersToWorkspaceMutation = (options?: Partial<Options<AssignUsersToWorkspaceData>>): UseMutationOptions<unknown, AssignUsersToWorkspaceError, Options<AssignUsersToWorkspaceData>> => {
+    const mutationOptions: UseMutationOptions<unknown, AssignUsersToWorkspaceError, Options<AssignUsersToWorkspaceData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await assignUsersToWorkspace({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Unassign users from a workspace
+ *
+ * Unassigns users from a workspace by their IDs.
+ */
+export const unassignUsersFromWorkspaceMutation = (options?: Partial<Options<UnassignUsersFromWorkspaceData>>): UseMutationOptions<unknown, UnassignUsersFromWorkspaceError, Options<UnassignUsersFromWorkspaceData>> => {
+    const mutationOptions: UseMutationOptions<unknown, UnassignUsersFromWorkspaceError, Options<UnassignUsersFromWorkspaceData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await unassignUsersFromWorkspace({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

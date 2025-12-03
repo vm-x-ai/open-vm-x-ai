@@ -12,6 +12,7 @@ import { AssignRoleDto } from './dto/assign-role.dto';
 import { modules } from './modules';
 import { PermissionsDto } from './dto/permissions.dto';
 import { UnassignRoleDto } from './dto/unassign-role.dto';
+import { RoleDto } from './dto/role-dto';
 
 @Injectable()
 export class RoleService {
@@ -71,11 +72,14 @@ export class RoleService {
     };
   }
 
-  public async getAll(includesUsers: boolean): Promise<RoleEntity[]> {
+  public async getAll(includesUsers: boolean): Promise<RoleDto[]> {
     return await this.db.reader
       .selectFrom('roles')
       .selectAll('roles')
+      .leftJoin('userRoles', 'roles.roleId', 'userRoles.roleId')
+      .select((eb) => eb.fn.count<number>('userRoles.userId').as('membersCount'))
       .$if(includesUsers, this.db.includeEntityControlUsers('roles'))
+      .groupBy('roles.roleId')
       .execute();
   }
 

@@ -19,6 +19,6 @@ export default async function Page() {
   }
 
   redirect(
-    `/${workspaceId}/${environments.data?.[0]?.environmentId}/ai-connections/overview`
+    `/dashboard/${workspaceId}/${environments.data?.[0]?.environmentId}/ai-connections/overview`
   );
 }
