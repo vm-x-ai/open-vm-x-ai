@@ -40,6 +40,7 @@ export const configSchema = Joi.object({
   }),
   OIDC_FEDERATED_CLIENT_SECRET: Joi.string().optional(),
   OIDC_FEDERATED_SCOPE: Joi.string().default('openid profile email'),
+  OIDC_FEDERATED_DEFAULT_ROLE: Joi.string().default('power-user'),
 
   // Vault
   VAULT_ADDR: Joi.string().uri().required(),

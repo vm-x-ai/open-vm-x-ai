@@ -1,6 +1,11 @@
 'use server';
 
-import { assignUsersToRole, createRole, RolePolicy } from '@/clients/api';
+import {
+  assignUsersToRole,
+  RolePolicy,
+  unassignUsersFromRole,
+  updateRole,
+} from '@/clients/api';
 import {
   type FormSchema,
   type FormAction,
@@ -22,8 +27,19 @@ export async function submitForm(
   }
 
   const { members, newMembers, removedMembers, roleId, ...payload } = data;
+  if (!roleId) {
+    return {
+      ...prevState,
+      success: false,
+      message: 'Role ID is required',
+      data,
+    };
+  }
 
-  const { error, data: response } = await createRole({
+  const { error, data: response } = await updateRole({
+    path: {
+      roleId,
+    },
     body: {
       ...payload,
       policy: data.policy as RolePolicy,
@@ -34,18 +50,18 @@ export async function submitForm(
     return {
       ...prevState,
       success: false,
-      message: error?.errorMessage ?? 'Failed to create role',
+      message: error?.errorMessage ?? 'Failed to update role',
       data,
     };
   }
 
-  if (members?.length) {
+  if (newMembers?.length) {
     const { error: assignError } = await assignUsersToRole({
       path: {
         roleId: response?.roleId,
       },
       body: {
-        userIds: members
+        userIds: newMembers
           .map((member) => member.userId)
           .filter(Boolean) as string[],
       },
@@ -61,10 +77,33 @@ export async function submitForm(
     }
   }
 
+  if (removedMembers?.length) {
+    const { error: unassignError } = await unassignUsersFromRole({
+      path: {
+        roleId: response?.roleId,
+      },
+      body: {
+        userIds: removedMembers
+          .map((member) => member.userId)
+          .filter(Boolean) as string[],
+      },
+    });
+
+    if (unassignError) {
+      return {
+        ...prevState,
+        success: false,
+        message:
+          unassignError?.errorMessage ?? 'Failed to unassign users from role',
+        data,
+      };
+    }
+  }
+
   return {
     ...prevState,
     success: true,
-    message: 'Role created successfully',
+    message: 'Role updated successfully',
     data,
     response: response,
   };

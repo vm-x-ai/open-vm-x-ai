@@ -161,17 +161,6 @@ export const zUpdateUserDto = z.object({
 
 export type UpdateUserDtoZodType = z.infer<typeof zUpdateUserDto>;
 
-export const zPolicyExampleDto = z.object({
-    value: z.string().register(z.globalRegistry, {
-        description: 'The value of the policy example'
-    }),
-    description: z.string().register(z.globalRegistry, {
-        description: 'The description of the policy example'
-    })
-});
-
-export type PolicyExampleDtoZodType = z.infer<typeof zPolicyExampleDto>;
-
 export const zModulePermissionsDto = z.object({
     name: z.string().register(z.globalRegistry, {
         description: 'The name of the module'
@@ -184,8 +173,7 @@ export const zModulePermissionsDto = z.object({
     }),
     itemResource: z.string().register(z.globalRegistry, {
         description: 'The item resource of the module'
-    }),
-    policyExample: zPolicyExampleDto
+    })
 });
 
 export type ModulePermissionsDtoZodType = z.infer<typeof zModulePermissionsDto>;
@@ -284,6 +272,28 @@ export const zRolePolicy = z.object({
 
 export type RolePolicyZodType = z.infer<typeof zRolePolicy>;
 
+export const zUserRoleDto = z.object({
+    roleId: z.uuid().register(z.globalRegistry, {
+        description: 'The unique identifier for the role (UUID)'
+    }),
+    userId: z.uuid().register(z.globalRegistry, {
+        description: 'The user who is assigned the role'
+    }),
+    assignedAt: z.iso.datetime().register(z.globalRegistry, {
+        description: 'The date and time the role was assigned'
+    }),
+    assignedBy: z.uuid().register(z.globalRegistry, {
+        description: 'The user who assigned the role'
+    }),
+    assignedByUser: z.optional(z.union([
+        zUserRelationDto,
+        z.null()
+    ])),
+    user: zUserRelationDto
+});
+
+export type UserRoleDtoZodType = z.infer<typeof zUserRoleDto>;
+
 export const zRoleDto = z.object({
     createdAt: z.iso.datetime().register(z.globalRegistry, {
         description: 'The date and time the entity was created'
@@ -318,10 +328,27 @@ export const zRoleDto = z.object({
     policy: zRolePolicy,
     membersCount: z.number().register(z.globalRegistry, {
         description: 'The number of members in the role'
-    })
+    }),
+    members: z.optional(z.union([
+        z.array(zUserRoleDto),
+        z.null()
+    ]))
 });
 
 export type RoleDtoZodType = z.infer<typeof zRoleDto>;
+
+export const zCreateRoleDto = z.object({
+    name: z.string().register(z.globalRegistry, {
+        description: 'The name of the role'
+    }),
+    description: z.optional(z.union([
+        z.string(),
+        z.null()
+    ])),
+    policy: zRolePolicy
+});
+
+export type CreateRoleDtoZodType = z.infer<typeof zCreateRoleDto>;
 
 export const zRoleEntity = z.object({
     createdAt: z.iso.datetime().register(z.globalRegistry, {
@@ -358,19 +385,6 @@ export const zRoleEntity = z.object({
 });
 
 export type RoleEntityZodType = z.infer<typeof zRoleEntity>;
-
-export const zCreateRoleDto = z.object({
-    name: z.string().register(z.globalRegistry, {
-        description: 'The name of the role'
-    }),
-    description: z.optional(z.union([
-        z.string(),
-        z.null()
-    ])),
-    policy: zRolePolicy
-});
-
-export type CreateRoleDtoZodType = z.infer<typeof zCreateRoleDto>;
 
 export const zAssignRoleDto = z.object({
     userIds: z.array(z.string()).register(z.globalRegistry, {
@@ -2578,6 +2592,9 @@ export const zGetRoleByIdData = z.object({
     query: z.optional(z.object({
         includesUsers: z.optional(z.boolean().register(z.globalRegistry, {
             description: 'Whether to include users in the response'
+        })),
+        includesMembers: z.optional(z.boolean().register(z.globalRegistry, {
+            description: 'Whether to include members in the response'
         }))
     }))
 });
@@ -2587,7 +2604,7 @@ export type GetRoleByIdDataZodType = z.infer<typeof zGetRoleByIdData>;
 /**
  * Get a role by ID
  */
-export const zGetRoleByIdResponse = zRoleEntity;
+export const zGetRoleByIdResponse = zRoleDto;
 
 export type GetRoleByIdResponseZodType = z.infer<typeof zGetRoleByIdResponse>;
 
@@ -2609,6 +2626,27 @@ export type UpdateRoleDataZodType = z.infer<typeof zUpdateRoleData>;
 export const zUpdateRoleResponse = zRoleEntity;
 
 export type UpdateRoleResponseZodType = z.infer<typeof zUpdateRoleResponse>;
+
+export const zGetRoleMembersData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        roleId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the role'
+        })
+    }),
+    query: z.optional(z.never())
+});
+
+export type GetRoleMembersDataZodType = z.infer<typeof zGetRoleMembersData>;
+
+/**
+ * List all members of a role
+ */
+export const zGetRoleMembersResponse = z.array(zUserRoleDto).register(z.globalRegistry, {
+    description: 'List all members of a role'
+});
+
+export type GetRoleMembersResponseZodType = z.infer<typeof zGetRoleMembersResponse>;
 
 export const zAssignUsersToRoleData = z.object({
     body: zAssignRoleDto,

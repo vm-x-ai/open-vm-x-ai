@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsArray, IsString, ValidateNested, IsObject, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsArray, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class PolicyExampleDto {
@@ -57,13 +57,6 @@ export class ModulePermissionsDto {
   @IsString()
   @IsNotEmpty()
   itemResource: string;
-
-  @ApiProperty({
-    description: 'The policy example of the module',
-  })
-  @IsObject()
-  @IsOptional()
-  policyExample?: PolicyExampleDto;
 }
 export class PermissionsDto {
   @ApiProperty({

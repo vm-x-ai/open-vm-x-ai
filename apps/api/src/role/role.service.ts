@@ -13,6 +13,8 @@ import { modules } from './modules';
 import { PermissionsDto } from './dto/permissions.dto';
 import { UnassignRoleDto } from './dto/unassign-role.dto';
 import { RoleDto } from './dto/role-dto';
+import { UserRoleDto } from './dto/user-role.dto';
+import { jsonArrayFrom } from 'kysely/helpers/postgres';
 
 @Injectable()
 export class RoleService {
@@ -28,7 +30,7 @@ export class RoleService {
   ): Promise<void> {
     const userRoles = await this.getRolesByUserId(userId);
     for (const userRole of userRoles) {
-      const role = await this.getById(userRole.roleId, false);
+      const role = await this.getById(userRole.roleId, false, false);
       for (const statement of role.policy.statements) {
         for (const statementAction of statement.actions) {
           const regex = new RegExp(
@@ -77,7 +79,9 @@ export class RoleService {
       .selectFrom('roles')
       .selectAll('roles')
       .leftJoin('userRoles', 'roles.roleId', 'userRoles.roleId')
-      .select((eb) => eb.fn.count<number>('userRoles.userId').as('membersCount'))
+      .select((eb) =>
+        eb.fn.count<number>('userRoles.userId').as('membersCount')
+      )
       .$if(includesUsers, this.db.includeEntityControlUsers('roles'))
       .groupBy('roles.roleId')
       .execute();
@@ -93,35 +97,81 @@ export class RoleService {
     );
   }
 
+  public async getRoleMembers(roleId: string): Promise<UserRoleDto[]> {
+    return await this.db.reader
+      .selectFrom('userRoles')
+      .selectAll('userRoles')
+      .select((eb) => [
+        this.db
+          .withUser(eb.ref('userRoles.userId'), 'user')
+          .$notNull()
+          .as('user'),
+        this.db
+          .withUser(eb.ref('userRoles.assignedBy'), 'assignedByUser')
+          .$notNull()
+          .as('assignedByUser'),
+      ])
+      .where('roleId', '=', roleId)
+      .execute();
+  }
+
   public async getById(
     roleId: string,
-    includesUser: boolean
+    includesUser: boolean,
+    includesMembers: boolean
   ): Promise<RoleEntity>;
 
   public async getById<T extends false>(
     roleId: string,
     includesUser: boolean,
+    includesMembers: boolean,
     throwOnNotFound: T
   ): Promise<RoleEntity | undefined>;
 
   public async getById<T extends true>(
     roleId: string,
     includesUser: boolean,
+    includesMembers: boolean,
     throwOnNotFound: T
   ): Promise<RoleEntity>;
 
   public async getById(
     roleId: string,
     includesUser: boolean,
+    includesMembers: boolean,
     throwOnNotFound = true
   ): Promise<RoleEntity | undefined> {
     const role = await this.cache.wrap(
-      this.getRoleCacheKey(roleId, includesUser),
+      this.getRoleCacheKey(roleId, includesUser, includesMembers),
       () =>
         this.db.reader
           .selectFrom('roles')
           .selectAll('roles')
           .$if(includesUser, this.db.includeEntityControlUsers('roles'))
+          .$if(includesMembers, (qb) =>
+            qb.select((eb) => [
+              jsonArrayFrom(
+                eb
+                  .selectFrom('userRoles')
+                  .selectAll('userRoles')
+                  .select((eb) => [
+                    this.db
+                      .withUser(eb.ref('userRoles.userId'), 'user')
+                      .$notNull()
+                      .as('user'),
+                    this.db
+                      .withUser(
+                        eb.ref('userRoles.assignedBy'),
+                        'assignedByUser'
+                      )
+                      .$notNull()
+                      .as('assignedByUser'),
+                  ])
+                  .where('roleId', '=', roleId)
+                  .orderBy('assignedAt', 'asc')
+              ).as('members'),
+            ])
+          )
           .where('roleId', '=', roleId)
           .executeTakeFirst()
     );
@@ -133,6 +183,14 @@ export class RoleService {
     }
 
     return role;
+  }
+
+  public async getByName(name: string): Promise<RoleEntity | undefined> {
+    return await this.db.reader
+      .selectFrom('roles')
+      .selectAll('roles')
+      .where('name', '=', name)
+      .executeTakeFirst();
   }
 
   public async create(
@@ -171,8 +229,10 @@ export class RoleService {
       .executeTakeFirstOrThrow();
 
     await this.cache.mdel([
-      this.getRoleCacheKey(roleId, true),
-      this.getRoleCacheKey(roleId, false),
+      this.getRoleCacheKey(roleId, true, false),
+      this.getRoleCacheKey(roleId, false, false),
+      this.getRoleCacheKey(roleId, true, true),
+      this.getRoleCacheKey(roleId, false, true),
     ]);
 
     return role;
@@ -196,9 +256,13 @@ export class RoleService {
       .returningAll()
       .executeTakeFirstOrThrow();
 
-    await this.cache.mdel(
-      payload.userIds.map((userId) => this.getUserRoleCacheKey(userId))
-    );
+    await this.cache.mdel([
+      ...payload.userIds.map((userId) => this.getUserRoleCacheKey(userId)),
+      this.getRoleCacheKey(roleId, true, false),
+      this.getRoleCacheKey(roleId, false, false),
+      this.getRoleCacheKey(roleId, true, true),
+      this.getRoleCacheKey(roleId, false, true),
+    ]);
 
     return userRole;
   }
@@ -213,9 +277,13 @@ export class RoleService {
       .where('userId', 'in', payload.userIds)
       .execute();
 
-    await this.cache.mdel(
-      payload.userIds.map((userId) => this.getUserRoleCacheKey(userId))
-    );
+    await this.cache.mdel([
+      ...payload.userIds.map((userId) => this.getUserRoleCacheKey(userId)),
+      this.getRoleCacheKey(roleId, true, false),
+      this.getRoleCacheKey(roleId, false, false),
+      this.getRoleCacheKey(roleId, true, true),
+      this.getRoleCacheKey(roleId, false, true),
+    ]);
   }
 
   public async delete(roleId: string): Promise<void> {
@@ -232,14 +300,22 @@ export class RoleService {
       .execute();
 
     await this.cache.mdel([
-      this.getRoleCacheKey(roleId, true),
-      this.getRoleCacheKey(roleId, false),
+      this.getRoleCacheKey(roleId, true, false),
+      this.getRoleCacheKey(roleId, false, false),
+      this.getRoleCacheKey(roleId, true, true),
+      this.getRoleCacheKey(roleId, false, true),
       ...userRoles.map(({ userId }) => this.getUserRoleCacheKey(userId)),
     ]);
   }
 
-  private getRoleCacheKey(roleId: string, includesUser: boolean) {
-    return `role:${roleId}${includesUser ? ':includesUser' : ''}`;
+  private getRoleCacheKey(
+    roleId: string,
+    includesUser: boolean,
+    includesMembers: boolean
+  ) {
+    return `role:${roleId}${includesUser ? ':includesUser' : ''}${
+      includesMembers ? ':includesMembers' : ''
+    }`;
   }
 
   private getUserRoleCacheKey(userId: string) {

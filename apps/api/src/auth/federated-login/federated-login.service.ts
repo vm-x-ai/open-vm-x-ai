@@ -12,6 +12,7 @@ import { throwServiceError } from '../../error';
 import { UsersService } from '../../users/users.service';
 import { UserEntity } from '../../users/entities/user.entity';
 import { ErrorCode } from '../../error-code';
+import { RoleService } from '../../role/role.service';
 
 @Injectable()
 export class FederatedLoginService implements OnModuleInit {
@@ -21,7 +22,8 @@ export class FederatedLoginService implements OnModuleInit {
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: PinoLogger,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly roleService: RoleService
   ) {
     this.redirectUri = `${this.configService.getOrThrow<string>(
       'BASE_URL'
@@ -108,7 +110,21 @@ export class FederatedLoginService implements OnModuleInit {
         );
       }
 
-      return await this.usersService.createOidcUser(claims);
+      const user = await this.usersService.createOidcUser(claims);
+      const defaultRole = await this.roleService.getByName(
+        this.configService.getOrThrow<string>('OIDC_FEDERATED_DEFAULT_ROLE')
+      );
+
+      if (defaultRole) {
+        await this.roleService.assignUsersToRole(
+          defaultRole.roleId,
+          {
+            userIds: [user.id],
+          },
+          user
+        );
+      }
+      return user;
     } catch (error) {
       if (error instanceof oidcClient.ResponseBodyError) {
         throwServiceError(

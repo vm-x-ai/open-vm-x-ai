@@ -52,12 +52,12 @@ const result = NextAuth({
 
       return !!auth?.user && !auth?.user?.error;
     },
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       if (account) {
         return {
           name: token.name,
           email: token.email,
-          sub: token.sub,
+          sub: profile?.sub,
           picture: token.picture,
           expiresAt: account.expires_at ? account.expires_at * 1000 : undefined,
           accessToken: account.access_token,
@@ -83,13 +83,14 @@ const result = NextAuth({
         }
       }
     },
-    session({ session, token }) {
+    session({ session, token, user }) {
       session.accessToken = token.accessToken;
       session.idToken = token.idToken;
       session.expires = new Date(token.expiresAt).toISOString() as Date & string;
       if (token.error && typeof token.error === 'string') {
         session.user.error = token.error;
       }
+      session.user.userId = token.sub;
       return session;
     },
   } as NextAuthConfig['callbacks'],
@@ -106,6 +107,7 @@ declare module 'next-auth' {
     accessToken?: string;
     refreshToken?: string;
     expiresAt?: number;
+    userId?: string;
   }
 }
 

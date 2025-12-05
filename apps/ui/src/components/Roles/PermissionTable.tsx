@@ -7,15 +7,16 @@ import {
   useMaterialReactTable,
 } from 'material-react-table';
 import { useMemo, useState, useEffect } from 'react';
-import { ModulePermissionsDto, PermissionsDto } from '@/clients/api';
+import { ModulePermissionsDto } from '@/clients/api';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import { useQuery } from '@tanstack/react-query';
+import { getPermissionsOptions } from '@/clients/api/@tanstack/react-query.gen';
 
-export type PermissionTableProps = {
-  permissions: PermissionsDto;
-};
-
-export default function PermissionTable({ permissions }: PermissionTableProps) {
+export default function PermissionTable() {
+  const { data: permissions, isLoading } = useQuery({
+    ...getPermissionsOptions({}),
+  });
   const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>(
     {
       'mrt-row-expand': false,
@@ -38,7 +39,7 @@ export default function PermissionTable({ permissions }: PermissionTableProps) {
         header: 'Actions',
         filterVariant: 'autocomplete',
         accessorFn: (row) => row.actions.join(', '),
-        filterSelectOptions: permissions.modules.flatMap((module) =>
+        filterSelectOptions: permissions?.modules.flatMap((module) =>
           module.actions.map((action) => ({ label: action, value: action }))
         ),
         filterFn: (row, columnId, filterValue) => {
@@ -74,12 +75,12 @@ export default function PermissionTable({ permissions }: PermissionTableProps) {
         size: 50,
       },
     ],
-    [permissions.modules]
+    [permissions?.modules]
   );
 
   const table = useMaterialReactTable({
     columns,
-    data: permissions.modules || [],
+    data: permissions?.modules || [],
     displayColumnDefOptions: { 'mrt-row-actions': { size: 120 } },
     enableFullScreenToggle: false,
     enableExpandAll: false,
@@ -96,6 +97,7 @@ export default function PermissionTable({ permissions }: PermissionTableProps) {
     muiTableContainerProps: { sx: { maxHeight: '500px' } },
     state: {
       columnVisibility,
+      isLoading,
     },
     onColumnVisibilityChange: setColumnVisibility,
   });

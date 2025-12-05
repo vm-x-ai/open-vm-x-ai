@@ -1,4 +1,4 @@
-import CreateRoleForm from './Form';
+import RoleForm from './Form';
 
-export default CreateRoleForm;
+export default RoleForm;
 export * from './schema';

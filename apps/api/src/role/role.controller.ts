@@ -2,12 +2,15 @@ import {
   applyDecorators,
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
+  ParseBoolPipe,
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
@@ -16,6 +19,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { RoleEntity } from './entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -37,6 +41,7 @@ import { RoleGuard } from './role.guard';
 import { PermissionsDto } from './dto/permissions.dto';
 import { UnassignRoleDto } from './dto/unassign-role.dto';
 import { RoleDto } from './dto/role-dto';
+import { UserRoleDto } from './dto/user-role.dto';
 
 export function ApiRoleIdParam() {
   return applyDecorators(
@@ -98,7 +103,7 @@ export class RoleController {
   @Get(':roleId')
   @UseGuards(RoleGuard(RoleActions.GET, ROLE_RESOURCE_ITEM))
   @ApiOkResponse({
-    type: RoleEntity,
+    type: RoleDto,
     description: 'Get a role by ID',
   })
   @ApiOperation({
@@ -109,12 +114,43 @@ export class RoleController {
   })
   @ApiRoleIdParam()
   @ApiIncludesUsersQuery()
+  @ApiQuery({
+    name: 'includesMembers',
+    type: Boolean,
+    required: false,
+    description: 'Whether to include members in the response',
+  })
   public async getById(
     @RoleIdParam() roleId: string,
     @IncludesUsersQuery()
-    includesUsers: boolean
-  ): Promise<RoleEntity> {
-    return this.roleService.getById(roleId, includesUsers);
+    includesUsers: boolean,
+    @Query(
+      'includesMembers',
+      new DefaultValuePipe(true),
+      new ParseBoolPipe({ optional: true })
+    )
+    includesMembers: boolean
+  ): Promise<RoleDto> {
+    return this.roleService.getById(roleId, includesUsers, includesMembers);
+  }
+
+  @Get(':roleId/members')
+  @UseGuards(RoleGuard(RoleActions.GET_MEMBERS, ROLE_RESOURCE_ITEM))
+  @ApiOkResponse({
+    type: UserRoleDto,
+    isArray: true,
+    description: 'List all members of a role',
+  })
+  @ApiOperation({
+    operationId: 'getRoleMembers',
+    summary: 'List all members of a role',
+    description: 'Returns a list of all members of a role.',
+  })
+  @ApiRoleIdParam()
+  public async getRoleMembers(
+    @RoleIdParam() roleId: string
+  ): Promise<UserRoleDto[]> {
+    return this.roleService.getRoleMembers(roleId);
   }
 
   @Post()

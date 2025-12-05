@@ -9,30 +9,23 @@ import Typography from '@mui/material/Typography';
 import SubmitButton from '@/components/Form/SubmitButton';
 import { useRouter } from 'next/navigation';
 import { startTransition, useActionState, useEffect, useRef } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { schema } from './schema';
 import type { FormSchema, FormAction } from './schema';
-import { PermissionsDto, RolePolicyEffect } from '@/clients/api';
-import Editor, { Monaco } from '@/components/Editor';
-import { z } from 'zod';
-import { zRolePolicy } from '@/clients/api/zod.gen';
-import PermissionTable from '../PermissionTable';
-import Box from '@mui/material/Box';
-import Markdown from '@/components/Markdown';
+import { RoleDto, RolePolicyEffect } from '@/clients/api';
+import MembersTable from '../MembersTable';
+import PolicyField from '../Common/PolicyField';
 
-export type CreateRoleFormProps = {
-  permissions: PermissionsDto;
+export type RoleFormProps = {
+  role?: RoleDto;
   submitAction: (
     prevState: FormAction,
     data: FormSchema
   ) => Promise<FormAction>;
 };
 
-export default function CreateRoleForm({
-  permissions,
-  submitAction,
-}: CreateRoleFormProps) {
+export default function RoleForm({ submitAction, role }: RoleFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useActionState(submitAction, {
@@ -48,16 +41,13 @@ export default function CreateRoleForm({
     }
   }, [router, state]);
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormSchema>({
+  const form = useForm<FormSchema>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: '',
-      description: '',
-      policy: {
+      roleId: role?.roleId ?? undefined,
+      name: role?.name ?? '',
+      description: role?.description ?? '',
+      policy: role?.policy ?? {
         $schema: 'https://vm-x.ai/schema/role-policy.json',
         statements: [
           {
@@ -67,6 +57,7 @@ export default function CreateRoleForm({
           },
         ],
       },
+      members: role?.members ?? [],
     },
   });
 
@@ -79,274 +70,121 @@ export default function CreateRoleForm({
           </Grid>
         )}
         <Grid size={12}>
-          <form
-            action={() => {
-              handleSubmit((values) => {
-                startTransition(() => formAction(values));
-              })({
-                target: formRef.current,
-              } as unknown as React.FormEvent<HTMLFormElement>);
-            }}
-            noValidate
-          >
-            <Grid size={12}>
-              <Typography variant="h6">New Role</Typography>
-              <Divider />
-            </Grid>
-            <Grid container size={12}>
-              <Grid size={6}>
-                <Controller
-                  name="name"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      margin="normal"
-                      fullWidth
-                      label="Role Name"
-                      style={{ marginBottom: '12px' }}
-                      error={!!errors.name?.message}
-                      helperText={errors.name?.message}
-                    />
-                  )}
-                />
+          <FormProvider {...form}>
+            <form
+              action={() => {
+                form.handleSubmit((values) => {
+                  startTransition(() => formAction(values));
+                })({
+                  target: formRef.current,
+                } as unknown as React.FormEvent<HTMLFormElement>);
+              }}
+              noValidate
+            >
+              <Grid size={12}>
+                <Typography variant="h6">
+                  {role ? 'Edit Role' : 'New Role'}
+                </Typography>
+                <Divider />
               </Grid>
-            </Grid>
-            <Grid container size={12}>
-              <Grid size={6}>
-                <Controller
-                  name="description"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      margin="normal"
-                      multiline
-                      rows={4}
-                      fullWidth
-                      label="Description"
-                      style={{ marginBottom: '12px' }}
-                      error={!!errors.description?.message}
-                      helperText={
-                        errors.description?.message ||
-                        schema.shape.description.description
-                      }
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-            <Grid size={12}>
-              <Typography variant="subtitle2">Policy</Typography>
-              <Divider />
-            </Grid>
-            <Grid container size={12} spacing={3}>
-              <Grid size={6} paddingTop={3} paddingRight={3}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Grid container size={12}>
+                <Grid size={6}>
                   <Controller
-                    name="policy"
-                    control={control}
+                    name="name"
+                    control={form.control}
                     render={({ field }) => (
-                      <Editor
-                        height="300px"
-                        language="json"
-                        value={JSON.stringify(field.value, null, 2)}
-                        onChange={(_, parsed) => {
-                          field.onChange(parsed);
-                        }}
-                        onMount={(editor, monaco: Monaco) => {
-                          monaco.json.jsonDefaults.setDiagnosticsOptions({
-                            schemas: [
-                              {
-                                uri: 'https://vm-x.ai/schema/role-policy.json',
-                                schema: z.toJSONSchema(zRolePolicy),
-                              },
-                            ],
-                          });
-                        }}
+                      <TextField
+                        {...field}
+                        variant="outlined"
+                        margin="normal"
+                        fullWidth
+                        label="Role Name"
+                        style={{ marginBottom: '12px' }}
+                        error={!!form.formState.errors.name?.message}
+                        helperText={form.formState.errors.name?.message}
                       />
                     )}
                   />
-                  <PermissionTable permissions={permissions} />
-                </Box>
+                </Grid>
               </Grid>
-              <Grid size={6}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    gap: '.5rem',
-                    flexDirection: 'column',
-                    marginTop: '1rem',
-                  }}
-                >
-                  <Typography variant="caption" fontWeight={700}>
-                    How to Use the Permissions Table & Define Your Role Policy
-                  </Typography>
-                  <Typography variant="caption">
-                    The table on the left provides a detailed overview of all
-                    available modules in the system. For each module, you can
-                    see:
-                  </Typography>
-                  <ul
-                    style={{ paddingLeft: 20, marginTop: 0, marginBottom: 0 }}
-                  >
-                    <li>
-                      <Typography variant="caption">
-                        <b>Module Name</b>: The functional area your policy will
-                        control (e.g., &quot;workspace&quot;,
-                        &quot;environment&quot;, &quot;user&quot;).
-                      </Typography>
-                    </li>
-                    <li>
-                      <Typography variant="caption">
-                        <b>Actions</b>: The permissions (“verbs”) you can allow
-                        or deny for the module, such as{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          workspace:list
-                        </code>{' '}
-                        or{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          user:update
-                        </code>
-                        . You can grant or restrict these individually or in
-                        bulk using wildcards (
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          *
-                        </code>
-                        ).
-                      </Typography>
-                    </li>
-                    <li>
-                      <Typography variant="caption">
-                        <b>Base Resource</b>: Refers to the pattern for a
-                        general resource in that module. Use this string in your
-                        policy&apos;s{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          resources
-                        </code>{' '}
-                        to target all items under the module.
-                      </Typography>
-                    </li>
-                    <li>
-                      <Typography variant="caption">
-                        <b>Item Resource</b>: Refers to the pattern for a
-                        specific item in that module. Use this string in your
-                        policy&apos;s{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          resources
-                        </code>{' '}
-                        to target a specific item. For example, if the module is{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          user
-                        </code>
-                        , the item resource could be{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          &quot;user:${'{'}user.email{'}'}&quot;
-                        </code>
-                        .
-                      </Typography>
-                    </li>
-                  </ul>
-                  <Typography variant="caption" sx={{ marginTop: 1 }}>
-                    When writing your policy below, use a JSON format with{' '}
-                    <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                      statements
-                    </code>
-                    , each containing:
-                  </Typography>
-                  <ul
-                    style={{ paddingLeft: 20, marginTop: 0, marginBottom: 0 }}
-                  >
-                    <li>
-                      <Typography variant="caption">
-                        <b>effect</b>: Either{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          &quot;allow&quot;
-                        </code>{' '}
-                        or{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          &quot;deny&quot;
-                        </code>
-                        , determines whether the specified actions are permitted
-                        or blocked.
-                      </Typography>
-                    </li>
-                    <li>
-                      <Typography variant="caption">
-                        <b>actions</b>: A list of allowed or denied actions,
-                        matching those shown in the table. You can use a
-                        specific action (e.g.{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          &quot;user:get&quot;
-                        </code>
-                        ), or use{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          *
-                        </code>{' '}
-                        for all.
-                      </Typography>
-                    </li>
-                    <li>
-                      <Typography variant="caption">
-                        <b>resources</b>: A list of resource patterns (from the
-                        table&apos;s Base/Item Resource columns) that this
-                        statement applies to. You can also use{' '}
-                        <code className="px-1 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
-                          &quot;*&quot;
-                        </code>{' '}
-                        to apply to all resources.
-                      </Typography>
-                    </li>
-                  </ul>
-                  <Typography variant="caption" sx={{ marginTop: 1 }}>
-                    <b>Example:</b>
-                    <br />
-                    To allow a user to list and view users in any workspace, but
-                    deny them from deleting any, you could write:
-                  </Typography>
-                  <Box
-                    sx={{
-                      bgcolor: '#f6f8fa',
-                      p: 1,
-                      borderRadius: 1,
-                      fontFamily: 'monospace',
-                      fontSize: '0.85em',
-                      mt: 0.5,
-                    }}
-                  >
-                    <Markdown>
-                      {`\`\`\`json
-{
-  "statements": [
-    {
-      "effect": "deny",
-      "actions": ["user:delete"],
-      "resources": ["*"]
-    },
-    {
-      "effect": "allow",
-      "actions": ["user:list", "user:get"],
-      "resources": ["*"]
-    }
-  ]
-}
-\`\`\``}
-                    </Markdown>
-                  </Box>
-                  <Typography variant="caption" sx={{ marginTop: 1 }}>
-                    Use the information in the table to discover valid action
-                    and resource names and write clear, robust access policies!
-                  </Typography>
-                </Box>
+              <Grid container size={12}>
+                <Grid size={6}>
+                  <Controller
+                    name="description"
+                    control={form.control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        variant="outlined"
+                        margin="normal"
+                        multiline
+                        rows={4}
+                        fullWidth
+                        label="Description"
+                        style={{ marginBottom: '12px' }}
+                        error={!!form.formState.errors.description?.message}
+                        helperText={
+                          form.formState.errors.description?.message ||
+                          schema.shape.description.description
+                        }
+                      />
+                    )}
+                  />
+                </Grid>
               </Grid>
-            </Grid>
-            <Grid size={12}></Grid>
-            <Grid size={12} marginTop="1rem">
-              <SubmitButton label="Save" submittingLabel="Saving..." />
-            </Grid>
-          </form>
+              <PolicyField />
+              <Grid size={12}>
+                <Controller
+                  name="members"
+                  control={form.control}
+                  render={({ field }) => (
+                    <MembersTable
+                      value={field.value}
+                      onAddMember={(member) => {
+                        field.onChange([...(field.value ?? []), member]);
+                        form.setValue('newMembers', [
+                          ...(form.getValues('newMembers') ?? []),
+                          member,
+                        ]);
+                        const removedMembers =
+                          form.getValues('removedMembers') ?? [];
+                        if (
+                          removedMembers.some((m) => m.userId === member.userId)
+                        ) {
+                          form.setValue(
+                            'removedMembers',
+                            removedMembers.filter(
+                              (m) => m.userId !== member.userId
+                            )
+                          );
+                        }
+                      }}
+                      onRemoveMember={(member) => {
+                        field.onChange(
+                          field.value?.filter((m) => m.userId !== member.userId)
+                        );
+                        const newMembers = form.getValues('newMembers');
+                        const removedMembers =
+                          form.getValues('removedMembers') ?? [];
+
+                        form.setValue('removedMembers', [
+                          ...removedMembers,
+                          member,
+                        ]);
+                        form.setValue(
+                          'newMembers',
+                          newMembers?.filter((m) => m.userId !== member.userId)
+                        );
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid size={12} marginTop="1rem">
+                <SubmitButton label="Save" submittingLabel="Saving..." />
+              </Grid>
+            </form>
+          </FormProvider>
         </Grid>
       </Grid>
     </>

@@ -15,19 +15,40 @@ import {
 } from 'material-react-table';
 import Link from 'next/link';
 import { useMemo, useState, useEffect } from 'react';
-import ConfirmDeleteRoleDialog from './ConfirmDeleteDialog';
-import { RoleDto } from '@/clients/api';
-import { getRolesOptions } from '@/clients/api/@tanstack/react-query.gen';
+import { UserEntity } from '@/clients/api';
+import { getUsersOptions } from '@/clients/api/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
+import ConfirmDeleteUserDialog from './ConfirmDeleteDialog';
 import Alert from '@mui/material/Alert';
+import { useSession } from 'next-auth/react';
+import Avatar from '@mui/material/Avatar';
+import { stringToColor } from '@/utils/color';
 
-export default function RoleTable() {
+function stringAvatar(name: string) {
+  return {
+    sx: {
+      bgcolor: stringToColor(name),
+    },
+    children: `${name.split(' ')[0][0]}${name.split(' ')?.[1]?.[0] ?? ''}`,
+  };
+}
+
+export default function UserTable() {
+  const { data: session } = useSession();
   const theme = useTheme();
   const { data, isLoading, refetch, error } = useQuery({
-    ...getRolesOptions({}),
+    ...getUsersOptions({}),
   });
+
+  const usersMap = useMemo(() => {
+    return data?.reduce((acc, user) => {
+      acc[user.id] = user;
+      return acc;
+    }, {} as Record<string, UserEntity>);
+  }, [data]);
+
   const [confirmDeleteItem, setConfirmDeleteItem] = useState<
-    RoleDto | undefined
+    UserEntity | undefined
   >();
   const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>(
     {
@@ -40,37 +61,37 @@ export default function RoleTable() {
     window.scrollTo(0, 0);
   }, []);
 
-  const columns = useMemo<MRT_ColumnDef<RoleDto>[]>(
+  const columns = useMemo<MRT_ColumnDef<UserEntity>[]>(
     () => [
       {
         accessorKey: 'name',
-        header: 'Role Name',
+        header: 'User Name',
         size: 200,
         Cell: ({ row }) => {
           return (
-            <Typography
-              variant="inherit"
-              sx={{
-                color: theme.palette.primary.main,
-                fontWeight: 'bold',
-              }}
-            >
-              {row.original.name}
-            </Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              {row.original.pictureUrl ? (
+                <Avatar src={row.original.pictureUrl} />
+              ) : (
+                <Avatar {...stringAvatar(row.original.name)} />
+              )}
+              <Typography
+                variant="inherit"
+                sx={{
+                  color: theme.palette.primary.main,
+                  fontWeight: 'bold',
+                }}
+              >
+                {row.original.name}{' '}
+                {session?.user?.userId === row.original.id && '(You)'}
+              </Typography>
+            </Box>
           );
         },
       },
       {
-        accessorKey: 'description',
-        header: 'Description',
-      },
-      {
-        accessorKey: 'membersCount',
-        header: 'Members',
-        size: 200,
-        Cell: ({ row: { original: row } }) => (
-          <Typography variant="inherit">{row.membersCount}</Typography>
-        ),
+        accessorKey: 'email',
+        header: 'Email',
       },
       {
         accessorKey: 'createdAt',
@@ -86,11 +107,15 @@ export default function RoleTable() {
         accessorKey: 'createdBy',
         header: 'Created By',
         size: 300,
-        Cell: ({ row: { original: row } }) => (
-          <Typography variant="inherit">
-            {row.createdByUser?.name} ({row.createdByUser?.email})
-          </Typography>
-        ),
+        Cell: ({ row: { original: row } }) =>
+          row.createdBy ? (
+            <Typography variant="inherit">
+              {usersMap?.[row.createdBy]?.name} (
+              {usersMap?.[row.createdBy]?.email})
+            </Typography>
+          ) : (
+            <Typography variant="inherit">-</Typography>
+          ),
       },
       {
         accessorKey: 'updatedAt',
@@ -103,7 +128,7 @@ export default function RoleTable() {
         ),
       },
     ],
-    [theme.palette.primary.main]
+    [session?.user?.userId, theme.palette.primary.main, usersMap]
   );
 
   const table = useMaterialReactTable({
@@ -125,7 +150,7 @@ export default function RoleTable() {
         <Tooltip title="Edit">
           <IconButton
             LinkComponent={Link}
-            href={`/settings/roles/edit/${row.original.roleId}`}
+            href={`/settings/users/edit/${row.original.id}`}
           >
             <EditIcon />
           </IconButton>
@@ -133,6 +158,7 @@ export default function RoleTable() {
         <Tooltip title="Delete">
           <IconButton
             color="error"
+            disabled={session?.user?.userId === row.original.id}
             onClick={() => setConfirmDeleteItem(row.original)}
           >
             <DeleteIcon />
@@ -144,9 +170,9 @@ export default function RoleTable() {
       <Button
         variant="outlined"
         LinkComponent={Link}
-        href={`/settings/roles/new`}
+        href={`/settings/users/new`}
       >
-        Add new Role
+        Add new User
       </Button>
     ),
     state: {
@@ -165,8 +191,8 @@ export default function RoleTable() {
       )}
       <MaterialReactTable table={table} />
       {confirmDeleteItem && (
-        <ConfirmDeleteRoleDialog
-          role={confirmDeleteItem}
+        <ConfirmDeleteUserDialog
+          user={confirmDeleteItem}
           onClose={async () => {
             setConfirmDeleteItem(undefined);
             await refetch();

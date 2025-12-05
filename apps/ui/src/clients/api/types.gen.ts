@@ -182,17 +182,6 @@ export type UpdateUserDto = {
     password?: string;
 };
 
-export type PolicyExampleDto = {
-    /**
-     * The value of the policy example
-     */
-    value: string;
-    /**
-     * The description of the policy example
-     */
-    description: string;
-};
-
 export type ModulePermissionsDto = {
     /**
      * The name of the module
@@ -210,10 +199,6 @@ export type ModulePermissionsDto = {
      * The item resource of the module
      */
     itemResource: string;
-    /**
-     * The policy example of the module
-     */
-    policyExample: PolicyExampleDto;
 };
 
 export type PermissionsDto = {
@@ -322,6 +307,33 @@ export type RolePolicy = {
     statements: Array<RolePolicyStatement>;
 };
 
+export type UserRoleDto = {
+    /**
+     * The unique identifier for the role (UUID)
+     */
+    roleId: string;
+    /**
+     * The user who is assigned the role
+     */
+    userId: string;
+    /**
+     * The date and time the role was assigned
+     */
+    assignedAt: string;
+    /**
+     * The user who assigned the role
+     */
+    assignedBy: string;
+    /**
+     * The user who assigned the role
+     */
+    assignedByUser?: UserRelationDto | null;
+    /**
+     * The user who is assigned the role
+     */
+    user: UserRelationDto;
+};
+
 export type RoleDto = {
     /**
      * The date and time the entity was created
@@ -367,6 +379,25 @@ export type RoleDto = {
      * The number of members in the role
      */
     membersCount: number;
+    /**
+     * The members of the role
+     */
+    members?: Array<UserRoleDto> | null;
+};
+
+export type CreateRoleDto = {
+    /**
+     * The name of the role
+     */
+    name: string;
+    /**
+     * The description of the role
+     */
+    description?: string | null;
+    /**
+     * The policy of the role
+     */
+    policy: RolePolicy;
 };
 
 export type RoleEntity = {
@@ -398,21 +429,6 @@ export type RoleEntity = {
      * The unique identifier for the role (UUID)
      */
     roleId: string;
-    /**
-     * The name of the role
-     */
-    name: string;
-    /**
-     * The description of the role
-     */
-    description?: string | null;
-    /**
-     * The policy of the role
-     */
-    policy: RolePolicy;
-};
-
-export type CreateRoleDto = {
     /**
      * The name of the role
      */
@@ -2818,6 +2834,10 @@ export type GetRoleByIdData = {
          * Whether to include users in the response
          */
         includesUsers?: boolean;
+        /**
+         * Whether to include members in the response
+         */
+        includesMembers?: boolean;
     };
     url: '/v1/role/{roleId}';
 };
@@ -2835,7 +2855,7 @@ export type GetRoleByIdResponses = {
     /**
      * Get a role by ID
      */
-    200: RoleEntity;
+    200: RoleDto;
 };
 
 export type GetRoleByIdResponse = GetRoleByIdResponses[keyof GetRoleByIdResponses];
@@ -2869,6 +2889,36 @@ export type UpdateRoleResponses = {
 };
 
 export type UpdateRoleResponse = UpdateRoleResponses[keyof UpdateRoleResponses];
+
+export type GetRoleMembersData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the role
+         */
+        roleId: string;
+    };
+    query?: never;
+    url: '/v1/role/{roleId}/members';
+};
+
+export type GetRoleMembersErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type GetRoleMembersError = GetRoleMembersErrors[keyof GetRoleMembersErrors];
+
+export type GetRoleMembersResponses = {
+    /**
+     * List all members of a role
+     */
+    200: Array<UserRoleDto>;
+};
+
+export type GetRoleMembersResponse = GetRoleMembersResponses[keyof GetRoleMembersResponses];
 
 export type AssignUsersToRoleData = {
     body: AssignRoleDto;

@@ -1,9 +1,10 @@
 'use server';
 
-import { signOut } from '@/auth';
+import { auth, signOut } from '@/auth';
 
 export const signOutAction = async () => {
+  const session = await auth();
   await signOut({
-    redirectTo: '/api/federated/sign-out',
+    redirectTo: `/api/federated/sign-out?id_token=${session?.idToken}`,
   });
 };

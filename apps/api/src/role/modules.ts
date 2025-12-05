@@ -77,7 +77,6 @@ import {
   CompletionUsageActions,
 } from '../completion/usage/permissions/actions';
 import { StringKeyOf } from 'ts-enum-util/dist/types/types';
-import { RolePolicyEffect } from './entities/role.entity';
 
 function getEnumValues<T extends Record<StringKeyOf<T>, string>>(
   enumObj: T
@@ -93,28 +92,6 @@ export const modules = [
     actions: getEnumValues(WorkspaceActions),
     baseResource: WORKSPACE_BASE_RESOURCE,
     itemResource: WORKSPACE_RESOURCE_ITEM,
-    policyExample: {
-      value: JSON.stringify(
-        {
-          statements: [
-            {
-              effect: RolePolicyEffect.DENY,
-              actions: ['workspace:create'],
-              resources: ['*'],
-            },
-            {
-              effect: RolePolicyEffect.ALLOW,
-              actions: ['workspace:list', 'workspace:get'],
-              resources: ['*'],
-            },
-          ],
-        },
-        null,
-        2
-      ),
-      description:
-        'Allow the user to list and get workspaces, but not create them',
-    },
   },
   {
     name: ENVIRONMENT_MODULE_NAME,

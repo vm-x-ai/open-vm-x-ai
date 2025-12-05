@@ -46,23 +46,65 @@ export const migration: Migration = {
 
     await db
       .insertInto('roles')
-      .values({
-        name: 'admin',
-        description: 'Administrator role',
-        policy: JSON.stringify({
-          statements: [
-            {
-              effect: RolePolicyEffect.ALLOW,
-              actions: ['*'],
-              resources: ['*'],
-            },
-          ],
-        }),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        createdBy: adminUserId.id,
-        updatedBy: adminUserId.id,
-      })
+      .values([
+        {
+          name: 'admin',
+          description: 'Administrator role',
+          policy: JSON.stringify({
+            statements: [
+              {
+                effect: RolePolicyEffect.ALLOW,
+                actions: ['*'],
+                resources: ['*'],
+              },
+            ],
+          }),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdBy: adminUserId.id,
+          updatedBy: adminUserId.id,
+        },
+        {
+          name: 'read-only',
+          description: 'Read only role',
+          policy: JSON.stringify({
+            statements: [
+              {
+                effect: RolePolicyEffect.ALLOW,
+                actions: ['*:get', '*:list'],
+                resources: ['*'],
+              },
+            ],
+          }),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdBy: adminUserId.id,
+          updatedBy: adminUserId.id,
+        },
+        {
+          name: 'power-user',
+          description:
+            'Can create workspaces, environments, connections and resources, but not manage roles or users',
+          policy: JSON.stringify({
+            statements: [
+              {
+                effect: RolePolicyEffect.DENY,
+                actions: ['user:*', 'role:*'],
+                resources: ['*'],
+              },
+              {
+                effect: RolePolicyEffect.ALLOW,
+                actions: ['*'],
+                resources: ['*'],
+              },
+            ],
+          }),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdBy: adminUserId.id,
+          updatedBy: adminUserId.id,
+        },
+      ])
       .execute();
   },
 

@@ -1,9 +1,10 @@
 import { RoleEntity } from '@/clients/api';
-import { zRolePolicy } from '@/clients/api/zod.gen';
+import { zRolePolicy, zUserRoleDto } from '@/clients/api/zod.gen';
 import type { FormActionState } from '@/types';
 import { z } from 'zod';
 
 export const schema = z.object({
+  roleId: z.string().optional(),
   name: z
     .string({
       error: 'Role name is required.',
@@ -19,6 +20,9 @@ export const schema = z.object({
       error: 'Policy is required.',
     }
   ),
+  members: z.array(zUserRoleDto.partial()).optional(),
+  newMembers: z.array(zUserRoleDto.partial()).optional(),
+  removedMembers: z.array(zUserRoleDto.partial()).optional(),
 });
 
 export type FormSchema = z.output<typeof schema>;

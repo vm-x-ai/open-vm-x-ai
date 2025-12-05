@@ -1,6 +1,7 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { RoleEntity } from '../entities/role.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRoleDto } from './user-role.dto';
 
 export class RoleDto extends RoleEntity {
   @ApiProperty({
@@ -9,5 +10,15 @@ export class RoleDto extends RoleEntity {
   })
   @IsNumber()
   @IsNotEmpty()
-  membersCount: number;
+  membersCount?: number;
+
+  @ApiProperty({
+    description: 'The members of the role',
+    type: [UserRoleDto],
+    required: false,
+    nullable: true,
+  })
+  @IsArray()
+  @IsOptional()
+  members?: UserRoleDto[];
 }
