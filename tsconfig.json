@@ -4,10 +4,10 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/api"
+      "path": "./packages/api"
     },
     {
-      "path": "./apps/ui"
+      "path": "./packages/ui"
     },
     {
       "path": "./packages/libs/shared/ai-provider"

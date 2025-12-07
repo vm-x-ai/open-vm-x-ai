@@ -1,8 +1,12 @@
 packages:
-  - 'apps/*'
-  - 'packages/libs/shared/*'
+  - packages/*
+  - packages/libs/shared/*
+
 autoInstallPeers: true
+
 onlyBuiltDependencies:
   - '@nestjs/core'
-  - 'esbuild'
-  - 'sharp'
+  - '@scarf/scarf'
+  - argon2
+  - esbuild
+  - sharp
