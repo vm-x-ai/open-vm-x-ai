@@ -1,3 +1,17 @@
+## 0.1.1 (2025-12-11)
+
+### 🩹 Fixes
+
+- update docker repository name ([cbc81ae](https://github.com/vm-x-ai/open-vm-x-ai/commit/cbc81ae))
+
+### 🧱 Updated Dependencies
+
+- Updated shared-ai-provider to 0.1.1
+
+### ❤️ Thank You
+
+- Lucas Vieira @lucasvieirasilva
+
 ## 0.1.0 (2025-12-11)
 
 ### 🚀 Features
