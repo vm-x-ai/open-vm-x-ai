@@ -1,3 +1,17 @@
+## 0.2.0 (2025-12-11)
+
+### 🩹 Fixes
+
+- **ui:** update docker repository name ([4f7ab14](https://github.com/vm-x-ai/open-vm-x-ai/commit/4f7ab14))
+
+### 🧱 Updated Dependencies
+
+- Updated shared-ai-provider to 0.2.0
+
+### ❤️ Thank You
+
+- Lucas Vieira @lucasvieirasilva
+
 ## 0.1.1 (2025-12-11)
 
 ### 🩹 Fixes
