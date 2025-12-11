@@ -1,14 +1,17 @@
 import {
+  CamelCasePlugin,
   Kysely,
   Migration,
   MigrationProvider,
   Migrator,
   NO_MIGRATIONS,
+  PostgresDialect,
 } from 'kysely';
 import { DB } from '../storage/entities.generated';
 import { PinoLogger } from 'nestjs-pino';
 import { ConfigService } from '@nestjs/config';
 import { SERVICE_NAME } from '../consts';
+import { Pool } from 'pg';
 
 export class ListMigrationProvider implements MigrationProvider {
   constructor(private migrations: Record<string, Migration>) {}
@@ -25,9 +28,25 @@ export abstract class BaseMigrationsService {
   constructor(
     protected readonly logger: PinoLogger,
     protected readonly configService: ConfigService,
-    protected readonly migrationUrlConfigKey: string,
+    protected readonly migrationHostConfigKey: string,
     protected readonly service: string
-  ) {}
+  ) {
+    const dialect = new PostgresDialect({
+      pool: new Pool({
+        host: this.configService.getOrThrow<string>('DATABASE_HOST'),
+        port: this.configService.getOrThrow<number>('DATABASE_PORT'),
+        user: this.configService.getOrThrow<string>('DATABASE_USER'),
+        password: this.configService.getOrThrow<string>('DATABASE_PASSWORD'),
+        database: this.configService.getOrThrow<string>('DATABASE_DB_NAME'),
+        connectionTimeoutMillis: 10_000,
+      }),
+    });
+
+    this.db = new Kysely({
+      dialect,
+      plugins: [new CamelCasePlugin()],
+    });
+  }
 
   async migrate() {
     await this.db.schema
@@ -78,7 +97,7 @@ export abstract class BaseMigrationsService {
       this.configService.getOrThrow<string>('NODE_ENV') === 'test';
 
     const databaseContainsLocalhost = this.configService
-      .getOrThrow<string>(this.migrationUrlConfigKey)
+      .getOrThrow<string>(this.migrationHostConfigKey)
       .includes('localhost');
 
     if (!isLocalOrTest || !databaseContainsLocalhost) {
@@ -108,7 +127,7 @@ export abstract class BaseMigrationsService {
       this.configService.getOrThrow<string>('NODE_ENV') === 'test';
 
     const databaseContainsLocalhost = this.configService
-      .getOrThrow<string>(this.migrationUrlConfigKey)
+      .getOrThrow<string>(this.migrationHostConfigKey)
       .includes('localhost');
 
     if (!isLocalOrTest || !databaseContainsLocalhost) {

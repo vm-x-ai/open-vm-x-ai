@@ -16,13 +16,17 @@ export const configSchema = Joi.object({
   BASE_URL: Joi.string().uri().required(),
 
   // Database
-  DATABASE_URL: Joi.string().uri().required(),
-  DATABASE_RO_URL: Joi.string().uri().required(),
-  DATABASE_MIGRATION_URL: Joi.string().uri().required(),
+  DATABASE_HOST: Joi.string().hostname().required(),
+  DATABASE_RO_HOST: Joi.string().hostname().required(),
+  DATABASE_PORT: Joi.number().port().required(),
+  DATABASE_USER: Joi.string().required(),
+  DATABASE_PASSWORD: Joi.string().required(),
+  DATABASE_DB_NAME: Joi.string().required(),
+  DATABASE_SCHEMA: Joi.string().default(SERVICE_NAME.toLowerCase()),
+  
   DATABASE_WRITER_USER: Joi.string().default(SERVICE_NAME.toLowerCase()),
   DATABASE_WRITER_POOL_MAX: Joi.number().default(25),
   DATABASE_READER_POOL_MAX: Joi.number().default(50),
-  DATABASE_SCHEMA: Joi.string().default(SERVICE_NAME.toLowerCase()),
 
   // Redis
   REDIS_HOST: Joi.string().required(),
@@ -84,7 +88,27 @@ export const configSchema = Joi.object({
     .default('questdb'),
 
   // QuestDB Usage Provider
-  QUESTDB_URL: Joi.string().uri().when('COMPLETION_USAGE_PROVIDER', {
+  QUESTDB_HOST: Joi.string().hostname().when('COMPLETION_USAGE_PROVIDER', {
+    is: 'questdb',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  QUESTDB_PORT: Joi.number().port().when('COMPLETION_USAGE_PROVIDER', {
+    is: 'questdb',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  QUESTDB_USER: Joi.string().when('COMPLETION_USAGE_PROVIDER', {
+    is: 'questdb',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  QUESTDB_PASSWORD: Joi.string().when('COMPLETION_USAGE_PROVIDER', {
+    is: 'questdb',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  QUESTDB_DB_NAME: Joi.string().when('COMPLETION_USAGE_PROVIDER', {
     is: 'questdb',
     then: Joi.required(),
     otherwise: Joi.optional(),

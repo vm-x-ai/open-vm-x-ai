@@ -55,7 +55,6 @@
       "plugin": "@nx/vite/plugin",
       "options": {
         "buildTargetName": "build",
-        "testTargetName": "test",
         "serveTargetName": "serve",
         "devTargetName": "dev",
         "previewTargetName": "preview",
@@ -81,6 +80,12 @@
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
       }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testTargetName": "test"
+      }
     }
   ],
   "targetDefaults": {
@@ -96,6 +101,36 @@
       "application": {
         "style": "tailwind",
         "linter": "eslint"
+      }
+    }
+  },
+  "release": {
+    "releaseTag": {
+      "pattern": "release/{projectName}/{version}"
+    },
+    "git": {
+      "commitMessage": "chore(release): publish [no ci]"
+    },
+    "groups": {
+      "apps": {
+        "projects": ["api", "ui"],
+        "projectsRelationship": "independent",
+        "docker": {
+          "versionSchemes": {
+            "production": "{versionActionsVersion}"
+          }
+        },
+        "changelog": {
+          "projectChangelogs": {
+            "renderOptions": {
+              "authors": true,
+              "mapAuthorsToGitHubUsernames": true,
+              "commitReferences": true,
+              "versionTitleDate": true
+            },
+            "createRelease": "github"
+          }
+        }
       }
     }
   }

@@ -60,9 +60,12 @@ services:
       BASE_URL: http://localhost:3000
 
       # PG Database
-      DATABASE_URL: postgres://admin:password@localhost:5440/vmxai
-      DATABASE_RO_URL: postgres://admin:password@localhost:5440/vmxai
-      DATABASE_MIGRATION_URL: postgres://admin:password@localhost:5440/vmxai
+      DATABASE_HOST: localhost
+      DATABASE_RO_HOST: localhost
+      DATABASE_PORT: 5440
+      DATABASE_USER: admin
+      DATABASE_PASSWORD: password
+      DATABASE_DB_NAME: vmxai_dev
 
       # OIDC Provider
       OIDC_PROVIDER_ISSUER: http://localhost:3000/oauth2
@@ -83,7 +86,11 @@ services:
       COMPLETION_USAGE_PROVIDER: questdb
 
       # QuestDB
-      QUESTDB_URL: questdb://admin:password@localhost:8812/vmxai
+      QUESTDB_HOST: localhost
+      QUESTDB_PORT: 8812
+      QUESTDB_USER: admin
+      QUESTDB_PASSWORD: password
+      QUESTDB_DB_NAME: vmxai
 
       # AWS Timestream
       AWS_TIMESTREAM_DATABASE_NAME: test1

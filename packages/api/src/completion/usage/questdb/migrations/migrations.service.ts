@@ -20,23 +20,16 @@ import { DB } from '../storage/entities';
 @Injectable()
 export class QuestDBMigrationsService extends BaseMigrationsService {
   constructor(logger: PinoLogger, configService: ConfigService) {
-    super(logger, configService, 'DATABASE_MIGRATION_URL', 'questdb');
-    this.db = new Kysely({
-      dialect: new PostgresDialect({
-        pool: new Pool({
-          connectionString: this.configService.getOrThrow(
-            'DATABASE_MIGRATION_URL'
-          ),
-          connectionTimeoutMillis: 10_000,
-        }),
-      }),
-      plugins: [new CamelCasePlugin()],
-    });
-
+    super(logger, configService, 'DATABASE_HOST', 'questdb');
+    
     const questdb = new Kysely<DB>({
       dialect: new PostgresDialect({
         pool: new Pool({
-          connectionString: this.configService.getOrThrow('QUESTDB_URL'),
+          host: this.configService.getOrThrow<string>('QUESTDB_HOST'),
+          port: this.configService.getOrThrow<number>('QUESTDB_PORT'),
+          user: this.configService.getOrThrow<string>('QUESTDB_USER'),
+          password: this.configService.getOrThrow<string>('QUESTDB_PASSWORD'),
+          database: this.configService.getOrThrow<string>('QUESTDB_DB_NAME'),
           connectionTimeoutMillis: 10_000,
         }),
       }),

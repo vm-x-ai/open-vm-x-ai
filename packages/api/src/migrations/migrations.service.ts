@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CamelCasePlugin, Kysely, Migrator, PostgresDialect } from 'kysely';
-import { Pool } from 'pg';
+import { Migrator } from 'kysely';
 import { PinoLogger } from 'nestjs-pino';
 import { migration as migration01 } from './1-create-users';
 import { migration as migration02 } from './2-create-oidc-provider';
@@ -28,21 +27,8 @@ export class MigrationsService extends BaseMigrationsService {
     configService: ConfigService,
     private readonly passwordService: PasswordService
   ) {
-    super(logger, configService, 'DATABASE_MIGRATION_URL', 'main');
-    const dialect = new PostgresDialect({
-      pool: new Pool({
-        connectionString: this.configService.getOrThrow(
-          'DATABASE_MIGRATION_URL'
-        ),
-        connectionTimeoutMillis: 10_000,
-      }),
-    });
-
-    this.db = new Kysely({
-      dialect,
-      plugins: [new CamelCasePlugin()],
-    });
-
+    super(logger, configService, 'DATABASE_HOST', 'main');
+    
     this.migrator = new Migrator({
       db: this.db.withSchema(configService.getOrThrow('DATABASE_SCHEMA')),
       provider: new ListMigrationProvider({

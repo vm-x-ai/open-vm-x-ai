@@ -21,7 +21,11 @@ export class QuestDBDatabaseService
   ) {
     const dialect = new PostgresDialect({
       pool: new Pool({
-        connectionString: this.configService.getOrThrow('QUESTDB_URL'),
+        host: this.configService.getOrThrow<string>('QUESTDB_HOST'),
+        port: this.configService.getOrThrow<number>('QUESTDB_PORT'),
+        user: this.configService.getOrThrow<string>('QUESTDB_USER'),
+        password: this.configService.getOrThrow<string>('QUESTDB_PASSWORD'),
+        database: this.configService.getOrThrow<string>('QUESTDB_DB_NAME'),
         connectionTimeoutMillis: 10_000,
         max: this.configService.get('DATABASE_WRITER_POOL_MAX'),
       }),

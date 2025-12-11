@@ -29,7 +29,11 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
   ) {
     const writerDialect = new PostgresDialect({
       pool: new Pool({
-        connectionString: this.configService.getOrThrow('DATABASE_URL'),
+        host: this.configService.getOrThrow<string>('DATABASE_HOST'),
+        port: this.configService.getOrThrow<number>('DATABASE_PORT'),
+        user: this.configService.getOrThrow<string>('DATABASE_USER'),
+        password: this.configService.getOrThrow<string>('DATABASE_PASSWORD'),
+        database: this.configService.getOrThrow<string>('DATABASE_DB_NAME'),
         connectionTimeoutMillis: 10_000,
         max: this.configService.get('DATABASE_WRITER_POOL_MAX'),
       }),
@@ -49,7 +53,11 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
 
     const readerDialect = new PostgresDialect({
       pool: new Pool({
-        connectionString: this.configService.getOrThrow('DATABASE_RO_URL'),
+        host: this.configService.getOrThrow<string>('DATABASE_RO_HOST'),
+        port: this.configService.getOrThrow<number>('DATABASE_PORT'),
+        user: this.configService.getOrThrow<string>('DATABASE_USER'),
+        password: this.configService.getOrThrow<string>('DATABASE_PASSWORD'),
+        database: this.configService.getOrThrow<string>('DATABASE_DB_NAME'),
         connectionTimeoutMillis: 10_000,
         max: this.configService.get('DATABASE_READER_POOL_MAX'),
       }),
