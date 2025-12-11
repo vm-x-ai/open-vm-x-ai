@@ -1,3 +1,7 @@
+# 2512.11.0e86173 (2025-12-11)
+
+This was a version bump only for api to align it with other projects, there were no code changes.
+
 # 2512.11.a15b1e4 (2025-12-11)
 
 ### 🩹 Fixes
