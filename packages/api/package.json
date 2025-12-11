@@ -5,7 +5,7 @@
   "nx": {
     "release": {
       "docker": {
-        "repositoryName": "vm-x-ai/api"
+        "repositoryName": "vmxai/api"
       }
     },
     "targets": {

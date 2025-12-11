@@ -105,32 +105,26 @@
     }
   },
   "release": {
-    "releaseTag": {
-      "pattern": "release/{projectName}/{version}"
-    },
+    "releaseTagPattern": "{projectName}-{version}",
     "git": {
       "commitMessage": "chore(release): publish [no ci]"
     },
-    "groups": {
-      "apps": {
-        "projects": ["api", "ui"],
-        "projectsRelationship": "independent",
-        "docker": {
-          "versionSchemes": {
-            "production": "{versionActionsVersion}"
-          }
+    "projects": ["packages/**"],
+    "projectsRelationship": "independent",
+    "docker": {
+      "versionSchemes": {
+        "production": "{versionActionsVersion}"
+      }
+    },
+    "changelog": {
+      "projectChangelogs": {
+        "renderOptions": {
+          "authors": true,
+          "mapAuthorsToGitHubUsernames": true,
+          "commitReferences": true,
+          "versionTitleDate": true
         },
-        "changelog": {
-          "projectChangelogs": {
-            "renderOptions": {
-              "authors": true,
-              "mapAuthorsToGitHubUsernames": true,
-              "commitReferences": true,
-              "versionTitleDate": true
-            },
-            "createRelease": "github"
-          }
-        }
+        "createRelease": "github"
       }
     }
   }
