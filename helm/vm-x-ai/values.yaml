@@ -10,11 +10,11 @@ global:
 images:
   api:
     repository: vmxai/api
-    tag: "0.2.1"
+    tag: "2512.11.49fe280"
     pullPolicy: IfNotPresent
   ui:
     repository: vmxai/ui
-    tag: "0.2.1"
+    tag: "2512.11.49fe280"
     pullPolicy: IfNotPresent
 
 # API Configuration
@@ -46,14 +46,16 @@ api:
     DATABASE_READER_POOL_MAX: 50
     BATCH_QUEUE_VISIBILITY_TIMEOUT: 120000
   
-  # Vault Configuration
-  vault:
-    encryptionService: hashcorp # hashcorp or aws-kms
-    hashcorp:
-      addr: "" # Will be set automatically if vault is enabled
-      # roleId and secretId will be set from secrets
+  # Encryption Provider Configuration
+  # Options: libsodium (default, for local/small deployments) or aws-kms (for production)
+  encryption:
+    provider: libsodium # libsodium or aws-kms
+    libsodium:
+      # Encryption key for libsodium (base64 encoded, 32 bytes)
+      # Will be auto-generated if not provided via secrets
+      encryptionKey: "" # Will be set from secrets
     awsKms:
-      keyId: "" # Required if using aws-kms
+      keyId: "" # Required if using aws-kms (e.g., "arn:aws:kms:region:account:key/key-id")
   
   # Timeseries DB Configuration
   timeseriesDb:
@@ -267,62 +269,6 @@ questdb:
       - name: postgres
         port: 8812
 
-# Hashcorp Vault Configuration
-vault:
-  # Set to false if using aws-kms
-  enabled: true
-  
-  image:
-    repository: hashicorp/vault
-    tag: latest
-    pullPolicy: IfNotPresent
-  
-  # Self-sealed mode (useful for Minikube/development)
-  # If false, requires external unsealing mechanism
-  selfSealed: false
-  
-  # Storage backend: file or postgres
-  storage: postgres # file or postgres
-  
-  # File storage (for self-sealed mode)
-  fileStorage:
-    persistence:
-      enabled: true
-      size: 10Gi
-      storageClass: ""
-  
-  # PostgreSQL storage backend
-  postgresStorage:
-    host: "" # If empty, uses postgresql service
-    port: 5432
-    database: vmxai
-    username: admin
-    password: "" # Will be set from postgresql secrets
-  
-  # Vault KMS for auto-unsealing (if not self-sealed)
-  vaultKms:
-    enabled: false
-    image:
-      repository: hashicorp/vault
-      tag: latest
-      pullPolicy: IfNotPresent
-  
-  service:
-    type: ClusterIP
-    port: 8200
-  
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
-  
-  # Bootstrap configuration
-  bootstrap:
-    policyFile: "" # Path to policy.hcl file in container
-    approleRoleName: vmxai-app
 
 # OpenTelemetry Services
 otel:
@@ -478,19 +424,16 @@ secrets:
     questdb:
       secretName: ""  # e.g., "questdb-credentials"
       passwordKey: "password"
-    vault:
-      secretName: ""  # e.g., "vault-root-token"
-      rootTokenKey: "root-token"
+    libsodium:
+      # Only needed if api.encryption.provider is libsodium
+      secretName: ""  # e.g., "libsodium-encryption-key"
+      encryptionKeyKey: "encryption-key"
     ui:
       secretName: ""  # e.g., "ui-auth-secret"
       authSecretKey: "auth-secret"
     oidcFederated:
       secretName: ""  # e.g., "oidc-federated-secret"
       clientSecretKey: "client-secret"
-    vaultApprole:
-      secretName: ""  # e.g., "vault-approle-credentials"
-      roleIdKey: "role-id"
-      secretIdKey: "secret-id"
   
   # Option 3: External Secrets Operator (PRODUCTION-SAFE)
   # When method: "eso", creates ExternalSecret resources
@@ -512,9 +455,9 @@ secrets:
     questdb:
       secretKey: ""  # e.g., "vmxai/questdb/password"
       passwordKey: "password"
-    vault:
-      secretKey: ""  # e.g., "vmxai/vault/root-token"
-      rootTokenKey: "root-token"
+    libsodium:
+      secretKey: ""  # e.g., "vmxai/encryption/libsodium-key"
+      encryptionKeyKey: "encryption-key"
     ui:
       secretKey: ""  # e.g., "vmxai/ui/auth-secret"
       authSecretKey: "auth-secret"
@@ -522,10 +465,6 @@ secrets:
       # Only needed if api.oidcFederated.clientSecret is set
       secretKey: ""  # e.g., "vmxai/oidc/client-secret"
       clientSecretKey: "client-secret"
-    vaultApprole:
-      secretKey: ""  # e.g., "vmxai/vault/approle"
-      roleIdKey: "role-id"
-      secretIdKey: "secret-id"
 
 # Ingress Configuration
 # Choose between "nginx" (standard Kubernetes Ingress) or "istio" (Istio Gateway + VirtualService)

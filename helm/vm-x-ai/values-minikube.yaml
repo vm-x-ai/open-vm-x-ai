@@ -1,14 +1,10 @@
 # Example values for Minikube/development environment
 # Usage: helm install vm-x-ai ./helm/vm-x-ai -f values-minikube.yaml
 
-# Enable self-sealed vault for development
-vault:
-  enabled: true
-  selfSealed: true
-  storage: file
-  fileStorage:
-    persistence:
-      enabled: false  # Use emptyDir for development
+# Use libsodium for encryption (suitable for local development)
+api:
+  encryption:
+    provider: libsodium  # libsodium is fine for local testing
 
 # Use smaller resource requests for Minikube
 api:

@@ -109,13 +109,28 @@ Generate Redis connection details
 {{- end }}
 
 {{/*
-Generate Vault address
+Get secret name for libsodium
 */}}
-{{- define "vm-x-ai.vault.addr" -}}
-{{- if .Values.vault.enabled }}
-{{- printf "http://%s-vault:%d" (include "vm-x-ai.fullname" .) .Values.vault.service.port }}
+{{- define "vm-x-ai.secrets.libsodium.name" -}}
+{{- if eq $.Values.secrets.method "external" }}
+{{- if $.Values.secrets.external.libsodium.secretName }}
+{{- $.Values.secrets.external.libsodium.secretName }}
 {{- else }}
-{{- "" }}
+{{- include "vm-x-ai.fullname" $ }}-libsodium
+{{- end }}
+{{- else }}
+{{- include "vm-x-ai.fullname" $ }}-libsodium
+{{- end }}
+{{- end }}
+
+{{/*
+Get secret key for libsodium encryption key
+*/}}
+{{- define "vm-x-ai.secrets.libsodium.keyKey" -}}
+{{- if eq $.Values.secrets.method "external" }}
+{{- $.Values.secrets.external.libsodium.encryptionKeyKey }}
+{{- else }}
+{{- "encryption-key" }}
 {{- end }}
 {{- end }}
 

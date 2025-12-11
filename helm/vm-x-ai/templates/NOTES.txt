@@ -34,17 +34,8 @@
   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=api --tail=100
   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=ui --tail=100
 
-{{- if .Values.vault.enabled }}
-4. Vault Status:
-  kubectl exec -n {{ .Release.Namespace }} -it $(kubectl get pod -n {{ .Release.Namespace }} -l app.kubernetes.io/component=vault -o jsonpath='{.items[0].metadata.name}') -- vault status
-
-{{- if .Values.vault.selfSealed }}
-  Note: Vault is running in self-sealed mode. This is suitable for development but not recommended for production.
-{{- end }}
-{{- end }}
-
 {{- if .Values.otel.enabled }}
-5. OpenTelemetry Services:
+4. OpenTelemetry Services:
 {{- if .Values.otel.jaeger.enabled }}
   Jaeger UI: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "vm-x-ai.fullname" . }}-jaeger 16686:16686
 {{- end }}

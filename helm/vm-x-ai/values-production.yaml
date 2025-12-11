@@ -18,8 +18,8 @@ api:
     provider: aws-timestream
     awsTimestream:
       databaseName: "vmxai-production"
-  vault:
-    encryptionService: aws-kms
+  encryption:
+    provider: aws-kms  # Recommended for production
     awsKms:
       keyId: "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
 
@@ -59,9 +59,7 @@ redis:
 questdb:
   enabled: false
 
-# Use AWS KMS instead of Hashcorp Vault (recommended for production)
-vault:
-  enabled: false
+# Encryption is configured via api.encryption.provider (aws-kms recommended for production)
 
 # Enable ingress with TLS
 # Option 1: Nginx Ingress (uncomment to use)
@@ -178,13 +176,11 @@ secrets:
     ui:
       secretName: "ui-auth-secret"
       authSecretKey: "auth-secret"
-    vault:
-      secretName: "vault-root-token"
-      rootTokenKey: "root-token"
-    vaultApprole:
-      secretName: "vault-approle-credentials"
-      roleIdKey: "role-id"
-      secretIdKey: "secret-id"
+    # Libsodium encryption key (only needed if using libsodium provider)
+    # For production with AWS KMS, this section is not needed
+    libsodium:
+      secretName: "libsodium-encryption-key"
+      encryptionKeyKey: "encryption-key"
 
 # Option 2: Use External Secrets Operator (uncomment to use)
 # secrets:

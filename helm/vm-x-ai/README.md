@@ -31,7 +31,7 @@ By default, the chart deploys:
 - **PostgreSQL**: Single instance with persistence
 - **Redis**: Single node with persistence
 - **QuestDB**: Single instance with persistence
-- **Hashcorp Vault**: With self-sealed mode (useful for development/Minikube)
+- **Encryption**: Libsodium (default, for local/small deployments)
 - **OTEL Services**: Disabled by default
 
 ## Configuration
@@ -58,23 +58,36 @@ The chart supports two ingress options:
 
 See the Ingress Configuration section below for examples.
 
-### Vault Provider Selection
+### Encryption Provider Selection
 
-You can choose between Hashcorp Vault or AWS KMS for encryption:
+You can choose between **Libsodium** (default, for local/small deployments) or **AWS KMS** (recommended for production):
 
 ```yaml
 api:
-  vault:
-    encryptionService: hashcorp  # or "aws-kms"
+  encryption:
+    provider: libsodium  # libsodium or aws-kms
     
-    # For Hashcorp Vault
-    hashcorp:
-      addr: ""  # Auto-configured if vault is enabled
+    # For Libsodium (default)
+    # Encryption key will be auto-generated if not provided via secrets
+    libsodium:
+      encryptionKey: ""  # Will be set from secrets
     
-    # For AWS KMS
+    # For AWS KMS (production)
     awsKms:
       keyId: "arn:aws:kms:region:account:key/key-id"
 ```
+
+**Libsodium** is suitable for:
+- Local development and testing
+- Small deployments
+- Non-production environments
+- When AWS KMS is not available
+
+**AWS KMS** is recommended for:
+- Production environments
+- Compliance requirements
+- High-security deployments
+- Enterprise use cases
 
 ### Timeseries Database Selection
 
@@ -152,19 +165,6 @@ redis:
       - host: "redis-2.example.com"
         port: 6379
 ```
-
-### Hashcorp Vault Self-Sealed Mode
-
-For development or Minikube environments, you can enable self-sealed mode:
-
-```yaml
-vault:
-  enabled: true
-  selfSealed: true  # Enables auto-unsealing via transit key
-  storage: file  # or "postgres"
-```
-
-**Note**: Self-sealed mode is not recommended for production. In production, use external unsealing mechanisms or AWS KMS.
 
 ### OpenTelemetry Services
 
@@ -311,9 +311,10 @@ secrets:
     ui:
       secretName: "ui-auth-secret"
       authSecretKey: "auth-secret"
-    vault:
-      secretName: "vault-root-token"
-      rootTokenKey: "root-token"
+    libsodium:
+      # Only needed if api.encryption.provider is libsodium
+      secretName: "libsodium-encryption-key"
+      encryptionKeyKey: "encryption-key"
 ```
 
 **Create secrets separately:**
@@ -327,7 +328,7 @@ kubectl create secret generic questdb-credentials \
 
 #### Method 3: External Secrets Operator (Production-Safe, Recommended)
 
-Use External Secrets Operator to sync secrets from external systems (AWS Secrets Manager, HashiCorp Vault, etc.):
+Use External Secrets Operator to sync secrets from external systems (AWS Secrets Manager, etc.):
 
 ```yaml
 secrets:
@@ -360,7 +361,7 @@ See [External Secrets Operator documentation](https://external-secrets.io/) for 
 
 ### Security
 
-1. **Vault**: Do not use self-sealed mode in production. Configure proper unsealing mechanisms.
+1. **Encryption**: Use AWS KMS for production environments. Libsodium is suitable for local testing and small deployments.
 2. **Secrets**: **CRITICAL** - Never store secrets in `values.yaml`. Use External Secrets Operator or reference existing secrets. See [SECRETS.md](SECRETS.md) for detailed guidance.
 3. **TLS**: Enable TLS for all services and use proper certificate management.
 4. **Network Policies**: Implement network policies to restrict pod-to-pod communication.
@@ -405,26 +406,6 @@ redis:
 ```
 
 ## Troubleshooting
-
-### Vault Bootstrap Issues
-
-If the vault bootstrap job fails:
-
-1. Check if vault is unsealed:
-   ```bash
-   kubectl exec -it <vault-pod> -- vault status
-   ```
-
-2. Manually update the approle secret:
-   ```bash
-   # Get credentials from bootstrap job logs
-   kubectl logs <vault-bootstrap-job>
-   
-   # Update secret manually
-   kubectl patch secret <release-name>-vault-approle \
-     --type=json \
-     -p='[{"op":"replace","path":"/data/role-id","value":"<base64-role-id>"},{"op":"replace","path":"/data/secret-id","value":"<base64-secret-id>"}]'
-   ```
 
 ### API Not Connecting to Services
 
