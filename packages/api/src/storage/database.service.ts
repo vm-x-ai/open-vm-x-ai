@@ -40,7 +40,7 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
     });
 
     const camelCasePlugin = new CamelCasePlugin();
-    const schema = this.configService.getOrThrow('DATABASE_SCHEMA');
+    const schema = this.configService.getOrThrow<string>('DATABASE_SCHEMA');
 
     this.writerInstance = new Kysely<DB>({
       dialect: writerDialect,

@@ -149,36 +149,26 @@ Generate QuestDB host
 Check if TLS is enabled for ingress
 */}}
 {{- define "vm-x-ai.ingress.tlsEnabled" -}}
-{{- if eq .Values.ingress.type "istio" }}
 {{- range .Values.ingress.istio.gateway.servers }}
 {{- if and (eq .port.protocol "HTTPS") .tls }}
-true
-{{- end }}
-{{- end }}
-{{- else }}
-{{- if .Values.ingress.nginx.tls }}
 true
 {{- end }}
 {{- end }}
 {{- end }}
 
 {{/*
-Generate API base URL
+Generate API base URL (without BASE_PATH prefix)
+BASE_URL should be the base host, BASE_PATH is separate
 */}}
 {{- define "vm-x-ai.api.baseUrl" -}}
 {{- if .Values.ingress.enabled }}
-{{- $host := "" }}
-{{- if eq .Values.ingress.type "istio" }}
-{{- $host = (index .Values.ingress.istio.virtualService.hosts 0) }}
-{{- else }}
-{{- $host = (index .Values.ingress.nginx.hosts 0).host }}
-{{- end }}
+{{- $host := (index .Values.ingress.istio.virtualService.hosts 0) }}
 {{- $tlsEnabled := include "vm-x-ai.ingress.tlsEnabled" . }}
+{{- $scheme := "http" }}
 {{- if $tlsEnabled }}
-{{- printf "https://%s/api" $host }}
-{{- else }}
-{{- printf "http://%s/api" $host }}
+{{- $scheme = "https" }}
 {{- end }}
+{{- printf "%s://%s" $scheme $host }}
 {{- else }}
 {{- printf "http://%s-api:%d" (include "vm-x-ai.fullname" .) (int .Values.api.service.port) }}
 {{- end }}
@@ -189,12 +179,7 @@ Generate UI base URL
 */}}
 {{- define "vm-x-ai.ui.baseUrl" -}}
 {{- if .Values.ingress.enabled }}
-{{- $host := "" }}
-{{- if eq .Values.ingress.type "istio" }}
-{{- $host = (index .Values.ingress.istio.virtualService.hosts 0) }}
-{{- else }}
-{{- $host = (index .Values.ingress.nginx.hosts 0).host }}
-{{- end }}
+{{- $host := (index .Values.ingress.istio.virtualService.hosts 0) }}
 {{- $tlsEnabled := include "vm-x-ai.ingress.tlsEnabled" . }}
 {{- if $tlsEnabled }}
 {{- printf "https://%s" $host }}
@@ -207,10 +192,56 @@ Generate UI base URL
 {{- end }}
 
 {{/*
+Generate API base URL with BASE_PATH (for UI API_BASE_URL)
+This should be BASE_URL + BASE_PATH
+*/}}
+{{- define "vm-x-ai.api.baseUrlWithPath" -}}
+{{- $baseUrl := include "vm-x-ai.api.baseUrl" . }}
+{{- $basePath := .Values.api.env.BASE_PATH }}
+{{- if $basePath }}
+{{- printf "%s%s" $baseUrl $basePath }}
+{{- else }}
+{{- printf "%s/api" $baseUrl }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate internal API base URL (for server-side requests within cluster)
+Uses Kubernetes service name instead of external hostname
+*/}}
+{{- define "vm-x-ai.api.internalBaseUrl" -}}
+{{- $basePath := .Values.api.env.BASE_PATH }}
+{{- if $basePath }}
+{{- printf "http://%s-api:%d%s" (include "vm-x-ai.fullname" .) (int .Values.api.service.port) $basePath }}
+{{- else }}
+{{- printf "http://%s-api:%d/api" (include "vm-x-ai.fullname" .) (int .Values.api.service.port) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate internal OIDC issuer URL (for server-side requests within cluster)
+*/}}
+{{- define "vm-x-ai.oidc.internalIssuer" -}}
+{{- $basePath := .Values.api.env.BASE_PATH }}
+{{- if $basePath }}
+{{- printf "http://%s-api:%d%s/oauth2" (include "vm-x-ai.fullname" .) (int .Values.api.service.port) $basePath }}
+{{- else }}
+{{- printf "http://%s-api:%d/oauth2" (include "vm-x-ai.fullname" .) (int .Values.api.service.port) }}
+{{- end }}
+{{- end }}
+
+{{/*
 Generate OIDC Provider Issuer
+OIDC issuer should be BASE_URL + BASE_PATH + /oauth2
 */}}
 {{- define "vm-x-ai.oidc.issuer" -}}
-{{- include "vm-x-ai.api.baseUrl" . }}/oauth2
+{{- $baseUrl := include "vm-x-ai.api.baseUrl" . }}
+{{- $basePath := .Values.api.env.BASE_PATH }}
+{{- if $basePath }}
+{{- printf "%s%s/oauth2" $baseUrl $basePath }}
+{{- else }}
+{{- printf "%s/oauth2" $baseUrl }}
+{{- end }}
 {{- end }}
 
 {{/*

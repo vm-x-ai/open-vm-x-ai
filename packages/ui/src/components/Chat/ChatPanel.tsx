@@ -113,6 +113,7 @@ export default function ChatPanel({
                       <Box>
                         <Image
                           alt={model.model}
+                          loader={({ src }) => src}
                           src={providersMap[model.provider].config.logo.url}
                           height={18}
                           width={18}

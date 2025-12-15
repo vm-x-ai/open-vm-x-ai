@@ -53,7 +53,8 @@ services:
     network_mode: host
     environment:
       LOCAL: true
-      BASE_URL: http://localhost:3000/api
+      BASE_URL: http://localhost:3000
+      BASE_PATH: /api
 
       # PG Database
       DATABASE_HOST: localhost
@@ -64,7 +65,8 @@ services:
       DATABASE_DB_NAME: vmxai
 
       # OIDC Provider
-      OIDC_PROVIDER_ISSUER: http://localhost:3000/api/oauth2
+      # Default is BASE_URL + BASE_PATH + /oauth2 (e.g. http://localhost:3000/api/oauth2)
+      # OIDC_PROVIDER_ISSUER: http://localhost:3000/api/oauth2
 
       # Redis (network mode: host)
       REDIS_HOST: localhost

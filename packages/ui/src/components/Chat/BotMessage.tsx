@@ -31,6 +31,7 @@ export default function BotMessage({
           {modelIconUrl ? (
             <Image
               alt={model ?? ''}
+              loader={({ src }) => src}
               src={modelIconUrl}
               height={20}
               width={20}

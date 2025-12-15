@@ -13,14 +13,14 @@ A production-ready Helm chart for deploying the VM-X AI Application, including U
 ### Quick Start
 
 ```bash
+kubectl create namespace vm-x-ai
+kubectl label namespace vm-x-ai istio-injection=enabled
+
 # Install with default values
-helm install vm-x-ai ./helm/vm-x-ai
+helm install vm-x-ai ./helm/vm-x-ai --namespace vm-x-ai
 
 # Install with custom values
-helm install vm-x-ai ./helm/vm-x-ai -f my-values.yaml
-
-# Install in a specific namespace
-helm install vm-x-ai ./helm/vm-x-ai --namespace vm-x-ai --create-namespace
+helm install vm-x-ai ./helm/vm-x-ai -f my-values.yaml --namespace vm-x-ai
 ```
 
 ### Default Configuration
@@ -36,25 +36,14 @@ By default, the chart deploys:
 
 ## Configuration
 
-### Ingress Type Selection
+### Ingress Configuration
 
-The chart supports two ingress options:
-
-1. **Nginx Ingress** (default) - Standard Kubernetes Ingress, simpler setup
-2. **Istio** - Service mesh with advanced features (recommended for production)
-
-**When to use Istio:**
-- Production environments requiring advanced traffic management
-- Need for canary deployments, A/B testing, or traffic splitting
-- Requirement for automatic mTLS between services
-- Need for advanced observability (Kiali, distributed tracing)
+The chart uses **Istio Gateway and VirtualService** for ingress. Istio provides:
+- Advanced traffic management (canary deployments, A/B testing, traffic splitting)
+- Automatic mTLS between services
+- Advanced observability (Kiali, distributed tracing)
 - Complex routing requirements (header-based, weight-based)
-
-**When to use Nginx:**
-- Simpler deployments
-- Development/test environments
-- When Istio is not available or desired
-- Basic ingress requirements
+- Circuit breakers and connection pooling
 
 See the Ingress Configuration section below for examples.
 
@@ -192,44 +181,26 @@ otel:
 
 ### Ingress Configuration
 
-You can choose between **Nginx Ingress** (standard Kubernetes Ingress) or **Istio** (service mesh with Gateway and VirtualService).
-
-#### Nginx Ingress (Standard)
-
-```yaml
-ingress:
-  type: nginx
-  enabled: true
-  nginx:
-    className: "nginx"
-    annotations:
-      cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    hosts:
-      - host: vm-x-ai.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-            service: ui
-          - path: /api
-            pathType: Prefix
-            service: api
-    tls:
-      - secretName: vm-x-ai-tls
-        hosts:
-          - vm-x-ai.example.com
-```
-
-#### Istio (Service Mesh) - Recommended for Production
-
-Istio provides advanced features beyond simple ingress:
+The chart uses **Istio Gateway and VirtualService** for ingress. Istio provides:
 - **Service Mesh**: Automatic mTLS between services
 - **Traffic Management**: Advanced routing, canary deployments, circuit breakers
 - **Observability**: Integrated with Kiali, Grafana, Prometheus
 - **Security**: Fine-grained access control, rate limiting
 
+#### API Base Path
+
+You can configure a custom base path for the API using `api.env.BASE_PATH`. If set, the API will be accessible at that path. If not set, it defaults to `/api` for backward compatibility.
+
+```yaml
+api:
+  env:
+    BASE_PATH: "/api"  # Optional: API will be accessible at /api/v1 instead of /v1
+```
+
+#### Istio Configuration
+
 ```yaml
 ingress:
-  type: istio
   enabled: true
   istio:
     gateway:
@@ -268,7 +239,7 @@ ingress:
           tcp:
             maxConnections: 100
         outlierDetection:
-          consecutiveErrors: 3
+          consecutive5xxErrors: 3
           interval: 30s
 ```
 
@@ -276,8 +247,6 @@ ingress:
 - Istio must be installed in your cluster
 - Gateway should be deployed in `istio-system` namespace
 - TLS secret should exist in `istio-system` namespace
-
-See `values-istio.yaml` for a complete example.
 
 ### Secrets Management
 

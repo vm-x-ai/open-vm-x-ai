@@ -30,7 +30,7 @@ export class MigrationsService extends BaseMigrationsService {
     super(logger, configService, 'DATABASE_HOST', 'main');
     
     this.migrator = new Migrator({
-      db: this.db.withSchema(configService.getOrThrow('DATABASE_SCHEMA')),
+      db: this.db.withSchema(configService.getOrThrow<string>('DATABASE_SCHEMA')),
       provider: new ListMigrationProvider({
         '01': migration01(this.passwordService),
         '02': migration02,

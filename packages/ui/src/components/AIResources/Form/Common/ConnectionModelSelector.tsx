@@ -123,6 +123,7 @@ const ConnectionModelSelector = forwardRef<
               >
                 <Image
                   alt={providersMap[option.provider].name}
+                  loader={({ src }) => src}
                   src={providersMap[option.provider].config.logo.url}
                   height={20}
                   width={25}
@@ -150,6 +151,7 @@ const ConnectionModelSelector = forwardRef<
                         <InputAdornment position="start">
                           <Image
                             alt={providersMap[selectedConnection.provider].name}
+                            loader={({ src }) => src}
                             src={
                               providersMap[selectedConnection.provider].config
                                 .logo.url

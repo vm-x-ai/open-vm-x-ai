@@ -2,12 +2,13 @@
 # Usage: helm install vm-x-ai ./helm/vm-x-ai -f values-minikube.yaml
 
 # Use libsodium for encryption (suitable for local development)
+# Use smaller resource requests for Minikube
 api:
   encryption:
     provider: libsodium  # libsodium is fine for local testing
-
-# Use smaller resource requests for Minikube
-api:
+  env:
+    # Avoid conflicts with Next.js API routes when both are deployed to same host
+    BASE_PATH: "/_api"
   replicaCount: 1
   resources:
     requests:
@@ -26,6 +27,8 @@ ui:
     limits:
       cpu: 500m
       memory: 512Mi
+  env:
+    NEXT_AUTH_DEBUG: "true"
 
 redis:
   mode: single
@@ -44,7 +47,6 @@ otel:
     enabled: true
 
 ingress:
-  type: istio
   enabled: true
 
   istio:
@@ -68,3 +70,9 @@ ingress:
         - vm-x-ai.local
       gateways:
         - istio-system/vm-x-ai-gateway
+    
+    # Enable internal DNS resolution for cluster-internal access
+    internalDns:
+      enabled: true
+      gatewayService: istio-ingressgateway.istio-system.svc.cluster.local
+      port: 80

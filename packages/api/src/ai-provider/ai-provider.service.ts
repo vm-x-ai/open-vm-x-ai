@@ -29,14 +29,16 @@ export class AIProviderService {
   }
 
   public getAll(): AIProviderDto[] {
-    const baseUrl = this.configService.get('BASE_URL');
+    const baseUrl = this.configService.getOrThrow<string>('BASE_URL');
+    const basePath = this.configService.getOrThrow<string>('BASE_PATH');
+
     return Object.values(this.providers).map((provider) => ({
       ...provider.provider,
       config: {
         ...provider.provider.config,
         logo: {
           ...provider.provider.config.logo,
-          url: `${baseUrl}${provider.provider.config.logo.url}`,
+          url: `${baseUrl}${basePath}${provider.provider.config.logo.url}`,
         },
       },
     }));

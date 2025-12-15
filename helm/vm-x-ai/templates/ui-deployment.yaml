@@ -16,6 +16,9 @@ spec:
     metadata:
       annotations:
         checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        proxy.istio.io/config: |
+          proxyMetadata:
+            ISTIO_META_DNS_CAPTURE: "true"
       labels:
         {{- include "vm-x-ai.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: ui
@@ -54,7 +57,9 @@ spec:
         - name: AUTH_REDIRECT_PROXY_URL
           value: {{ printf "%s/api/auth" (include "vm-x-ai.ui.baseUrl" .) | quote }}
         - name: API_BASE_URL
-          value: {{ include "vm-x-ai.api.baseUrl" . | quote }}
+          value: {{ include "vm-x-ai.api.baseUrlWithPath" . | quote }}
+        - name: NEXT_AUTH_DEBUG
+          value: {{ .Values.ui.env.NEXT_AUTH_DEBUG | quote }}
         {{- if .Values.otel.enabled }}
         {{- $otelEndpoint := include "vm-x-ai.otel.exporterEndpoint" . }}
         - name: OTEL_EXPORTER_OTLP_ENDPOINT

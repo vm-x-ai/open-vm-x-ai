@@ -27,7 +27,7 @@ spec:
         image: {{ printf "%s:%s" .Values.postgresql.image.repository .Values.postgresql.image.tag }}
         imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
         ports:
-        - name: postgresql
+        - name: tcp-postgresql
           containerPort: 5432
           protocol: TCP
         env:
@@ -104,9 +104,9 @@ spec:
   type: {{ .Values.postgresql.service.type }}
   ports:
     - port: {{ .Values.postgresql.service.port }}
-      targetPort: postgresql
+      targetPort: tcp-postgresql
       protocol: TCP
-      name: postgresql
+      name: tcp-postgresql
   selector:
     {{- include "vm-x-ai.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: postgresql

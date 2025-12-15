@@ -145,6 +145,7 @@ export default function AuditTable({
                 <Box>
                   {aiConnectionMap[row.connectionId] && (
                     <Image
+                      loader={({ src }) => src}
                       alt={
                         providersMap[aiConnectionMap[row.connectionId].provider]
                           ?.name

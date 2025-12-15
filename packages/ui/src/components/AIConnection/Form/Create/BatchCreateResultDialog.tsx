@@ -116,6 +116,7 @@ export default function BatchCreateResultDialog({
             <Box>
               <Image
                 alt={providersMap[row.provider]?.name ?? row.provider}
+                loader={({ src }) => src}
                 src={providersMap[row.provider].config.logo.url}
                 height={24}
                 width={24}

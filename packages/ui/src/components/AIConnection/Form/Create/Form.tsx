@@ -212,6 +212,7 @@ export default function CreateAIConnectionForm({
                                   >
                                     <Image
                                       alt={provider.name}
+                                      loader={({ src }) => src}
                                       src={provider.config.logo.url}
                                       height={50}
                                       width={55}

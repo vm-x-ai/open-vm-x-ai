@@ -14,8 +14,8 @@ images:
     pullPolicy: Always
   ui:
     repository: vmxai/ui
-    tag: "2512.11.9a5a7e7"
-    pullPolicy: IfNotPresent
+    tag: "lts"
+    pullPolicy: Always
 
 # API Configuration
 api:
@@ -40,6 +40,7 @@ api:
     NODE_ENV: production
     PORT: 3000
     BASE_URL: "" # Will be set based on ingress or service
+    BASE_PATH: "" # API base path prefix (e.g., "/v1" or "/api/v1")
     UI_BASE_URL: "" # Will be set based on ingress or service
     OIDC_PROVIDER_ISSUER: "" # Will be set based on BASE_URL
     DATABASE_WRITER_POOL_MAX: 25
@@ -115,6 +116,7 @@ ui:
     AUTH_OIDC_CLIENT_SECRET: ui
     AUTH_REDIRECT_PROXY_URL: "" # Will be set based on ingress or service
     API_BASE_URL: "" # Will be set based on API service
+    NEXT_AUTH_DEBUG: "false" # Set to "true" for debugging
   
   nodeSelector: {}
   tolerations: []
@@ -266,7 +268,7 @@ questdb:
     ports:
       - name: http
         port: 9000
-      - name: postgres
+      - name: tcp-postgres
         port: 8812
 
 
@@ -289,11 +291,11 @@ otel:
     service:
       type: ClusterIP
       ports:
-        - name: otlp-grpc
+        - name: grpc-otlp
           port: 4317
-        - name: otlp-http
+        - name: http-otlp
           port: 4318
-        - name: zpages
+        - name: http-zpages
           port: 55679
     
     resources:
@@ -314,15 +316,15 @@ otel:
     service:
       type: ClusterIP
       ports:
-        - name: ui
+        - name: http-ui
           port: 16686
-        - name: collector-http
+        - name: http-collector
           port: 14268
-        - name: collector-grpc
+        - name: grpc-collector
           port: 14250
-        - name: otlp-grpc
+        - name: grpc-otlp
           port: 4317
-        - name: otlp-http
+        - name: http-otlp
           port: 4318
     
     resources:
@@ -476,28 +478,9 @@ secrets:
       clientSecretKey: "client-secret"
 
 # Ingress Configuration
-# Choose between "nginx" (standard Kubernetes Ingress) or "istio" (Istio Gateway + VirtualService)
+# Uses Istio Gateway + VirtualService
 ingress:
-  type: nginx  # nginx or istio
   enabled: false
-  
-  # Nginx Ingress Configuration
-  nginx:
-    className: ""
-    annotations: {}
-    hosts:
-      - host: vm-x-ai.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-            service: ui
-          - path: /api
-            pathType: Prefix
-            service: api
-    tls: []
-    #  - secretName: vm-x-ai-tls
-    #    hosts:
-    #      - vm-x-ai.example.com
   
   # Istio Gateway and VirtualService Configuration
   istio:
@@ -534,25 +517,16 @@ ingress:
       # Optional: Traffic management features
       # These apply to all routes unless overridden per-route
       trafficPolicy:
-        # Load balancer settings
-        # Options: ROUND_ROBIN, LEAST_CONN, RANDOM, PASSTHROUGH
-        loadBalancer:
-          simple: LEAST_CONN
-        # Connection pool settings
-        connectionPool:
-          tcp:
-            maxConnections: 100
-          http:
-            http1MaxPendingRequests: 10
-            http2MaxRequests: 100
-            maxRequestsPerConnection: 2
-        # Circuit breaker
-        outlierDetection:
-          consecutiveErrors: 3
-          interval: 30s
-          baseEjectionTime: 30s
-          maxEjectionPercent: 50
-          minHealthPercent: 50
+    
+    # Internal DNS configuration for cluster-internal access
+    # This creates a ServiceEntry to allow pods to resolve and access vm-x-ai.local
+    internalDns:
+      enabled: false  # Set to true to enable internal DNS resolution
+      # Gateway service to route internal traffic to
+      # Default is the standard Istio ingress gateway service
+      gatewayService: istio-ingressgateway.istio-system.svc.cluster.local
+      # Port for internal access (should match Gateway port)
+      port: 80
 
 # Service Account
 serviceAccount:
@@ -577,3 +551,9 @@ securityContext:
 commonLabels: {}
 commonAnnotations: {}
 
+# Namespace Configuration
+namespace:
+  # Additional labels for the namespace
+  labels: {}
+  # Additional annotations for the namespace
+  annotations: {}

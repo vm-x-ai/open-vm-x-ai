@@ -79,7 +79,12 @@ fi
 # Install Istiod (Istio control plane) if not already installed
 if ! helm status istiod -n istio-system &>/dev/null; then
     log_info_bold "Installing Istiod ${ISTIO_VERSION}"
-    if ! helm install istiod istio/istiod -n istio-system --version=${ISTIO_VERSION} --wait; then
+    if ! helm install istiod istio/istiod \
+    -n istio-system --version=${ISTIO_VERSION} \
+    --set cni.enabled=true \
+    --set meshConfig.defaultConfig.proxyMetadata.ISTIO_META_DNS_CAPTURE="true" \
+    --set meshConfig.defaultConfig.proxyMetadata.ISTIO_META_DNS_AUTO_ALLOCATE="true" \
+    --wait; then
         log_warning "Failed to install Istiod. Please check the logs and try again."
         cleanup
         exit 1
@@ -90,7 +95,7 @@ fi
 # Install Istio CNI (Container Network Interface) if not already installed
 if ! helm status istio-cni -n istio-system &>/dev/null; then
     log_info_bold "Installing Istio CNI ${ISTIO_VERSION}"
-    if ! helm install istio-cni istio/cni -n istio-system --version=${ISTIO_VERSION} --wait; then
+    if ! helm install istio-cni istio/cni -n istio-system --version=${ISTIO_VERSION} --set operator.enabled=true --wait; then
         log_warning "Failed to install Istio CNI. Please check the logs and try again."
         cleanup
         exit 1

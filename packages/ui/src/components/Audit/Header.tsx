@@ -237,6 +237,7 @@ export default function AuditHeader({
               >
                 <Image
                   alt={providersMap[aiConnectionMap[option].provider]?.name}
+                  loader={({ src }) => src}
                   src={
                     providersMap[aiConnectionMap[option].provider]?.config?.logo
                       ?.url
@@ -260,6 +261,7 @@ export default function AuditHeader({
                         startAdornment: (
                           <InputAdornment position="start">
                             <Image
+                              loader={({ src }) => src}
                               alt={
                                 providersMap[
                                   aiConnectionMap[connectionId].provider

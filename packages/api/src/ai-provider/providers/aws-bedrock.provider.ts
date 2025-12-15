@@ -88,7 +88,9 @@ export class AWSBedrockProvider implements CompletionProvider {
     private readonly logger: PinoLogger,
     private readonly configService: ConfigService
   ) {
-    const baseUrl = this.configService.get('BASE_URL');
+    const baseUrl = this.configService.getOrThrow<string>('BASE_URL');
+    const basePath = this.configService.getOrThrow<string>('BASE_PATH');
+
     this.provider = {
       id: 'aws-bedrock',
       name: 'AWS Bedrock',
@@ -96,7 +98,7 @@ export class AWSBedrockProvider implements CompletionProvider {
       defaultModel: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
       config: {
         logo: {
-          url: '/assets/logos/aws.png',
+          url: `/assets/logos/aws.png`,
         },
         connection: {
           form: {
@@ -161,7 +163,7 @@ export class AWSBedrockProvider implements CompletionProvider {
               target: '_blank',
               helperText:
                 'After creating the stack, look for the **Outputs** tab, copy the **RoleArn** value and paste in the field above.',
-              url: `https://<%- formData?.config?.region %>.console.aws.amazon.com/cloudformation/home?region=<%- formData?.config?.region %>#/stacks/create/review?templateURL=${baseUrl}/assets/aws/cfn/bedrock-iam-role.yaml&stackName=vm-x-ai-<%- environment.name %><%- formData?.name ? \`-\${formData?.name}\` : '' %>-bedrock-integration-role&param_ExternalID=<%- environment.workspaceId %>:<%- environment.environmentId %>&param_RoleName=vm-x-ai-<%- environment.name %><%- formData?.name ? \`-\${formData?.name}\` : '' %>-bedrock-<%- formData?.config?.region %>`,
+              url: `https://<%- formData?.config?.region %>.console.aws.amazon.com/cloudformation/home?region=<%- formData?.config?.region %>#/stacks/create/review?templateURL=${baseUrl}${basePath}/assets/aws/cfn/bedrock-iam-role.yaml&stackName=vm-x-ai-<%- environment.name %><%- formData?.name ? \`-\${formData?.name}\` : '' %>-bedrock-integration-role&param_ExternalID=<%- environment.workspaceId %>:<%- environment.environmentId %>&param_RoleName=vm-x-ai-<%- environment.name %><%- formData?.name ? \`-\${formData?.name}\` : '' %>-bedrock-<%- formData?.config?.region %>`,
             },
             {
               type: AIProviderComponentType.ACCORDION,

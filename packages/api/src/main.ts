@@ -14,6 +14,7 @@ import fastifyExpress from '@fastify/express';
 import { setupOpenAPIDocumentation } from './openapi';
 import { join } from 'path';
 import '@fastify/view';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   await otelSDK.start();
@@ -25,7 +26,10 @@ async function bootstrap() {
     })
   );
 
-  app.setGlobalPrefix('api');
+  const basePath = app.get(ConfigService).getOrThrow<string>('BASE_PATH')
+  if (basePath) {
+    app.setGlobalPrefix(basePath);
+  }
 
   const fastify = app.getHttpAdapter().getInstance();
   // Register the plugin to allow Express-style middleware
@@ -64,11 +68,11 @@ async function bootstrap() {
 
   const oidcProvider = app.get(OidcProviderService);
   // Mount the OIDC provider
-  fastify.use('/api/oauth2', oidcProvider.provider.callback());
+  fastify.use(`${basePath}/oauth2`, oidcProvider.provider.callback());
 
   app.useStaticAssets({
     root: join(__dirname, '..', 'assets'),
-    prefix: '/api/assets/',
+    prefix: `${basePath}/assets/`,
   });
 
   app.setViewEngine({

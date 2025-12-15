@@ -28,12 +28,16 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 @ApiTags('OIDC Interaction')
 @Controller({ path: 'interaction', version: VERSION_NEUTRAL })
 export class OidcInteractionController {
+  private readonly basePath: string;
+
   constructor(
     private readonly federatedLoginService: FederatedLoginService,
     private readonly oidc: OidcProviderService,
     private readonly authService: AuthService,
     private readonly configService: ConfigService
-  ) {}
+  ) {
+    this.basePath = this.configService.getOrThrow<string>('BASE_PATH')
+  }
 
   // Step 1: render (or return data for) login/consent
   @Get(':uid')
@@ -67,6 +71,7 @@ export class OidcInteractionController {
         uid,
         clientId: details.params.client_id,
         federatedLoginUrl,
+        basePath: this.basePath,
       });
     } else if (details.prompt.name === 'consent') {
       // Show consent form
@@ -75,6 +80,7 @@ export class OidcInteractionController {
         clientId: details.params.client_id,
         clientName: client?.clientName ?? details.params.client_id,
         scopes: details.prompt.details?.missingOIDCScope || [],
+        basePath: this.basePath,
       });
     } else {
       res.status(400).send(`Unknown prompt: ${details.prompt.name}`);
@@ -99,7 +105,7 @@ export class OidcInteractionController {
     const authUser = await this.authService.validateUser(
       body.username,
       body.password
-    );
+    );    
     if (authUser) {
       const result: InteractionResults = {
         login: { accountId: authUser.id },
@@ -138,7 +144,7 @@ export class OidcInteractionController {
     }
 
     res.redirect(
-      `/api/interaction/${uid}?error=invalid_credentials`,
+      `${this.basePath}/interaction/${uid}?error=invalid_credentials`,
       HttpStatus.FOUND
     );
   }
@@ -230,7 +236,7 @@ export class OidcInteractionController {
     @Query('state') state: string | undefined
   ) {
     return {
-      url: `/api/interaction/${state}/federated?${new URLSearchParams(
+      url: `${this.basePath}/interaction/${state}/federated?${new URLSearchParams(
         req.query as Record<string, string>
       ).toString()}`,
       statusCode: HttpStatus.FOUND,

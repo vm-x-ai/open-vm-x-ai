@@ -77,6 +77,7 @@ export default function AIResourceTable({
           <Box display="flex" alignItems="center" gap={1}>
             <Image
               alt={providersMap[row.model.provider]?.name || 'ai-provider'}
+              loader={({ src }) => src}
               src={providersMap[row.model.provider]?.config.logo.url}
               height={20}
               width={20}
@@ -98,6 +99,7 @@ export default function AIResourceTable({
                   <Box display="flex" alignItems="center" gap={1}>
                     <Image
                       alt={providersMap[model.provider]?.name || 'ai-provider'}
+                      loader={({ src }) => src}
                       src={providersMap[model.provider].config.logo.url}
                       height={20}
                       width={20}
@@ -121,6 +123,7 @@ export default function AIResourceTable({
                   <Box display="flex" alignItems="center" gap={1}>
                     <Image
                       alt={providersMap[model.provider]?.name || 'ai-provider'}
+                      loader={({ src }) => src}
                       src={providersMap[model.provider].config.logo.url}
                       height={20}
                       width={20}

@@ -64,6 +64,8 @@ export class OidcProviderService implements OnModuleInit {
     }));
 
     const uiBaseUrl = this.configService.getOrThrow<string>('UI_BASE_URL');
+    const baseUrl = this.configService.getOrThrow<string>('BASE_URL');
+    const basePath = this.configService.getOrThrow<string>('BASE_PATH');
 
     return {
       adapter: this.createAdapterFactory(),
@@ -115,9 +117,7 @@ export class OidcProviderService implements OnModuleInit {
           application_type: 'web',
           redirect_uris: [
             'https://oauth.pstmn.io/v1/callback',
-            `${this.configService.getOrThrow<string>(
-              'BASE_URL'
-            )}/docs/oauth2-redirect.html`,
+            `${baseUrl}${basePath}/docs/oauth2-redirect.html`,
           ],
           grant_types: ['refresh_token', 'authorization_code'],
           scope: 'openid profile email offline_access',
@@ -205,7 +205,7 @@ export class OidcProviderService implements OnModuleInit {
       },
       interactions: {
         url(_, interaction) {
-          return `/api/interaction/${interaction.uid}`;
+          return `${basePath}/interaction/${interaction.uid}`;
         },
       },
       cookies: {

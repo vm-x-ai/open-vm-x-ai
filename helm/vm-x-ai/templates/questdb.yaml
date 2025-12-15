@@ -30,7 +30,7 @@ spec:
         - name: http
           containerPort: 9000
           protocol: TCP
-        - name: postgres
+        - name: tcp-postgres
           containerPort: 8812
           protocol: TCP
         env:

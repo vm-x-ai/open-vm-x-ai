@@ -1,23 +1,21 @@
 1. Get the application URLs by running these commands:
 {{- if .Values.ingress.enabled }}
-{{- if eq .Values.ingress.type "istio" }}
 {{- $host := (index .Values.ingress.istio.virtualService.hosts 0) }}
-  UI:  https://{{ $host }}
-  API: https://{{ $host }}/api
-  
-  Note: Using Istio Gateway. Ensure the Gateway is deployed and the TLS secret exists in istio-system namespace.
+{{- $basePath := .Values.api.env.BASE_PATH }}
+{{- $tlsEnabled := include "vm-x-ai.ingress.tlsEnabled" . }}
+{{- $scheme := "http" }}
+{{- if $tlsEnabled }}
+{{- $scheme = "https" }}
+{{- end }}
+  UI:  {{ $scheme }}://{{ $host }}
+{{- if $basePath }}
+  API: {{ $scheme }}://{{ $host }}{{ $basePath }}
+  API Swagger: {{ $scheme }}://{{ $host }}{{ $basePath }}/docs
 {{- else }}
-{{- range $host := .Values.ingress.nginx.hosts }}
-  {{- range $path := $host.paths }}
-  {{- if eq $path.service "ui" }}
-  UI:  https://{{ $host.host }}{{ $path.path }}
-  {{- end }}
-  {{- if eq $path.service "api" }}
-  API: https://{{ $host.host }}{{ $path.path }}
-  {{- end }}
-  {{- end }}
+  API: {{ $scheme }}://{{ $host }}/api
 {{- end }}
-{{- end }}
+  
+  Note: Using Istio Gateway. Ensure the Gateway is deployed{{- if $tlsEnabled }} and the TLS secret exists in istio-system namespace{{- end }}.
 {{- else }}
   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "vm-x-ai.fullname" . }}-ui)
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")

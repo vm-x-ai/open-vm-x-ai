@@ -46,6 +46,8 @@ spec:
           value: {{ .Values.api.env.PORT | toString | quote }}
         - name: BASE_URL
           value: {{ include "vm-x-ai.api.baseUrl" . | quote }}
+        - name: BASE_PATH
+          value: {{ .Values.api.env.BASE_PATH | quote }}
         - name: UI_BASE_URL
           value: {{ include "vm-x-ai.ui.baseUrl" . | quote }}
         - name: OIDC_PROVIDER_ISSUER

@@ -89,6 +89,7 @@ export default function AIConnectionTable({
               <Box>
                 <Image
                   alt={providersMap[row.provider]?.name}
+                  loader={({ src }) => src}
                   src={providersMap[row.provider]?.config.logo.url}
                   height={20}
                   width={20}

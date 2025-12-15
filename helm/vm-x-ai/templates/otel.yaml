@@ -24,7 +24,7 @@ data:
     exporters:
     {{- if .Values.otel.jaeger.enabled }}
       otlp:
-        endpoint: {{ include "vm-x-ai.fullname" . }}-jaeger:4318
+        endpoint: {{ include "vm-x-ai.fullname" . }}-jaeger:4317
         tls:
           insecure: true
     {{- end }}
@@ -93,7 +93,7 @@ spec:
           protocol: TCP
         {{- end }}
         {{- if .Values.otel.prometheus.enabled }}
-        - name: prometheus
+        - name: http-prometheus
           containerPort: 8889
           protocol: TCP
         {{- end }}
@@ -127,9 +127,9 @@ spec:
     {{- end }}
     {{- if .Values.otel.prometheus.enabled }}
     - port: 8889
-      targetPort: prometheus
+      targetPort: http-prometheus
       protocol: TCP
-      name: prometheus
+      name: http-prometheus
     {{- end }}
   selector:
     {{- include "vm-x-ai.selectorLabels" . | nindent 4 }}

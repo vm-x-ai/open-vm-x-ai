@@ -25,9 +25,9 @@ export class FederatedLoginService implements OnModuleInit {
     private readonly usersService: UsersService,
     private readonly roleService: RoleService
   ) {
-    this.redirectUri = `${this.configService.getOrThrow<string>(
-      'BASE_URL'
-    )}/interaction/federated/callback`;
+    const baseUrl = this.configService.getOrThrow<string>('BASE_URL');
+    const basePath = this.configService.getOrThrow<string>('BASE_PATH');
+    this.redirectUri = `${baseUrl}${basePath}/interaction/federated/callback`;
   }
 
   async onModuleInit() {

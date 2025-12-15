@@ -74,6 +74,7 @@ export default function MultiConnectionModelSelector({
             <Tooltip title={providersMap[row.provider]?.name}>
               <Image
                 alt={providersMap[row.provider]?.name || 'ai-provider'}
+                loader={({ src }) => src}
                 src={providersMap[row.provider]?.config.logo.url}
                 height={20}
                 width={20}
@@ -89,6 +90,7 @@ export default function MultiConnectionModelSelector({
             {row.provider && (
               <Image
                 alt={providersMap[row.provider]?.name || 'ai-provider'}
+                loader={({ src }) => src}
                 src={providersMap[row.provider]?.config.logo.url}
                 height={20}
                 width={20}
@@ -120,6 +122,7 @@ export default function MultiConnectionModelSelector({
                   >
                     <Image
                       alt={providersMap[option.provider].name}
+                      loader={({ src }) => src}
                       src={providersMap[option.provider].config.logo.url}
                       height={20}
                       width={25}
@@ -203,6 +206,7 @@ export default function MultiConnectionModelSelector({
             {row.provider && (
               <Image
                 alt={providersMap[row.provider]?.name || 'ai-provider'}
+                loader={({ src }) => src}
                 src={providersMap[row.provider]?.config.logo.url}
                 height={20}
                 width={20}

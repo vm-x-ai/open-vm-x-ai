@@ -1,0 +1,31 @@
+{{- if .Values.ingress.enabled }}
+{{- if .Values.ingress.istio.internalDns.enabled }}
+---
+# ServiceEntry for Istio to properly route vm-x-ai.local internally
+# This ensures Istio mesh traffic can resolve and route to the hostname
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: {{ include "vm-x-ai.fullname" . }}-internal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vm-x-ai.labels" . | nindent 4 }}
+    app.kubernetes.io/component: internal-dns
+spec:
+  hosts:
+    {{- range .Values.ingress.istio.virtualService.hosts }}
+    - {{ . }}
+    {{- end }}
+  ports:
+    - number: {{ .Values.ingress.istio.internalDns.port | default 80 }}
+      name: http
+      protocol: HTTP
+  location: MESH_INTERNAL
+  resolution: DNS
+  endpoints:
+    - address: {{ .Values.ingress.istio.internalDns.gatewayService | default "istio-ingressgateway.istio-system.svc.cluster.local" }}
+      ports:
+        http: {{ .Values.ingress.istio.internalDns.port | default 80 }}
+{{- end }}
+{{- end }}
+

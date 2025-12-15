@@ -239,6 +239,7 @@ export default function ProviderFieldset({
                       <Box display="flex" gap={1}>
                         <Image
                           alt={option.name}
+                          loader={({ src }) => src}
                           src={option.config.logo.url}
                           height={20}
                           width={25}
@@ -267,6 +268,7 @@ export default function ProviderFieldset({
                               <InputAdornment position="start">
                                 <Image
                                   alt={providersMap[field.value].name}
+                                  loader={({ src }) => src}
                                   src={
                                     providersMap[field.value].config.logo.url
                                   }

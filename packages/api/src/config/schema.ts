@@ -14,6 +14,7 @@ export const configSchema = Joi.object({
 
   // API
   BASE_URL: Joi.string().uri().required(),
+  BASE_PATH: Joi.string().default(''),
 
   // Database
   DATABASE_HOST: Joi.string().hostname().required(),
@@ -23,7 +24,7 @@ export const configSchema = Joi.object({
   DATABASE_PASSWORD: Joi.string().required(),
   DATABASE_DB_NAME: Joi.string().required(),
   DATABASE_SCHEMA: Joi.string().default(SERVICE_NAME.toLowerCase()),
-  
+
   DATABASE_WRITER_USER: Joi.string().default(SERVICE_NAME.toLowerCase()),
   DATABASE_WRITER_POOL_MAX: Joi.number().default(25),
   DATABASE_READER_POOL_MAX: Joi.number().default(50),
@@ -34,7 +35,9 @@ export const configSchema = Joi.object({
   REDIS_MODE: Joi.string().valid('single', 'cluster').default('single'),
 
   // OIDC Provider
-  OIDC_PROVIDER_ISSUER: Joi.string().uri().required(),
+  OIDC_PROVIDER_ISSUER: Joi.string()
+    .uri()
+    .default((parent) => `${parent.BASE_URL}${parent.BASE_PATH}/oauth2`),
   OIDC_PROVIDER_AUTO_CONSENT_CLIENT_IDS: Joi.string().default('ui'),
 
   // OIDC Federated Login
