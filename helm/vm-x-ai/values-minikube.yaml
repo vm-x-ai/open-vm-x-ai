@@ -27,11 +27,17 @@ ui:
     limits:
       cpu: 500m
       memory: 512Mi
-  env:
-    NEXT_AUTH_DEBUG: "true"
 
 redis:
   mode: single
+
+  # Cluster Config
+  # mode: cluster
+  # cluster:
+  #   nodes: 3
+  #   replicas: 1
+  #   persistence:
+  #     enabled: true
 
 otel:
   enabled: true
@@ -70,9 +76,3 @@ ingress:
         - vm-x-ai.local
       gateways:
         - istio-system/vm-x-ai-gateway
-    
-    # Enable internal DNS resolution for cluster-internal access
-    internalDns:
-      enabled: true
-      gatewayService: istio-ingressgateway.istio-system.svc.cluster.local
-      port: 80

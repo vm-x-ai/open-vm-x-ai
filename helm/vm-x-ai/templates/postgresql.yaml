@@ -8,16 +8,26 @@ metadata:
     app.kubernetes.io/component: postgresql
 spec:
   replicas: 1
+  # Use Recreate strategy for single-replica deployments with ReadWriteOnce volumes
+  # This ensures the old pod is fully terminated before the new one starts
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "vm-x-ai.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: postgresql
   template:
     metadata:
+      annotations:
+        {{- if not .Values.postgresql.istio.sidecar.enabled }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
       labels:
         {{- include "vm-x-ai.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: postgresql
     spec:
+      # Ensure proper termination to release volume locks
+      terminationGracePeriodSeconds: 30
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

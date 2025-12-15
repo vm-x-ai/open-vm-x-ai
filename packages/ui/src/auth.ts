@@ -47,7 +47,8 @@ const result = NextAuth({
     authorized({ auth, request }) {
       if (
         request.nextUrl.pathname.startsWith('/api/auth') ||
-        request.nextUrl.pathname.startsWith('/api/federated/sign-out')
+        request.nextUrl.pathname.startsWith('/api/federated/sign-out') ||
+        request.nextUrl.pathname.startsWith('/api/healthcheck')
       ) {
         return true;
       }

@@ -20,7 +20,9 @@ import {
 
 import process from 'process';
 
-const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318';
+const otlpEndpoint =
+  process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318';
+const basePath = process.env.BASE_PATH || '';
 
 const otelSDK = new NodeSDK({
   metricReader: new PeriodicExportingMetricReader({
@@ -49,12 +51,22 @@ const otelSDK = new NodeSDK({
   }),
   instrumentations: [
     getNodeAutoInstrumentations({
+      '@opentelemetry/instrumentation-http': {
+        enabled: true,
+        ignoreIncomingRequestHook: (request) => {
+          const url = request.url || '';
+          const healthcheckPath = basePath
+            ? `${basePath}/healthcheck`
+            : '/healthcheck';
+          return url.startsWith(healthcheckPath);
+        },
+      },
       '@opentelemetry/instrumentation-fastify': {
         enabled: true,
       },
       '@opentelemetry/instrumentation-openai': {
         enabled: false,
-      }
+      },
     }),
   ],
 });

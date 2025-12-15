@@ -16,9 +16,13 @@ spec:
     metadata:
       annotations:
         checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- if not .Values.ui.istio.sidecar.enabled }}
+        sidecar.istio.io/inject: "false"
+        {{- else }}
         proxy.istio.io/config: |
           proxyMetadata:
             ISTIO_META_DNS_CAPTURE: "true"
+        {{- end }}
       labels:
         {{- include "vm-x-ai.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: ui
@@ -69,6 +73,42 @@ spec:
         {{- end }}
         resources:
           {{- toYaml .Values.ui.resources | nindent 10 }}
+        {{- if .Values.ui.healthcheck.enabled }}
+        {{- $healthcheckPath := .Values.ui.healthcheck.liveness.path }}
+        {{- if .Values.ui.healthcheck.startup.enabled }}
+        startupProbe:
+          httpGet:
+            path: {{ $healthcheckPath }}
+            port: http
+          initialDelaySeconds: {{ .Values.ui.healthcheck.startup.initialDelaySeconds }}
+          periodSeconds: {{ .Values.ui.healthcheck.startup.periodSeconds }}
+          timeoutSeconds: {{ .Values.ui.healthcheck.startup.timeoutSeconds }}
+          successThreshold: {{ .Values.ui.healthcheck.startup.successThreshold }}
+          failureThreshold: {{ .Values.ui.healthcheck.startup.failureThreshold }}
+        {{- end }}
+        {{- if .Values.ui.healthcheck.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ $healthcheckPath }}
+            port: http
+          initialDelaySeconds: {{ .Values.ui.healthcheck.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.ui.healthcheck.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.ui.healthcheck.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.ui.healthcheck.liveness.successThreshold }}
+          failureThreshold: {{ .Values.ui.healthcheck.liveness.failureThreshold }}
+        {{- end }}
+        {{- if .Values.ui.healthcheck.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ $healthcheckPath }}
+            port: http
+          initialDelaySeconds: {{ .Values.ui.healthcheck.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.ui.healthcheck.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.ui.healthcheck.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.ui.healthcheck.readiness.successThreshold }}
+          failureThreshold: {{ .Values.ui.healthcheck.readiness.failureThreshold }}
+        {{- end }}
+        {{- end }}
       {{- with .Values.ui.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

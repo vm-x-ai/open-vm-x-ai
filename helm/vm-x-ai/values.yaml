@@ -85,10 +85,44 @@ api:
   tolerations: []
   affinity: {}
   
+  # Istio sidecar injection
+  # Set to false to disable sidecar injection (useful if namespace has istio-injection=enabled)
+  istio:
+    sidecar:
+      enabled: true  # API should have sidecars for mTLS and observability
+  
   # Pod disruption budget
   podDisruptionBudget:
     enabled: true
     minAvailable: 1
+  
+  # Healthcheck configuration
+  healthcheck:
+    enabled: true
+    liveness:
+      enabled: true
+      path: /healthcheck
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+    readiness:
+      enabled: true
+      path: /healthcheck
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+    startup:
+      enabled: true
+      path: /healthcheck
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 30
 
 # UI Configuration
 ui:
@@ -121,6 +155,40 @@ ui:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  
+  # Istio sidecar injection
+  # Set to false to disable sidecar injection (useful if namespace has istio-injection=enabled)
+  istio:
+    sidecar:
+      enabled: true  # UI should have sidecars for mTLS and observability
+  
+  # Healthcheck configuration
+  healthcheck:
+    enabled: true
+    liveness:
+      enabled: true
+      path: /api/healthcheck
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+    readiness:
+      enabled: true
+      path: /api/healthcheck
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+    startup:
+      enabled: true
+      path: /api/healthcheck
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 30
 
 # PostgreSQL Configuration
 postgresql:
@@ -155,6 +223,13 @@ postgresql:
     type: ClusterIP
     port: 5432
   
+  # Istio sidecar injection
+  # PostgreSQL typically doesn't need sidecars (internal service, latency-sensitive)
+  # Enable only if you need mTLS between API and PostgreSQL
+  istio:
+    sidecar:
+      enabled: false  # Usually disabled for internal databases
+  
   # If disabled, provide external connection details
   external:
     host: ""
@@ -172,6 +247,17 @@ redis:
   
   # Mode: single or cluster
   mode: single # single or cluster
+
+  # TLS
+  tls:
+    enabled: false
+  
+  # Istio sidecar injection
+  # Redis typically doesn't need sidecars (internal service, latency-sensitive)
+  # Enable only if you need mTLS between API and Redis
+  istio:
+    sidecar:
+      enabled: false  # Usually disabled for internal caches
   
   # Single node configuration
   single:
@@ -250,6 +336,13 @@ questdb:
     password: "" # Will be generated if not set
     database: vmxai
   
+  # Istio sidecar injection
+  # QuestDB typically doesn't need sidecars (internal service, latency-sensitive)
+  # Enable only if you need mTLS between API and QuestDB
+  istio:
+    sidecar:
+      enabled: false  # Usually disabled for internal databases
+  
   persistence:
     enabled: true
     size: 50Gi
@@ -275,6 +368,12 @@ questdb:
 # OpenTelemetry Services
 otel:
   enabled: false
+  
+  # Istio sidecar injection
+  # OTEL services typically don't need sidecars (they're observability tools themselves)
+  istio:
+    sidecar:
+      enabled: false  # Usually disabled for observability services
   
   # OTEL Exporter Endpoint
   # If empty, will auto-generate based on collector service (if collector is enabled)
@@ -521,7 +620,7 @@ ingress:
     # Internal DNS configuration for cluster-internal access
     # This creates a ServiceEntry to allow pods to resolve and access vm-x-ai.local
     internalDns:
-      enabled: false  # Set to true to enable internal DNS resolution
+      enabled: true  # Set to true to enable internal DNS resolution
       # Gateway service to route internal traffic to
       # Default is the standard Istio ingress gateway service
       gatewayService: istio-ingressgateway.istio-system.svc.cluster.local

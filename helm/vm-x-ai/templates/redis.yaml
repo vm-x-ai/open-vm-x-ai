@@ -16,6 +16,10 @@ spec:
       app.kubernetes.io/component: redis
   template:
     metadata:
+      annotations:
+        {{- if not .Values.redis.istio.sidecar.enabled }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
       labels:
         {{- include "vm-x-ai.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: redis
@@ -111,13 +115,17 @@ metadata:
     app.kubernetes.io/component: redis
 spec:
   serviceName: {{ include "vm-x-ai.fullname" . }}-redis-cluster
-  replicas: {{ .Values.redis.cluster.nodes }}
+  replicas: {{ int .Values.redis.cluster.nodes }}
   selector:
     matchLabels:
       {{- include "vm-x-ai.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: redis
   template:
     metadata:
+      annotations:
+        {{- if not .Values.redis.istio.sidecar.enabled }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
       labels:
         {{- include "vm-x-ai.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: redis
@@ -141,7 +149,11 @@ spec:
         - /bin/sh
         - -c
         - |
-          redis-server /etc/redis/redis.conf --cluster-announce-ip $(hostname -i) --cluster-announce-port 6379
+          # Get pod name and construct FQDN: <pod-name>.<service-name>
+          POD_NAME=$(hostname)
+          SERVICE_NAME="{{ include "vm-x-ai.fullname" . }}-redis-cluster"
+          CLUSTER_ANNOUNCE_IP="${POD_NAME}.${SERVICE_NAME}"
+          redis-server /etc/redis/redis.conf --cluster-announce-ip ${CLUSTER_ANNOUNCE_IP} --cluster-announce-port 6379
         volumeMounts:
         - name: config
           mountPath: /etc/redis
@@ -207,6 +219,7 @@ data:
     cluster-node-timeout 5000
     appendonly yes
     protected-mode no
+    # cluster-announce-ip will be set via command line to use pod FQDN
 ---
 apiVersion: v1
 kind: Service
@@ -232,11 +245,16 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "vm-x-ai.fullname" . }}-redis-cluster-init
+  name: {{ include "vm-x-ai.fullname" . }}-redis-cluster-init-{{ printf "%s-%d-%d" (include "vm-x-ai.fullname" .) (int .Values.redis.cluster.nodes) (int .Values.redis.cluster.replicas) | sha256sum | trunc 8 }}
   labels:
     {{- include "vm-x-ai.labels" . | nindent 4 }}
     app.kubernetes.io/component: redis
+  annotations:
+    # Checksum of init script parameters - included in name to force Job recreation when script logic changes
+    checksum/init-script: {{ printf "%s-%d-%d" (include "vm-x-ai.fullname" .) (int .Values.redis.cluster.nodes) (int .Values.redis.cluster.replicas) | sha256sum | trunc 10 }}
 spec:
+  # TTL for completed/failed jobs - automatically clean up after 1 hour
+  ttlSecondsAfterFinished: 3600
   template:
     metadata:
       labels:
@@ -255,12 +273,47 @@ spec:
         - /bin/sh
         - -c
         - |
-          sleep 10
-          redis-cli --cluster create \
-            {{- range $i := until .Values.redis.cluster.nodes }}
-            {{- printf " %s-redis-cluster-%d.%s-redis-cluster:6379" (include "vm-x-ai.fullname" $) $i (include "vm-x-ai.fullname" $) }}
-            {{- end }} \
-            --cluster-replicas {{ .Values.redis.cluster.replicas }}
+          set -e
+          echo "Waiting for Redis cluster pods to be ready..."
+          {{- $fullname := include "vm-x-ai.fullname" . }}
+          {{- $nodes := int .Values.redis.cluster.nodes }}
+          {{- range $i := until $nodes }}
+          until redis-cli -h {{ $fullname }}-redis-cluster-{{ $i }}.{{ $fullname }}-redis-cluster ping > /dev/null 2>&1; do
+            echo "Waiting for {{ $fullname }}-redis-cluster-{{ $i }}.{{ $fullname }}-redis-cluster to be ready..."
+            sleep 2
+          done
+          echo "{{ $fullname }}-redis-cluster-{{ $i }}.{{ $fullname }}-redis-cluster is ready"
+          {{- end }}
+          echo "All Redis pods are ready. Checking if cluster already exists..."
+          # Check if cluster is already initialized by checking if any node knows about the cluster
+          CLUSTER_INFO=$(redis-cli -h {{ $fullname }}-redis-cluster-0.{{ $fullname }}-redis-cluster cluster info 2>/dev/null || echo "")
+          if echo "$CLUSTER_INFO" | grep -q "cluster_state:ok"; then
+            # Check if cluster nodes are using IPs instead of FQDNs
+            CLUSTER_NODES=$(redis-cli -h {{ $fullname }}-redis-cluster-0.{{ $fullname }}-redis-cluster cluster nodes 2>/dev/null || echo "")
+            if echo "$CLUSTER_NODES" | grep -qE "^[0-9a-f]+.*[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+"; then
+              echo "Cluster exists but nodes are using IP addresses. Resetting cluster to use FQDNs..."
+              # Reset cluster on all nodes
+              {{- range $i := until (int .Values.redis.cluster.nodes) }}
+              redis-cli -h {{ $fullname }}-redis-cluster-{{ $i }}.{{ $fullname }}-redis-cluster cluster reset hard || true
+              {{- end }}
+              echo "Cluster reset. Will recreate with FQDNs."
+            else
+              echo "Redis cluster already initialized with FQDNs, skipping cluster creation."
+              exit 0
+            fi
+          fi
+          echo "Creating Redis cluster..."
+          {{- $nodes := int .Values.redis.cluster.nodes }}
+          {{- $replicas := int .Values.redis.cluster.replicas }}
+          {{- $minNodesForReplicas := mul (add $replicas 1) 3 }}
+          {{- if and (gt $replicas 0) (lt $nodes $minNodesForReplicas) }}
+          echo "Warning: Only {{ $nodes }} nodes available, but {{ $replicas }} replicas per master requires at least {{ $minNodesForReplicas }} nodes."
+          echo "Creating cluster with 0 replicas instead..."
+          redis-cli --cluster create{{- range $i := until $nodes }} {{ $fullname }}-redis-cluster-{{ $i }}.{{ $fullname }}-redis-cluster:6379{{- end }} --cluster-replicas 0 --cluster-yes
+          {{- else }}
+          redis-cli --cluster create{{- range $i := until $nodes }} {{ $fullname }}-redis-cluster-{{ $i }}.{{ $fullname }}-redis-cluster:6379{{- end }} --cluster-replicas {{ $replicas }} --cluster-yes
+          {{- end }}
+          echo "Redis cluster created successfully!"
 {{- end }}
 {{- end }}
 

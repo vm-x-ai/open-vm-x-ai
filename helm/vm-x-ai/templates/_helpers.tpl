@@ -87,7 +87,8 @@ Generate Redis connection details
 {{- define "vm-x-ai.redis.host" -}}
 {{- if .Values.redis.enabled }}
 {{- if eq .Values.redis.mode "cluster" }}
-{{- printf "%s-redis-cluster" (include "vm-x-ai.fullname" .) }}
+{{- $fullname := include "vm-x-ai.fullname" . }}
+{{- printf "%s-redis-cluster-0.%s-redis-cluster" $fullname $fullname }}
 {{- else }}
 {{- printf "%s-redis" (include "vm-x-ai.fullname" .) }}
 {{- end }}

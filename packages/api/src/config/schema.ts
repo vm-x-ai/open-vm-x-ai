@@ -33,6 +33,7 @@ export const configSchema = Joi.object({
   REDIS_HOST: Joi.string().required(),
   REDIS_PORT: Joi.number().port().required(),
   REDIS_MODE: Joi.string().valid('single', 'cluster').default('single'),
+  REDIS_TLS: Joi.boolean().default(false),
 
   // OIDC Provider
   OIDC_PROVIDER_ISSUER: Joi.string()

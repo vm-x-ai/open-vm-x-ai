@@ -13,6 +13,7 @@ import _ from 'lodash';
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => {
         await ConfigModule.envVariablesLoaded;
+        const basePath = config.getOrThrow<string>('BASE_PATH');
         return {
           pinoHttp: {
             transport:
@@ -37,7 +38,7 @@ import _ from 'lodash';
               ignore: (req) => {
                 const href =
                   (req as unknown as FastifyRequest).originalUrl ?? req.url;
-                return href.startsWith('/healthcheck');
+                return href.startsWith(`${basePath}/healthcheck`);
               },
             },
             formatters: {
