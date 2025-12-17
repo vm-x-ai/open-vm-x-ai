@@ -59,6 +59,29 @@ spec:
           value: {{ include "vm-x-ai.ui.baseUrl" . | quote }}
         - name: OIDC_PROVIDER_ISSUER
           value: {{ include "vm-x-ai.oidc.issuer" . | quote }}
+        {{- $useSecretForConnection := include "vm-x-ai.secrets.database.useSecretForConnection" . }}
+        {{- if $useSecretForConnection }}
+        - name: DATABASE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "vm-x-ai.secrets.database.name" . }}
+              key: {{ include "vm-x-ai.secrets.database.hostKey" . }}
+        - name: DATABASE_RO_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "vm-x-ai.secrets.database.name" . }}
+              key: {{ include "vm-x-ai.secrets.database.hostKey" . }}
+        - name: DATABASE_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "vm-x-ai.secrets.database.name" . }}
+              key: {{ include "vm-x-ai.secrets.database.portKey" . }}
+        - name: DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "vm-x-ai.secrets.database.name" . }}
+              key: {{ include "vm-x-ai.secrets.database.usernameKey" . }}
+        {{- else }}
         - name: DATABASE_HOST
           value: {{ include "vm-x-ai.database.host" . | quote }}
         - name: DATABASE_RO_HOST
@@ -67,13 +90,22 @@ spec:
           value: {{ if .Values.postgresql.enabled }}{{ .Values.postgresql.service.port | toString | quote }}{{ else }}{{ .Values.postgresql.external.port | toString | quote }}{{ end }}
         - name: DATABASE_USER
           value: {{ if .Values.postgresql.enabled }}{{ .Values.postgresql.auth.username | quote }}{{ else }}{{ .Values.postgresql.external.username | quote }}{{ end }}
+        {{- end }}
         - name: DATABASE_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ include "vm-x-ai.secrets.database.name" . }}
               key: {{ include "vm-x-ai.secrets.database.passwordKey" . }}
+        {{- if $useSecretForConnection }}
+        - name: DATABASE_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "vm-x-ai.secrets.database.name" . }}
+              key: {{ include "vm-x-ai.secrets.database.databaseKey" . }}
+        {{- else }}
         - name: DATABASE_DB_NAME
           value: {{ if .Values.postgresql.enabled }}{{ .Values.postgresql.auth.database | quote }}{{ else }}{{ .Values.postgresql.external.database | quote }}{{ end }}
+        {{- end }}
         - name: DATABASE_WRITER_POOL_MAX
           value: {{ .Values.api.env.DATABASE_WRITER_POOL_MAX | toString | quote }}
         - name: DATABASE_READER_POOL_MAX

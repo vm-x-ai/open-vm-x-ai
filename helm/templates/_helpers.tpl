@@ -303,6 +303,103 @@ Get secret key for database password
 {{- end }}
 
 {{/*
+Get secret key for database host
+*/}}
+{{- define "vm-x-ai.secrets.database.hostKey" -}}
+{{- if eq (default "create" $.Values.secrets.database.method) "external" }}
+{{- if $.Values.secrets.database.external.hostKey }}
+{{- $.Values.secrets.database.external.hostKey }}
+{{- else }}
+{{- "host" }}
+{{- end }}
+{{- else if eq (default "create" $.Values.secrets.database.method) "eso" }}
+{{- if $.Values.secrets.database.externalSecrets.hostKey }}
+{{- $.Values.secrets.database.externalSecrets.hostKey }}
+{{- else }}
+{{- "host" }}
+{{- end }}
+{{- else }}
+{{- "host" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Get secret key for database port
+*/}}
+{{- define "vm-x-ai.secrets.database.portKey" -}}
+{{- if eq (default "create" $.Values.secrets.database.method) "external" }}
+{{- if $.Values.secrets.database.external.portKey }}
+{{- $.Values.secrets.database.external.portKey }}
+{{- else }}
+{{- "port" }}
+{{- end }}
+{{- else if eq (default "create" $.Values.secrets.database.method) "eso" }}
+{{- if $.Values.secrets.database.externalSecrets.portKey }}
+{{- $.Values.secrets.database.externalSecrets.portKey }}
+{{- else }}
+{{- "port" }}
+{{- end }}
+{{- else }}
+{{- "port" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Get secret key for database name
+*/}}
+{{- define "vm-x-ai.secrets.database.databaseKey" -}}
+{{- if eq (default "create" $.Values.secrets.database.method) "external" }}
+{{- if $.Values.secrets.database.external.databaseKey }}
+{{- $.Values.secrets.database.external.databaseKey }}
+{{- else }}
+{{- "database" }}
+{{- end }}
+{{- else if eq (default "create" $.Values.secrets.database.method) "eso" }}
+{{- if $.Values.secrets.database.externalSecrets.databaseKey }}
+{{- $.Values.secrets.database.externalSecrets.databaseKey }}
+{{- else }}
+{{- "database" }}
+{{- end }}
+{{- else }}
+{{- "database" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Get secret key for database username
+*/}}
+{{- define "vm-x-ai.secrets.database.usernameKey" -}}
+{{- if eq (default "create" $.Values.secrets.database.method) "external" }}
+{{- if $.Values.secrets.database.external.usernameKey }}
+{{- $.Values.secrets.database.external.usernameKey }}
+{{- else }}
+{{- "username" }}
+{{- end }}
+{{- else if eq (default "create" $.Values.secrets.database.method) "eso" }}
+{{- if $.Values.secrets.database.externalSecrets.usernameKey }}
+{{- $.Values.secrets.database.externalSecrets.usernameKey }}
+{{- else }}
+{{- "username" }}
+{{- end }}
+{{- else }}
+{{- "username" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Check if database connection details should come from secrets
+Returns true if using external PostgreSQL and secret method supports it
+*/}}
+{{- define "vm-x-ai.secrets.database.useSecretForConnection" -}}
+{{- if not $.Values.postgresql.enabled }}
+{{- $method := default "create" $.Values.secrets.database.method }}
+{{- if or (eq $method "create") (eq $method "eso") (eq $method "external") }}
+true
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Get secret name for questdb
 */}}
 {{- define "vm-x-ai.secrets.questdb.name" -}}
