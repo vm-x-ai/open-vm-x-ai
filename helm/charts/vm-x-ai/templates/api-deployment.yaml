@@ -66,11 +66,16 @@ spec:
             secretKeyRef:
               name: {{ include "vm-x-ai.secrets.database.name" . }}
               key: {{ include "vm-x-ai.secrets.database.hostKey" . }}
+        {{- if .Values.postgresql.external.roHost }}
+        - name: DATABASE_RO_HOST
+          value: {{ include "vm-x-ai.database.roHost" . | quote }}
+        {{- else }}
         - name: DATABASE_RO_HOST
           valueFrom:
             secretKeyRef:
               name: {{ include "vm-x-ai.secrets.database.name" . }}
               key: {{ include "vm-x-ai.secrets.database.hostKey" . }}
+        {{- end }}
         - name: DATABASE_PORT
           valueFrom:
             secretKeyRef:
