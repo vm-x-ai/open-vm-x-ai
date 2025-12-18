@@ -24,6 +24,7 @@ export const configSchema = Joi.object({
   DATABASE_PASSWORD: Joi.string().required(),
   DATABASE_DB_NAME: Joi.string().required(),
   DATABASE_SCHEMA: Joi.string().default(SERVICE_NAME.toLowerCase()),
+  DATABASE_SSL: Joi.boolean().default(false),
 
   DATABASE_WRITER_USER: Joi.string().default(SERVICE_NAME.toLowerCase()),
   DATABASE_WRITER_POOL_MAX: Joi.number().default(25),
@@ -69,6 +70,17 @@ export const configSchema = Joi.object({
     is: 'aws-kms',
     then: Joi.required(),
     otherwise: Joi.optional(),
+  }),
+
+  // AWS Region (required for AWS services)
+  AWS_REGION: Joi.string().when('ENCRYPTION_PROVIDER', {
+    is: 'aws-kms',
+    then: Joi.required(),
+    otherwise: Joi.when('COMPLETION_USAGE_PROVIDER', {
+      is: 'aws-timestream',
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
   }),
 
   // TimeseriesDB

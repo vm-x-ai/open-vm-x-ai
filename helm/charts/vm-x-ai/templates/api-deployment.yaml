@@ -159,6 +159,10 @@ spec:
         - name: AWS_TIMESTREAM_DATABASE_NAME
           value: {{ .Values.api.timeseriesDb.awsTimestream.databaseName | quote }}
         {{- end }}
+        {{- if or (eq .Values.api.encryption.provider "aws-kms") (eq .Values.api.timeseriesDb.provider "aws-timestream") }}
+        - name: AWS_REGION
+          value: {{ .Values.api.aws.region | quote }}
+        {{- end }}
         - name: BATCH_QUEUE_VISIBILITY_TIMEOUT
           value: {{ .Values.api.env.BATCH_QUEUE_VISIBILITY_TIMEOUT | toString | quote }}
         {{- if .Values.api.oidcFederated.enabled }}

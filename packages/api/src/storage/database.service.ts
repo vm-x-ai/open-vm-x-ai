@@ -27,6 +27,13 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
     private readonly configService: ConfigService,
     private readonly migrationsService: MigrationsService
   ) {
+    const databaseSSL = this.configService.get<boolean>('DATABASE_SSL') ?? false;
+    const sslConfig = databaseSSL
+      ? {
+          rejectUnauthorized: false, // AWS RDS uses self-signed certificates
+        }
+      : undefined;
+
     const writerDialect = new PostgresDialect({
       pool: new Pool({
         host: this.configService.getOrThrow<string>('DATABASE_HOST'),
@@ -36,6 +43,7 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
         database: this.configService.getOrThrow<string>('DATABASE_DB_NAME'),
         connectionTimeoutMillis: 10_000,
         max: this.configService.get('DATABASE_WRITER_POOL_MAX'),
+        ssl: sslConfig,
       }),
     });
 
@@ -60,6 +68,7 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
         database: this.configService.getOrThrow<string>('DATABASE_DB_NAME'),
         connectionTimeoutMillis: 10_000,
         max: this.configService.get('DATABASE_READER_POOL_MAX'),
+        ssl: sslConfig,
       }),
     });
 

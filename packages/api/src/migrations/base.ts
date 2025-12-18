@@ -31,6 +31,13 @@ export abstract class BaseMigrationsService {
     protected readonly migrationHostConfigKey: string,
     protected readonly service: string
   ) {
+    const databaseSSL = this.configService.get<boolean>('DATABASE_SSL') ?? false;
+    const sslConfig = databaseSSL
+      ? {
+          rejectUnauthorized: false, // AWS RDS uses self-signed certificates
+        }
+      : undefined;
+
     const dialect = new PostgresDialect({
       pool: new Pool({
         host: this.configService.getOrThrow<string>('DATABASE_HOST'),
@@ -39,6 +46,7 @@ export abstract class BaseMigrationsService {
         password: this.configService.getOrThrow<string>('DATABASE_PASSWORD'),
         database: this.configService.getOrThrow<string>('DATABASE_DB_NAME'),
         connectionTimeoutMillis: 10_000,
+        ssl: sslConfig,
       }),
     });
 

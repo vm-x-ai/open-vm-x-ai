@@ -163,7 +163,8 @@ export class QuestDBCompletionUsageProvider implements CompletionUsageProvider {
     const databaseName = this.configService.getOrThrow<string>(
       'AWS_TIMESTREAM_DATABASE_NAME'
     );
-    const writeClient = new TimestreamWriteClient({});
+    const region = this.configService.getOrThrow<string>('AWS_REGION');
+    const writeClient = new TimestreamWriteClient({ region });
     await writeClient.send(
       new WriteRecordsCommand({
         DatabaseName: databaseName,

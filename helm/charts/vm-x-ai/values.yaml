@@ -58,6 +58,10 @@ api:
     awsKms:
       keyId: "" # Required if using aws-kms (e.g., "arn:aws:kms:region:account:key/key-id")
   
+  # AWS Configuration (required for AWS services like KMS or Timestream)
+  aws:
+    region: "" # Required if using aws-kms or aws-timestream (e.g., "us-east-1")
+  
   # Timeseries DB Configuration
   timeseriesDb:
     provider: questdb # questdb or aws-timestream

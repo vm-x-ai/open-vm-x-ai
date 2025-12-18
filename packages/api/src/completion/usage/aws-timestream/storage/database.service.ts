@@ -24,9 +24,10 @@ export class AWSTimestreamDatabaseService
     const databaseName = this.configService.getOrThrow(
       'AWS_TIMESTREAM_DATABASE_NAME'
     );
+    const region = this.configService.getOrThrow<string>('AWS_REGION');
     const dialect = new AWSTimestreamDialect({
-      queryClient: new TimestreamQueryClient({}),
-      writeClient: new TimestreamWriteClient({}),
+      queryClient: new TimestreamQueryClient({ region }),
+      writeClient: new TimestreamWriteClient({ region }),
       databaseName,
     });
 
