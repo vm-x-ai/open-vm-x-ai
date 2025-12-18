@@ -61,7 +61,33 @@ spec:
             port:
               number: {{ .Values.api.service.port }}
     {{- end }}
-    # UI routes (catch-all)
+    {{- if and .Values.otel.enabled .Values.otel.jaeger.enabled .Values.otel.jaeger.ingress.enabled }}
+    # Jaeger UI route (must come before UI catch-all)
+    - match:
+        - uri:
+            prefix: {{ .Values.otel.jaeger.ingress.path }}
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: {{ include "vm-x-ai.fullname" . }}-jaeger
+            port:
+              number: {{ (index .Values.otel.jaeger.service.ports 0).port }}
+    {{- end }}
+    {{- if and .Values.otel.enabled .Values.otel.grafana.enabled .Values.otel.grafana.ingress.enabled }}
+    # Grafana UI route (must come before UI catch-all)
+    - match:
+        - uri:
+            prefix: {{ .Values.otel.grafana.ingress.path }}
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: {{ include "vm-x-ai.fullname" . }}-grafana
+            port:
+              number: {{ .Values.otel.grafana.service.port }}
+    {{- end }}
+    # UI routes (catch-all - must be last)
     - match:
         - uri:
             prefix: /

@@ -384,7 +384,8 @@ otel:
   # OTEL Exporter Endpoint
   # If empty, will auto-generate based on collector service (if collector is enabled)
   # Otherwise, specify a custom endpoint (e.g., "http://external-otel-collector:4318")
-  exporterEndpoint: ""  # Empty = auto-generate, or specify custom endpoint
+  # For external collectors, use HTTP endpoint format: "http://hostname:port" or "https://hostname:port"
+  exporterEndpoint: ""  # Empty = auto-generate, or specify custom endpoint (supports external collectors)
   
   collector:
     enabled: false
@@ -439,6 +440,11 @@ otel:
       limits:
         cpu: 1000m
         memory: 1Gi
+    
+    # Ingress configuration for Jaeger UI
+    ingress:
+      enabled: false  # Set to true to expose Jaeger UI via Istio ingress
+      path: /jaeger  # Path prefix for Jaeger UI (e.g., /jaeger)
   
   prometheus:
     enabled: false
@@ -511,6 +517,11 @@ otel:
       limits:
         cpu: 500m
         memory: 512Mi
+    
+    # Ingress configuration for Grafana UI
+    ingress:
+      enabled: false  # Set to true to expose Grafana UI via Istio ingress
+      path: /grafana  # Path prefix for Grafana UI (e.g., /grafana)
 
 # Secrets Configuration
 # WARNING: Do NOT store secrets in values.yaml for production!

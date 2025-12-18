@@ -35,10 +35,30 @@
 {{- if .Values.otel.enabled }}
 4. OpenTelemetry Services:
 {{- if .Values.otel.jaeger.enabled }}
+{{- if and .Values.ingress.enabled .Values.otel.jaeger.ingress.enabled }}
+{{- $host := .Values.ingress.istio.host }}
+{{- $tlsEnabled := include "vm-x-ai.ingress.tlsEnabled" . }}
+{{- $scheme := "http" }}
+{{- if $tlsEnabled }}
+{{- $scheme = "https" }}
+{{- end }}
+  Jaeger UI: {{ $scheme }}://{{ $host }}{{ .Values.otel.jaeger.ingress.path }}
+{{- else }}
   Jaeger UI: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "vm-x-ai.fullname" . }}-jaeger 16686:16686
 {{- end }}
+{{- end }}
 {{- if .Values.otel.grafana.enabled }}
+{{- if and .Values.ingress.enabled .Values.otel.grafana.ingress.enabled }}
+{{- $host := .Values.ingress.istio.host }}
+{{- $tlsEnabled := include "vm-x-ai.ingress.tlsEnabled" . }}
+{{- $scheme := "http" }}
+{{- if $tlsEnabled }}
+{{- $scheme = "https" }}
+{{- end }}
+  Grafana: {{ $scheme }}://{{ $host }}{{ .Values.otel.grafana.ingress.path }}
+{{- else }}
   Grafana: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "vm-x-ai.fullname" . }}-grafana 3000:3000
+{{- end }}
 {{- end }}
 {{- if .Values.otel.prometheus.enabled }}
   Prometheus: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "vm-x-ai.fullname" . }}-prometheus 9090:9090

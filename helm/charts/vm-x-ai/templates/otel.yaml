@@ -499,6 +499,13 @@ spec:
         - name: http
           containerPort: {{ .Values.otel.grafana.service.port }}
           protocol: TCP
+        {{- if and .Values.ingress.enabled .Values.otel.grafana.ingress.enabled }}
+        env:
+        - name: GF_SERVER_SERVE_FROM_SUB_PATH
+          value: "true"
+        - name: GF_SERVER_ROOT_URL
+          value: {{ .Values.otel.grafana.ingress.path }}
+        {{- end }}
         volumeMounts:
         - name: data
           mountPath: /var/lib/grafana
