@@ -192,6 +192,8 @@ spec:
         - name: OTEL_LOG_LEVEL
           value: error
         {{- end }}
+        - name: OTEL_TRACES_SAMPLER
+          value: {{ .Values.api.env.OTEL_TRACES_SAMPLER | quote }}
         {{- end }}
         resources:
           {{- toYaml .Values.api.resources | nindent 10 }}

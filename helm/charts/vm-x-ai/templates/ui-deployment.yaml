@@ -70,6 +70,8 @@ spec:
           value: {{ $otelEndpoint | quote }}
         - name: OTEL_LOG_LEVEL
           value: error
+        - name: OTEL_TRACES_SAMPLER
+          value: {{ .Values.ui.env.OTEL_TRACES_SAMPLER | quote }}
         {{- end }}
         resources:
           {{- toYaml .Values.ui.resources | nindent 10 }}

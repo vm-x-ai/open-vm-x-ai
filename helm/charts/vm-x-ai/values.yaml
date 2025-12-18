@@ -46,6 +46,7 @@ api:
     DATABASE_WRITER_POOL_MAX: 25
     DATABASE_READER_POOL_MAX: 50
     BATCH_QUEUE_VISIBILITY_TIMEOUT: 120000
+    OTEL_TRACES_SAMPLER: always_on
   
   # Encryption Provider Configuration
   # Options: libsodium (default, for local/small deployments) or aws-kms (for production)
@@ -155,6 +156,7 @@ ui:
     AUTH_REDIRECT_PROXY_URL: "" # Will be set based on ingress or service
     API_BASE_URL: "" # Will be set based on API service
     NEXT_AUTH_DEBUG: "false" # Set to "true" for debugging
+    OTEL_TRACES_SAMPLER: always_on
   
   nodeSelector: {}
   tolerations: []
