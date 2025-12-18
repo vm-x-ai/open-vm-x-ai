@@ -237,6 +237,17 @@ spec:
     spec:
       # Ensure proper termination to release volume locks
       terminationGracePeriodSeconds: 30
+      {{- if .Values.otel.prometheus.securityContext.runAsRoot }}
+      securityContext:
+        fsGroup: 0
+        runAsUser: 0
+        runAsNonRoot: false
+      {{- else }}
+      securityContext:
+        fsGroup: {{ .Values.otel.prometheus.securityContext.fsGroup | default 65534 }}
+        runAsUser: {{ .Values.otel.prometheus.securityContext.runAsUser | default 65534 }}
+        runAsNonRoot: true
+      {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -245,10 +256,26 @@ spec:
       - name: prometheus
         image: {{ printf "%s:%s" .Values.otel.prometheus.image.repository .Values.otel.prometheus.image.tag }}
         imagePullPolicy: {{ .Values.otel.prometheus.image.pullPolicy }}
+        {{- if .Values.otel.prometheus.securityContext.runAsRoot }}
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+        {{- else }}
+        securityContext:
+          runAsUser: {{ .Values.otel.prometheus.securityContext.runAsUser | default 65534 }}
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+        {{- end }}
         command:
         - prometheus
         - --config.file=/etc/prometheus/prometheus.yml
         - --storage.tsdb.path=/prometheus
+        {{- if and .Values.otel.prometheus.queryLogFile (ne .Values.otel.prometheus.queryLogFile "") }}
+        - --query.active-query-log-file={{ .Values.otel.prometheus.queryLogFile }}
+        {{- end }}
         ports:
         - name: http
           containerPort: {{ .Values.otel.prometheus.service.port }}
@@ -368,6 +395,10 @@ spec:
     spec:
       # Ensure proper termination to release volume locks
       terminationGracePeriodSeconds: 30
+      securityContext:
+        fsGroup: {{ .Values.otel.loki.securityContext.fsGroup | default 10001 }}
+        runAsUser: {{ .Values.otel.loki.securityContext.runAsUser | default 10001 }}
+        runAsNonRoot: true
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -376,6 +407,11 @@ spec:
       - name: loki
         image: {{ printf "%s:%s" .Values.otel.loki.image.repository .Values.otel.loki.image.tag }}
         imagePullPolicy: {{ .Values.otel.loki.image.pullPolicy }}
+        securityContext:
+          runAsUser: {{ .Values.otel.loki.securityContext.runAsUser | default 10001 }}
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
         ports:
         - name: http
           containerPort: {{ .Values.otel.loki.service.port }}
@@ -487,6 +523,10 @@ spec:
         {{- include "vm-x-ai.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: grafana
     spec:
+      securityContext:
+        fsGroup: {{ .Values.otel.grafana.securityContext.fsGroup | default 472 }}
+        runAsUser: {{ .Values.otel.grafana.securityContext.runAsUser | default 472 }}
+        runAsNonRoot: true
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -495,6 +535,11 @@ spec:
       - name: grafana
         image: {{ printf "%s:%s" .Values.otel.grafana.image.repository .Values.otel.grafana.image.tag }}
         imagePullPolicy: {{ .Values.otel.grafana.image.pullPolicy }}
+        securityContext:
+          runAsUser: {{ .Values.otel.grafana.securityContext.runAsUser | default 472 }}
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
         ports:
         - name: http
           containerPort: {{ .Values.otel.grafana.service.port }}

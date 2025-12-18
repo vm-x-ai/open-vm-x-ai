@@ -469,6 +469,20 @@ otel:
       limits:
         cpu: 1000m
         memory: 2Gi
+    
+    # Security context configuration
+    # If you encounter permission issues with existing volumes, you may need to:
+    # 1. Set runAsRoot: true (less secure but may be necessary for query log)
+    # 2. Delete and recreate the PVC
+    # 3. Disable query log (queryLogFile: "")
+    securityContext:
+      runAsRoot: false  # Set to true if permission issues persist (runs as UID 0)
+      runAsUser: 65534  # Prometheus default user (nobody)
+      fsGroup: 65534
+    
+    # Query log configuration
+    # Set to empty string to disable query log (recommended if permission issues occur)
+    queryLogFile: ""  # Empty = disabled, or set path like "/prometheus/queries.active"
   
   loki:
     enabled: false
@@ -493,6 +507,11 @@ otel:
       limits:
         cpu: 1000m
         memory: 2Gi
+    
+    # Security context configuration
+    securityContext:
+      runAsUser: 10001  # Loki default user
+      fsGroup: 10001
   
   grafana:
     enabled: false
@@ -517,6 +536,11 @@ otel:
       limits:
         cpu: 500m
         memory: 512Mi
+    
+    # Security context configuration
+    securityContext:
+      runAsUser: 472  # Grafana default user
+      fsGroup: 472
     
     # Ingress configuration for Grafana UI
     ingress:
