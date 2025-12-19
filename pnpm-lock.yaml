@@ -196,6 +196,18 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack@5.102.1)
 
+  examples/aws-cdk-ecs:
+    dependencies:
+      aws-cdk-lib:
+        specifier: ^2.232.2
+        version: 2.232.2(constructs@10.4.4)
+      constructs:
+        specifier: ^10.4.4
+        version: 10.4.4
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+
   examples/aws-cdk-eks:
     dependencies:
       '@aws-quickstart/eks-blueprints':
@@ -207,9 +219,6 @@ importers:
       constructs:
         specifier: ^10.4.4
         version: 10.4.4
-      string-dedent:
-        specifier: ^3.0.2
-        version: 3.0.2
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
