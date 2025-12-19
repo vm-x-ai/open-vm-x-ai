@@ -91,6 +91,7 @@ export class EKSStack extends cdk.Stack {
               tracing: ['otel'],
             },
 
+            // Enable OpenTelemetry tracing
             extensionProviders: [
               {
                 name: 'otel',
