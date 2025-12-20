@@ -61,6 +61,8 @@ export default function RoleForm({ submitAction, role }: RoleFormProps) {
     },
   });
 
+  console.log('errors', form.formState.errors);
+
   return (
     <>
       <Grid container spacing={3}>

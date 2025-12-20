@@ -511,6 +511,84 @@ export const zWorkspaceEntity = z.object({
 
 export type WorkspaceEntityZodType = z.infer<typeof zWorkspaceEntity>;
 
+/**
+ * The role of the user in the workspace
+ */
+export const zWorkspaceUserRole = z.enum(['MEMBER', 'OWNER']).register(z.globalRegistry, {
+    description: 'The role of the user in the workspace'
+});
+
+export type WorkspaceUserRoleZodType = z.infer<typeof zWorkspaceUserRole>;
+
+export const zWorkspaceRelationDto = z.object({
+    createdBy: z.string().register(z.globalRegistry, {
+        description: 'The user who created the entity'
+    }),
+    createdByUser: z.optional(z.union([
+        zUserRelationDto,
+        z.null()
+    ])),
+    updatedBy: z.string().register(z.globalRegistry, {
+        description: 'The user who last updated the entity'
+    }),
+    updatedByUser: z.optional(z.union([
+        zUserRelationDto,
+        z.null()
+    ])),
+    workspaceId: z.uuid().register(z.globalRegistry, {
+        description: 'The unique identifier for the workspace (UUID)'
+    }),
+    name: z.string().register(z.globalRegistry, {
+        description: 'The name of the workspace'
+    }),
+    description: z.optional(z.union([
+        z.string(),
+        z.null()
+    ])),
+    environments: z.optional(z.union([
+        z.array(zEnvironmentRelationDto),
+        z.null()
+    ])),
+    createdAt: z.iso.datetime().register(z.globalRegistry, {
+        description: 'The date and time the user was created'
+    }),
+    updatedAt: z.iso.datetime().register(z.globalRegistry, {
+        description: 'The date and time the user was last updated'
+    })
+});
+
+export type WorkspaceRelationDtoZodType = z.infer<typeof zWorkspaceRelationDto>;
+
+export const zWorkspaceUserDto = z.object({
+    workspaceId: z.uuid().register(z.globalRegistry, {
+        description: 'The unique identifier for the workspace (UUID)'
+    }),
+    userId: z.uuid().register(z.globalRegistry, {
+        description: 'The user who is a member of the workspace (UUID)'
+    }),
+    role: zWorkspaceUserRole,
+    addedAt: z.iso.datetime().register(z.globalRegistry, {
+        description: 'The date and time the user was added to the workspace'
+    }),
+    addedBy: z.uuid().register(z.globalRegistry, {
+        description: 'The user who added the user to the workspace'
+    }),
+    workspace: z.optional(z.union([
+        zWorkspaceRelationDto,
+        z.null()
+    ])),
+    user: z.optional(z.union([
+        zUserRelationDto,
+        z.null()
+    ])),
+    addedByUser: z.optional(z.union([
+        zUserRelationDto,
+        z.null()
+    ]))
+});
+
+export type WorkspaceUserDtoZodType = z.infer<typeof zWorkspaceUserDto>;
+
 export const zCreateWorkspaceDto = z.object({
     name: z.string().min(1).register(z.globalRegistry, {
         description: 'The name of the workspace'
@@ -535,14 +613,11 @@ export const zUpdateWorkspaceDto = z.object({
 
 export type UpdateWorkspaceDtoZodType = z.infer<typeof zUpdateWorkspaceDto>;
 
-/**
- * The role to assign to the users
- */
-export const zWorkspaceUserRole = z.enum(['MEMBER', 'OWNER']).register(z.globalRegistry, {
-    description: 'The role to assign to the users'
+export const zUpdateMemberRoleDto = z.object({
+    role: zWorkspaceUserRole
 });
 
-export type WorkspaceUserRoleZodType = z.infer<typeof zWorkspaceUserRole>;
+export type UpdateMemberRoleDtoZodType = z.infer<typeof zUpdateMemberRoleDto>;
 
 export const zAssignWorkspaceUsersDto = z.object({
     userIds: z.array(z.string()).register(z.globalRegistry, {
@@ -2812,6 +2887,42 @@ export type UpdateWorkspaceDataZodType = z.infer<typeof zUpdateWorkspaceData>;
 export const zUpdateWorkspaceResponse = zWorkspaceEntity;
 
 export type UpdateWorkspaceResponseZodType = z.infer<typeof zUpdateWorkspaceResponse>;
+
+export const zGetWorkspaceMembersData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        workspaceId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the workspace'
+        })
+    }),
+    query: z.optional(z.never())
+});
+
+export type GetWorkspaceMembersDataZodType = z.infer<typeof zGetWorkspaceMembersData>;
+
+/**
+ * Get the members of a workspace
+ */
+export const zGetWorkspaceMembersResponse = z.array(zWorkspaceUserDto).register(z.globalRegistry, {
+    description: 'Get the members of a workspace'
+});
+
+export type GetWorkspaceMembersResponseZodType = z.infer<typeof zGetWorkspaceMembersResponse>;
+
+export const zUpdateMemberRoleData = z.object({
+    body: zUpdateMemberRoleDto,
+    path: z.object({
+        workspaceId: z.string().register(z.globalRegistry, {
+            description: 'The ID of the workspace'
+        }),
+        userId: z.uuid().register(z.globalRegistry, {
+            description: 'The unique identifier of the user'
+        })
+    }),
+    query: z.optional(z.never())
+});
+
+export type UpdateMemberRoleDataZodType = z.infer<typeof zUpdateMemberRoleData>;
 
 export const zAssignUsersToWorkspaceData = z.object({
     body: zAssignWorkspaceUsersDto,

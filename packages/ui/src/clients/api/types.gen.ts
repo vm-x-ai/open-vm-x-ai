@@ -576,6 +576,92 @@ export type WorkspaceEntity = {
     environments?: Array<EnvironmentRelationDto> | null;
 };
 
+/**
+ * The role of the user in the workspace
+ */
+export enum WorkspaceUserRole {
+    MEMBER = 'MEMBER',
+    OWNER = 'OWNER'
+}
+
+export type WorkspaceRelationDto = {
+    /**
+     * The user who created the entity
+     */
+    createdBy: string;
+    /**
+     * The user who created the entity
+     */
+    createdByUser?: UserRelationDto | null;
+    /**
+     * The user who last updated the entity
+     */
+    updatedBy: string;
+    /**
+     * The user who last updated the entity
+     */
+    updatedByUser?: UserRelationDto | null;
+    /**
+     * The unique identifier for the workspace (UUID)
+     */
+    workspaceId: string;
+    /**
+     * The name of the workspace
+     */
+    name: string;
+    /**
+     * The description of the workspace
+     */
+    description?: string | null;
+    /**
+     * The environments in the workspace
+     */
+    environments?: Array<EnvironmentRelationDto> | null;
+    /**
+     * The date and time the user was created
+     */
+    createdAt: string;
+    /**
+     * The date and time the user was last updated
+     */
+    updatedAt: string;
+};
+
+export type WorkspaceUserDto = {
+    /**
+     * The unique identifier for the workspace (UUID)
+     */
+    workspaceId: string;
+    /**
+     * The user who is a member of the workspace (UUID)
+     */
+    userId: string;
+    /**
+     * The role of the user in the workspace
+     */
+    role: WorkspaceUserRole;
+    /**
+     * The date and time the user was added to the workspace
+     */
+    addedAt: string;
+    /**
+     * The user who added the user to the workspace
+     */
+    addedBy: string;
+    /**
+     * The workspace that the user is a member of
+     */
+    workspace?: WorkspaceRelationDto | null;
+    /**
+     * The user who is a member of the workspace
+     */
+    user?: UserRelationDto | null;
+    /**
+     * The user who added the user to the workspace
+     */
+    addedByUser?: UserRelationDto | null;
+};
+
 export type CreateWorkspaceDto = {
     /**
      * The name of the workspace
@@ -598,13 +684,12 @@ export type UpdateWorkspaceDto = {
     description?: string | null;
 };
 
-/**
- * The role to assign to the users
- */
-export enum WorkspaceUserRole {
-    MEMBER = 'MEMBER',
-    OWNER = 'OWNER'
-}
+export type UpdateMemberRoleDto = {
+    /**
+     * The role to assign to the user
+     */
+    role: WorkspaceUserRole;
+};
 
 export type AssignWorkspaceUsersDto = {
     /**
@@ -3205,6 +3290,68 @@ export type UpdateWorkspaceResponses = {
 };
 
 export type UpdateWorkspaceResponse = UpdateWorkspaceResponses[keyof UpdateWorkspaceResponses];
+
+export type GetWorkspaceMembersData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the workspace
+         */
+        workspaceId: string;
+    };
+    query?: never;
+    url: '/v1/workspace/{workspaceId}/members';
+};
+
+export type GetWorkspaceMembersErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type GetWorkspaceMembersError = GetWorkspaceMembersErrors[keyof GetWorkspaceMembersErrors];
+
+export type GetWorkspaceMembersResponses = {
+    /**
+     * Get the members of a workspace
+     */
+    200: Array<WorkspaceUserDto>;
+};
+
+export type GetWorkspaceMembersResponse = GetWorkspaceMembersResponses[keyof GetWorkspaceMembersResponses];
+
+export type UpdateMemberRoleData = {
+    body: UpdateMemberRoleDto;
+    path: {
+        /**
+         * The ID of the workspace
+         */
+        workspaceId: string;
+        /**
+         * The unique identifier of the user
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/v1/workspace/{workspaceId}/members/{userId}/role';
+};
+
+export type UpdateMemberRoleErrors = {
+    /**
+     * Server Error
+     */
+    500: ServiceError;
+};
+
+export type UpdateMemberRoleError = UpdateMemberRoleErrors[keyof UpdateMemberRoleErrors];
+
+export type UpdateMemberRoleResponses = {
+    /**
+     * Update the role of a member of a workspace
+     */
+    200: unknown;
+};
 
 export type AssignUsersToWorkspaceData = {
     body: AssignWorkspaceUsersDto;

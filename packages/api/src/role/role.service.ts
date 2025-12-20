@@ -242,8 +242,8 @@ export class RoleService {
     roleId: string,
     payload: AssignRoleDto,
     user: UserEntity
-  ): Promise<UserRoleEntity> {
-    const userRole = await this.db.writer
+  ): Promise<void> {
+    await this.db.writer
       .insertInto('userRoles')
       .values(
         payload.userIds.map((userId) => ({
@@ -254,7 +254,8 @@ export class RoleService {
         }))
       )
       .returningAll()
-      .executeTakeFirstOrThrow();
+      .onConflict((oc) => oc.doNothing())
+      .execute();
 
     await this.cache.mdel([
       ...payload.userIds.map((userId) => this.getUserRoleCacheKey(userId)),
@@ -263,8 +264,6 @@ export class RoleService {
       this.getRoleCacheKey(roleId, true, true),
       this.getRoleCacheKey(roleId, false, true),
     ]);
-
-    return userRole;
   }
 
   public async unassignUsersFromRole(

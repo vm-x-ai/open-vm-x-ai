@@ -10,9 +10,10 @@ import { ErrorCode } from '../error-code';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ListWorkspaceDto } from './dto/list-workspace.dto';
 import { Expression } from 'kysely';
-import { jsonArrayFrom } from 'kysely/helpers/postgres';
+import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
 import { AssignWorkspaceUsersDto } from './dto/assign-user.dto';
 import { UnassignWorkspaceUsersDto } from './dto/unassign-user.dto';
+import { WorkspaceUserDto } from './dto/workspace-user.dto';
 
 @Injectable()
 export class WorkspaceService {
@@ -121,6 +122,26 @@ export class WorkspaceService {
     return workspace;
   }
 
+  public async getMembers(workspaceId: string): Promise<WorkspaceUserDto[]> {
+    return await this.db.reader
+      .selectFrom('workspaceUsers')
+      .selectAll('workspaceUsers')
+      .where('workspaceId', '=', workspaceId)
+      .select((eb) => [
+        jsonObjectFrom(
+          eb
+            .selectFrom(`workspaces`)
+            .selectAll('workspaces')
+            .where('workspaceId', '=', workspaceId)
+        ).as('workspace'),
+        this.db.withUser(eb.ref('workspaceUsers.userId'), 'user').as('user'),
+        this.db
+          .withUser(eb.ref('workspaceUsers.addedBy'), 'addedByUser')
+          .as('addedByUser'),
+      ])
+      .execute();
+  }
+
   public async getByIds(workspaceIds: string[]): Promise<WorkspaceEntity[]> {
     if (workspaceIds.length === 0) return [];
     return await this.db.reader
@@ -212,6 +233,19 @@ export class WorkspaceService {
     ]);
 
     return workspace;
+  }
+
+  public async updateMemberRole(
+    workspaceId: string,
+    userId: string,
+    role: PublicWorkspaceUserRole
+  ): Promise<void> {
+    await this.db.writer
+      .updateTable('workspaceUsers')
+      .set({ role })
+      .where('workspaceId', '=', workspaceId)
+      .where('userId', '=', userId)
+      .execute();
   }
 
   public async delete(workspaceId: string): Promise<void> {

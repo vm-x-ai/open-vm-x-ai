@@ -51,6 +51,7 @@ export const migration: Migration = {
           name: 'admin',
           description: 'Administrator role',
           policy: JSON.stringify({
+            $schema: 'https://vm-x.ai/schema/role-policy.json', 
             statements: [
               {
                 effect: RolePolicyEffect.ALLOW,
@@ -68,6 +69,7 @@ export const migration: Migration = {
           name: 'read-only',
           description: 'Read only role',
           policy: JSON.stringify({
+            $schema: 'https://vm-x.ai/schema/role-policy.json',
             statements: [
               {
                 effect: RolePolicyEffect.ALLOW,
@@ -86,10 +88,18 @@ export const migration: Migration = {
           description:
             'Can create workspaces, environments, connections and resources, but not manage roles or users',
           policy: JSON.stringify({
+            $schema: 'https://vm-x.ai/schema/role-policy.json',
             statements: [
               {
                 effect: RolePolicyEffect.DENY,
-                actions: ['user:*', 'role:*'],
+                actions: [
+                  'user:create',
+                  'user:update',
+                  'user:delete',
+                  'role:create',
+                  'role:update',
+                  'role:delete',
+                ],
                 resources: ['*'],
               },
               {

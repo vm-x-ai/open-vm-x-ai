@@ -13,10 +13,12 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { schema } from './schema';
 import type { FormSchema, FormAction } from './schema';
-import { WorkspaceEntity } from '@/clients/api';
+import { WorkspaceEntity, WorkspaceUserDto } from '@/clients/api';
+import MembersTable from './MembersTable';
 
 export type WorkspaceEditFormProps = {
   workspace: WorkspaceEntity;
+  members: WorkspaceUserDto[];
   submitAction: (
     prevState: FormAction,
     data: FormSchema
@@ -26,6 +28,7 @@ export type WorkspaceEditFormProps = {
 export default function WorkspaceEditForm({
   submitAction,
   workspace,
+  members,
 }: WorkspaceEditFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -48,6 +51,7 @@ export default function WorkspaceEditForm({
       workspaceId: workspace.workspaceId,
       name: workspace.name,
       description: workspace.description ?? '',
+      members: members,
     },
   });
 
@@ -119,6 +123,111 @@ export default function WorkspaceEditForm({
                     )}
                   />
                 </Grid>
+              </Grid>
+              <Grid size={12}>
+                <Controller
+                  name="members"
+                  control={form.control}
+                  render={({ field }) => (
+                    <MembersTable
+                      value={field.value}
+                      onUpdateMemberRole={(member) => {
+                        field.onChange(
+                          field.value?.map((m) =>
+                            m.userId === member.userId ? member : m
+                          )
+                        );
+
+                        const newMembers = form.getValues('newMembers') ?? [];
+                        const updatedMembers =
+                          form.getValues('updatedMembers') ?? [];
+
+                        const newMember = newMembers.find(
+                          (m) => m.userId === member.userId
+                        );
+
+                        if (newMember) {
+                          form.setValue(
+                            'newMembers',
+                            newMembers.map((m) =>
+                              m.userId === member.userId ? member : m
+                            )
+                          );
+                          return;
+                        }
+
+                        const existingMember = updatedMembers.find(
+                          (m) => m.userId === member.userId
+                        );
+
+                        form.setValue(
+                          'updatedMembers',
+                          existingMember
+                            ? updatedMembers.map((m) =>
+                                m.userId === member.userId ? member : m
+                              )
+                            : [...updatedMembers, member]
+                        );
+                      }}
+                      onAddMember={(member) => {
+                        field.onChange([...(field.value ?? []), member]);
+
+                        const removedMembers =
+                          form.getValues('removedMembers') ?? [];
+
+                        const removedMember = removedMembers.find(
+                          (m) => m.userId === member.userId
+                        );
+                        if (removedMember) {
+                          form.setValue(
+                            'removedMembers',
+                            removedMembers.filter(
+                              (m) => m.userId !== member.userId
+                            )
+                          );
+
+                          if (removedMember.role !== member.role) {
+                            form.setValue('updatedMembers', [
+                              ...(form.getValues('updatedMembers') ?? []),
+                              member,
+                            ]);
+                          }
+                          return;
+                        }
+
+                        form.setValue('newMembers', [
+                          ...(form.getValues('newMembers') ?? []),
+                          member,
+                        ]);
+                      }}
+                      onRemoveMember={(member) => {
+                        field.onChange(
+                          field.value?.filter((m) => m.userId !== member.userId)
+                        );
+                        const newMembers = form.getValues('newMembers');
+                        const updatedMembers =
+                          form.getValues('updatedMembers') ?? [];
+                        const removedMembers =
+                          form.getValues('removedMembers') ?? [];
+
+                        form.setValue('removedMembers', [
+                          ...removedMembers,
+                          member,
+                        ]);
+                        form.setValue(
+                          'newMembers',
+                          newMembers?.filter((m) => m.userId !== member.userId)
+                        );
+                        form.setValue(
+                          'updatedMembers',
+                          updatedMembers.filter(
+                            (m) => m.userId !== member.userId
+                          )
+                        );
+                      }}
+                    />
+                  )}
+                />
               </Grid>
               <Grid size={12} marginTop="1rem">
                 <SubmitButton label="Save" submittingLabel="Saving..." />

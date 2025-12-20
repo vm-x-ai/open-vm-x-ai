@@ -39,6 +39,9 @@ import {
 } from './permissions/actions';
 import { AssignWorkspaceUsersDto } from './dto/assign-user.dto';
 import { UnassignWorkspaceUsersDto } from './dto/unassign-user.dto';
+import { WorkspaceUserDto } from './dto/workspace-user.dto';
+import { ApiUserIdParam, UserIdParam } from '../users/users.controller';
+import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 
 @Controller('workspace')
 @ApiInternalServerErrorResponse({
@@ -111,6 +114,28 @@ export class WorkspaceController {
     return this.workspaceService.getById(workspaceId, includesUsers);
   }
 
+  @Get(':workspaceId/members')
+  @UseGuards(
+    WorkspaceMemberGuard(),
+    RoleGuard(WorkspaceActions.GET_MEMBERS, WORKSPACE_RESOURCE_ITEM)
+  )
+  @ApiWorkspaceIdParam()
+  @ApiOperation({
+    operationId: 'getWorkspaceMembers',
+    summary: 'Get the members of a workspace',
+    description: 'Returns the members of a workspace.',
+  })
+  @ApiOkResponse({
+    type: WorkspaceUserDto,
+    isArray: true,
+    description: 'Get the members of a workspace',
+  })
+  public async getMembers(
+    @WorkspaceIdParam() workspaceId: string
+  ): Promise<WorkspaceUserDto[]> {
+    return this.workspaceService.getMembers(workspaceId);
+  }
+
   @Post()
   @UseGuards(RoleGuard(WorkspaceActions.CREATE, WORKSPACE_BASE_RESOURCE))
   @ApiOkResponse({
@@ -152,6 +177,33 @@ export class WorkspaceController {
     @AuthenticatedUser() user: UserEntity
   ): Promise<WorkspaceEntity> {
     return this.workspaceService.update(workspaceId, payload, user);
+  }
+
+  @Put(':workspaceId/members/:userId/role')
+  @UseGuards(
+    WorkspaceMemberGuard(),
+    RoleGuard(WorkspaceActions.UPDATE_MEMBER_ROLE, WORKSPACE_RESOURCE_ITEM)
+  )
+  @ApiWorkspaceIdParam()
+  @ApiUserIdParam()
+  @ApiOkResponse({
+    description: 'Update the role of a member of a workspace',
+  })
+  @ApiOperation({
+    operationId: 'updateMemberRole',
+    summary: 'Update the role of a member of a workspace',
+    description: 'Updates the role of a member of a workspace by their ID.',
+  })
+  public async updateMemberRole(
+    @WorkspaceIdParam() workspaceId: string,
+    @UserIdParam() userId: string,
+    @Body() payload: UpdateMemberRoleDto
+  ): Promise<void> {
+    await this.workspaceService.updateMemberRole(
+      workspaceId,
+      userId,
+      payload.role
+    );
   }
 
   @Post(':workspaceId/assign')

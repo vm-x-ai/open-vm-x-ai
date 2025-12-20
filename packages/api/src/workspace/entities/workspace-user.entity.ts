@@ -1,21 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsNotEmpty } from 'class-validator';
-import { UserEntity } from '../../users/entities/user.entity';
+import { IsDateString, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { PublicWorkspaceUserRole } from '../../storage/entities.generated';
-import { WorkspaceEntity } from './workspace.entity';
 
 export class WorkspaceUserEntity {
   @ApiProperty({
-    description: 'The workspace that the user is a member of',
+    description: 'The unique identifier for the workspace (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsNotEmpty()
-  workspace: WorkspaceEntity;
+  @IsUUID('4')
+  workspaceId: string;
 
   @ApiProperty({
-    description: 'The user who is a member of the workspace',
+    description: 'The user who is a member of the workspace (UUID)',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsNotEmpty()
-  user: UserEntity;
+  @IsUUID('4')
+  userId: string;
 
   @ApiProperty({
     description: 'The role of the user in the workspace',
@@ -37,7 +41,10 @@ export class WorkspaceUserEntity {
 
   @ApiProperty({
     description: 'The user who added the user to the workspace',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    format: 'uuid',
   })
   @IsNotEmpty()
-  addedBy: UserEntity;
+  @IsUUID('4')
+  addedBy: string;
 }
