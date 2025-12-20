@@ -1,0 +1,28 @@
+name: Publish Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Publish Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10.14.0
+
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Publish Docs
+        run: pnpm nx run docs:deploy

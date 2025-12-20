@@ -2,6 +2,7 @@ packages:
   - packages/*
   - packages/libs/shared/*
   - examples/*
+  - docs/
 
 autoInstallPeers: true
 
