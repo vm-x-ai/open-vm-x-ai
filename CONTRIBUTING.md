@@ -18,8 +18,8 @@ Thank you for your interest in contributing to VM-X AI! This document provides g
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/vm-x-ai/open-vm-x-ai.git
-cd open-vm-x-ai
+git clone https://github.com/vm-x-ai/vm-x-ai.git
+cd vm-x-ai
 ```
 
 2. **Install dependencies**

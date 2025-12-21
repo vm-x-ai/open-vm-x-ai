@@ -97,7 +97,7 @@ AWS Bedrock uses IAM roles for authentication. You need to create an IAM role in
 2. Configure the role's trust policy to allow VM-X AI to assume it
 3. Use the role ARN in the connection configuration
 
-A CloudFormation template is available in the repository at [`packages/api/assets/aws/cfn/bedrock-iam-role.yaml`](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/packages/api/assets/aws/cfn/bedrock-iam-role.yaml) to help you create the required IAM role.
+A CloudFormation template is available in the repository at [`packages/api/assets/aws/cfn/bedrock-iam-role.yaml`](https://github.com/vm-x-ai/vm-x-ai/blob/main/packages/api/assets/aws/cfn/bedrock-iam-role.yaml) to help you create the required IAM role.
 
 ## Capacity Configuration
 

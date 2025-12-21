@@ -42,7 +42,7 @@ Before you begin, ensure you have:
 
 ### 1. Get the EKS Example
 
-The EKS example is available in the [examples/aws-cdk-eks](https://github.com/vm-x-ai/open-vm-x-ai/tree/main/examples/aws-cdk-eks) directory.
+The EKS example is available in the [examples/aws-cdk-eks](https://github.com/vm-x-ai/vm-x-ai/tree/main/examples/aws-cdk-eks) directory.
 
 If you have the repository cloned, navigate to:
 
@@ -103,7 +103,7 @@ This will:
 - Deploy the VM-X AI Helm chart from the published repository
 - Configure all IAM roles and service accounts
 
-The stack uses the published Helm chart from `https://vm-x-ai.github.io/open-vm-x-ai/helm/`.
+The stack uses the published Helm chart from `https://vm-x-ai.github.io/vm-x-ai/helm/`.
 
 **Deployment typically takes 15-30 minutes.**
 
@@ -175,7 +175,7 @@ graph TB
 
 ## CDK Stack Overview
 
-The EKS stack is defined in [`examples/aws-cdk-eks/lib/eks-stack.ts`](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/aws-cdk-eks/lib/eks-stack.ts). Here's a breakdown of the key components:
+The EKS stack is defined in [`examples/aws-cdk-eks/lib/eks-stack.ts`](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/aws-cdk-eks/lib/eks-stack.ts). Here's a breakdown of the key components:
 
 ### VPC Configuration
 
@@ -361,7 +361,7 @@ The VM-X AI Helm chart is deployed from the published repository with complete c
 const helmChart = new HelmChart(cluster.stack, 'VmXAiHelmChart', {
   cluster: cluster,
   chart: 'vm-x-ai',
-  repository: 'https://vm-x-ai.github.io/open-vm-x-ai/helm/',
+  repository: 'https://vm-x-ai.github.io/vm-x-ai/helm/',
   namespace: 'vm-x-ai',
   release: 'vm-x-ai',
   values: {
@@ -747,7 +747,7 @@ For production deployments:
 
 ## Complete Example
 
-For the complete CDK stack implementation, see the [EKS example directory](https://github.com/vm-x-ai/open-vm-x-ai/tree/main/examples/aws-cdk-eks).
+For the complete CDK stack implementation, see the [EKS example directory](https://github.com/vm-x-ai/vm-x-ai/tree/main/examples/aws-cdk-eks).
 
 The example includes:
 - Complete CDK stack code
@@ -760,5 +760,5 @@ The example includes:
 
 - [AWS ECS Deployment](./aws-ecs.md) - Alternative AWS deployment option
 - [Minikube Deployment](./minikube.md) - Local Kubernetes deployment
-- [EKS Example README](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/aws-cdk-eks/README.md) - Detailed example documentation
+- [EKS Example README](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/aws-cdk-eks/README.md) - Detailed example documentation
 

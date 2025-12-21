@@ -44,7 +44,7 @@ Before you begin, ensure you have:
 
 ### 1. Get the ECS Example
 
-The ECS example is available in the [examples/aws-cdk-ecs](https://github.com/vm-x-ai/open-vm-x-ai/tree/main/examples/aws-cdk-ecs) directory.
+The ECS example is available in the [examples/aws-cdk-ecs](https://github.com/vm-x-ai/vm-x-ai/tree/main/examples/aws-cdk-ecs) directory.
 
 If you have the repository cloned, navigate to:
 
@@ -154,7 +154,7 @@ graph TB
 
 ## CDK Stack Overview
 
-The ECS stack is defined in [`examples/aws-cdk-ecs/lib/ecs-stack.ts`](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/aws-cdk-ecs/lib/ecs-stack.ts). Here's a breakdown of the key components:
+The ECS stack is defined in [`examples/aws-cdk-ecs/lib/ecs-stack.ts`](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/aws-cdk-ecs/lib/ecs-stack.ts). Here's a breakdown of the key components:
 
 ### VPC Configuration
 
@@ -413,7 +413,7 @@ apiListener.addTargets('API/Target', {
 
 ## Complete Example
 
-For the complete CDK stack implementation, see the [ECS example directory](https://github.com/vm-x-ai/open-vm-x-ai/tree/main/examples/aws-cdk-ecs).
+For the complete CDK stack implementation, see the [ECS example directory](https://github.com/vm-x-ai/vm-x-ai/tree/main/examples/aws-cdk-ecs).
 
 The example includes:
 - Complete CDK stack code
@@ -455,7 +455,7 @@ const apiService = new FargateService(this, 'API/Service', {
 
 ### OpenTelemetry Configuration
 
-The OpenTelemetry collector configuration is stored in [`ecs-otel-config.yaml`](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/aws-cdk-ecs/ecs-otel-config.yaml) and uploaded to SSM Parameter Store. Customize by editing the file.
+The OpenTelemetry collector configuration is stored in [`ecs-otel-config.yaml`](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/aws-cdk-ecs/ecs-otel-config.yaml) and uploaded to SSM Parameter Store. Customize by editing the file.
 
 The configuration file defines receivers, processors, and exporters for traces and metrics:
 
@@ -763,5 +763,5 @@ Before deploying to production:
 
 - [AWS EKS Deployment](./aws-eks.md) - Alternative AWS deployment option
 - [Minikube Deployment](./minikube.md) - Local Kubernetes deployment
-- [ECS Example README](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/aws-cdk-ecs/README.md) - Detailed example documentation
+- [ECS Example README](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/aws-cdk-ecs/README.md) - Detailed example documentation
 

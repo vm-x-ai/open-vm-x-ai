@@ -37,7 +37,7 @@ minikube addons enable metrics-server
 
 ### 3. Install Istio
 
-VM-X AI uses Istio for ingress. You can use the provided [bootstrap script](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/scripts/bootstrap_minikube.sh) to install Istio.
+VM-X AI uses Istio for ingress. You can use the provided [bootstrap script](https://github.com/vm-x-ai/vm-x-ai/blob/main/scripts/bootstrap_minikube.sh) to install Istio.
 
 :::important Minikube Tunnel Requirement
 The Istio Gateway requires a **minikube tunnel** to be running to generate an external IP address. The bootstrap script automatically starts the tunnel, but you must keep it running while using Istio ingress.
@@ -104,7 +104,7 @@ kubectl label namespace vm-x-ai istio-injection=enabled
 Add the VM-X AI Helm repository:
 
 ```bash
-helm repo add vm-x-ai https://vm-x-ai.github.io/open-vm-x-ai/helm/
+helm repo add vm-x-ai https://vm-x-ai.github.io/vm-x-ai/helm/
 helm repo update
 ```
 
@@ -115,14 +115,14 @@ Install with Minikube-specific values:
 ```bash
 helm install vm-x-ai vm-x-ai/vm-x-ai \
   --namespace vm-x-ai \
-  -f https://raw.githubusercontent.com/vm-x-ai/open-vm-x-ai/main/helm/charts/vm-x-ai/values-minikube.yaml
+  -f https://raw.githubusercontent.com/vm-x-ai/vm-x-ai/main/helm/charts/vm-x-ai/values-minikube.yaml
 ```
 
 Or download the values file and customize it:
 
 ```bash
 # Download the values file
-curl -O https://raw.githubusercontent.com/vm-x-ai/open-vm-x-ai/main/helm/charts/vm-x-ai/values-minikube.yaml
+curl -O https://raw.githubusercontent.com/vm-x-ai/vm-x-ai/main/helm/charts/vm-x-ai/values-minikube.yaml
 
 # Edit values-minikube.yaml if needed
 # Then install
@@ -287,7 +287,7 @@ Install with custom values:
 ```bash
 helm install vm-x-ai vm-x-ai/vm-x-ai \
   --namespace vm-x-ai \
-  -f https://raw.githubusercontent.com/vm-x-ai/open-vm-x-ai/main/helm/charts/vm-x-ai/values-minikube.yaml \
+  -f https://raw.githubusercontent.com/vm-x-ai/vm-x-ai/main/helm/charts/vm-x-ai/values-minikube.yaml \
   -f my-values.yaml
 ```
 
@@ -411,4 +411,4 @@ kubectl delete pvc -n vm-x-ai --all
 
 - [AWS EKS Deployment](./aws-eks.md) - Deploy to AWS EKS
 - [AWS ECS Deployment](./aws-ecs.md) - Deploy to AWS ECS
-- [Helm Chart Documentation](https://github.com/vm-x-ai/open-vm-x-ai/tree/main/helm/charts/vm-x-ai) - Detailed Helm chart reference
+- [Helm Chart Documentation](https://github.com/vm-x-ai/vm-x-ai/tree/main/helm/charts/vm-x-ai) - Detailed Helm chart reference

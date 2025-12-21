@@ -222,7 +222,7 @@ for chunk in model.stream("Tell me a story"):
 
 ## Example Project
 
-A complete example is available in the [examples/langchain](https://github.com/vm-x-ai/open-vm-x-ai/tree/main/examples/langchain) directory.
+A complete example is available in the [examples/langchain](https://github.com/vm-x-ai/vm-x-ai/tree/main/examples/langchain) directory.
 
 The example includes:
 - Agent creation with tools

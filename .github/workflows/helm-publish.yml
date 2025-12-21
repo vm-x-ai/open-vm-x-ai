@@ -38,7 +38,7 @@ jobs:
 
       - name: Generate index.yaml
         run: |
-          helm repo index pages/helm/ --url https://vm-x-ai.github.io/open-vm-x-ai/helm/
+          helm repo index pages/helm/ --url https://vm-x-ai.github.io/vm-x-ai/helm/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

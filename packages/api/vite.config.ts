@@ -10,7 +10,7 @@ export default defineConfig(() => ({
   //  plugins: [ nxViteTsPaths() ],
   // },
   test: {
-    name: '@open-vm-x-ai/api',
+    name: 'api',
     watch: false,
     globals: true,
     environment: 'node',

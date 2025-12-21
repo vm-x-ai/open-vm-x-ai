@@ -30,8 +30,8 @@ The fastest way to get started is using Docker Compose:
 
 ```bash
 # Clone the repository
-git clone https://github.com/vm-x-ai/open-vm-x-ai.git
-cd open-vm-x-ai
+git clone https://github.com/vm-x-ai/vm-x-ai.git
+cd vm-x-ai
 
 # Start all services
 docker-compose -f examples/docker-compose/default.docker-compose.yml up -d
@@ -96,8 +96,8 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and contribution 
 ## Links
 
 - **Documentation**: [https://vm-x-ai.github.io/](https://vm-x-ai.github.io/)
-- **GitHub**: [https://github.com/vm-x-ai/open-vm-x-ai](https://github.com/vm-x-ai/open-vm-x-ai)
-- **Helm Repository**: [https://vm-x-ai.github.io/open-vm-x-ai/helm/](https://vm-x-ai.github.io/open-vm-x-ai/helm/)
+- **GitHub**: [https://github.com/vm-x-ai/vm-x-ai](https://github.com/vm-x-ai/vm-x-ai)
+- **Helm Repository**: [https://vm-x-ai.github.io/vm-x-ai/helm/](https://vm-x-ai.github.io/vm-x-ai/helm/)
 
 ---
 

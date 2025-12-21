@@ -13,6 +13,8 @@ onlyBuiltDependencies:
   - '@swc/core'
   - argon2
   - bcrypt
+  - core-js
+  - core-js-pure
   - esbuild
   - nx
   - protobufjs

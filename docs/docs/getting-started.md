@@ -309,7 +309,7 @@ curl http://localhost:3000/v1/completion/{workspaceId}/{environmentId}/chat/comp
 
 ## Additional Docker Compose Configurations
 
-For more advanced configurations, see the [examples/docker-compose](https://github.com/vm-x-ai/open-vm-x-ai/tree/main/examples/docker-compose) directory in the repository, which contains several pre-configured setups:
+For more advanced configurations, see the [examples/docker-compose](https://github.com/vm-x-ai/vm-x-ai/tree/main/examples/docker-compose) directory in the repository, which contains several pre-configured setups:
 
 ### Available Configurations
 
@@ -321,7 +321,7 @@ For more advanced configurations, see the [examples/docker-compose](https://gith
 2. **OpenTelemetry Configuration** (`otel.docker-compose.yml`)
    - Full observability stack
    - OpenTelemetry Collector, Jaeger, Prometheus, Loki, Grafana
-   - See [README](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/docker-compose/README.md) for access URLs
+   - See [README](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/docker-compose/README.md) for access URLs
 
 3. **AWS Services Configuration** (`aws.docker-compose.yml`)
    - Production-like setup using AWS services
@@ -334,7 +334,7 @@ For more advanced configurations, see the [examples/docker-compose](https://gith
    - 3-node Redis cluster
    - QuestDB
 
-For detailed information about all configurations, see the [Docker Compose Examples README](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/docker-compose/README.md).
+For detailed information about all configurations, see the [Docker Compose Examples README](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/docker-compose/README.md).
 
 ## Configuration
 
@@ -431,7 +431,7 @@ Now that you have VM-X AI running locally:
 
 ## Additional Resources
 
-- [Docker Compose Examples README](https://github.com/vm-x-ai/open-vm-x-ai/blob/main/examples/docker-compose/README.md) - Detailed information about all configurations
+- [Docker Compose Examples README](https://github.com/vm-x-ai/vm-x-ai/blob/main/examples/docker-compose/README.md) - Detailed information about all configurations
 - [Core Components](./core-components.md) - Understand AI Connections and Resources
 - [Architecture](./architecture.md) - Learn about the technical stack
 

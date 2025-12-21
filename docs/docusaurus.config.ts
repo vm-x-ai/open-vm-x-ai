@@ -87,7 +87,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/vm-x-ai/open-vm-x-ai',
+          href: 'https://github.com/vm-x-ai/vm-x-ai',
           label: 'GitHub',
           position: 'right',
         },

@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 HELM_REPO_DIR="$REPO_ROOT/helm-repo"
 CHART_DIR="$REPO_ROOT/helm/charts/vm-x-ai"
-REPO_URL="https://vm-x-ai.github.io/open-vm-x-ai/helm/"
+REPO_URL="https://vm-x-ai.github.io/vm-x-ai/helm/"
 
 echo "📦 Packaging Helm chart..."
 helm package "$CHART_DIR" -d "$HELM_REPO_DIR/"

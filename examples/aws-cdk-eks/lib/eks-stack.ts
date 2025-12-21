@@ -341,7 +341,7 @@ export class EKSStack extends cdk.Stack {
     const helmChart = new HelmChart(cluster.stack, 'VmXAiHelmChart', {
       cluster: cluster,
       chart: 'vm-x-ai',
-      repository: 'https://vm-x-ai.github.io/open-vm-x-ai/helm/',
+      repository: 'https://vm-x-ai.github.io/vm-x-ai/helm/',
       namespace: 'vm-x-ai',
       release: 'vm-x-ai',
       values: {
