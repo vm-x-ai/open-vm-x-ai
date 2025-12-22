@@ -2,8 +2,8 @@ apiVersion: v2
 name: vm-x-ai
 description: A Helm chart for VM-X AI Application
 type: application
-version: 0.2.1
-appVersion: "0.2.1"
+version: 1.0.0
+appVersion: "1.0.0"
 keywords:
   - vm-x-ai
   - ai
