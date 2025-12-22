@@ -1,6 +1,6 @@
 'use server';
 
-import { assignUsersToRole, createUser } from '@/clients/api';
+import { assignUsersToRole, createUser, UserState } from '@/clients/api';
 import {
   type FormSchema,
   type FormAction,
@@ -26,6 +26,7 @@ export async function submitForm(
   const { error, data: response } = await createUser({
     body: {
       ...payload,
+      state: payload.state as UserState,
       username: payload.email as string,
       password: payload.password as string,
     },

@@ -1,4 +1,5 @@
 import { UserEntity } from '@/clients/api';
+import { zUserState } from '@/clients/api/zod.gen';
 import type { FormActionState } from '@/types';
 import { z } from 'zod';
 
@@ -21,6 +22,7 @@ export const schema = z
       ),
     confirmPassword: z.string({ error: 'Confirm password is required.' }),
     roleIds: z.array(z.string()).optional(),
+    state: zUserState,
   })
   .superRefine((data, ctx) => {
     if (

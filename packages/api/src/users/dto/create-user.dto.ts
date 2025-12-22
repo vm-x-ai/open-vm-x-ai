@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { PublicUserState } from '../../storage/entities.generated';
 
 /**
  * Create a new user.
@@ -52,4 +53,14 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @ApiProperty({
+    description: 'The state of the user',
+    example: PublicUserState.CHANGE_PASSWORD,
+    enum: PublicUserState,
+    enumName: 'UserState',
+  })
+  @IsEnum(PublicUserState)
+  @IsNotEmpty()
+  state: PublicUserState;
 }

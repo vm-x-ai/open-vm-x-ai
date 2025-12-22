@@ -61,6 +61,19 @@ export const zServiceError = z.object({
 
 export type ServiceErrorZodType = z.infer<typeof zServiceError>;
 
+/**
+ * The state of the user
+ */
+export const zUserState = z.enum([
+    'ACTIVE',
+    'CHANGE_PASSWORD',
+    'INACTIVE'
+]).register(z.globalRegistry, {
+    description: 'The state of the user'
+});
+
+export type UserStateZodType = z.infer<typeof zUserState>;
+
 export const zUserEntity = z.object({
     id: z.uuid().register(z.globalRegistry, {
         description: 'The unique identifier for the user (UUID)'
@@ -87,6 +100,7 @@ export const zUserEntity = z.object({
         z.string(),
         z.null()
     ])),
+    state: zUserState,
     providerType: z.enum(['LOCAL', 'OIDC']).register(z.globalRegistry, {
         description: 'The type of provider used by the user'
     }),
@@ -133,7 +147,8 @@ export const zCreateUserDto = z.object({
     }),
     password: z.string().register(z.globalRegistry, {
         description: 'The password of the user'
-    })
+    }),
+    state: zUserState
 });
 
 export type CreateUserDtoZodType = z.infer<typeof zCreateUserDto>;
@@ -156,7 +171,8 @@ export const zUpdateUserDto = z.object({
     })),
     password: z.optional(z.string().register(z.globalRegistry, {
         description: 'The password of the user'
-    }))
+    })),
+    state: z.optional(zUserState)
 });
 
 export type UpdateUserDtoZodType = z.infer<typeof zUpdateUserDto>;
@@ -212,6 +228,7 @@ export const zUserRelationDto = z.object({
         z.string(),
         z.null()
     ])),
+    state: zUserState,
     providerType: z.enum(['LOCAL', 'OIDC']).register(z.globalRegistry, {
         description: 'The type of provider used by the user'
     }),
@@ -425,6 +442,14 @@ export const zLoginDto = z.object({
 });
 
 export type LoginDtoZodType = z.infer<typeof zLoginDto>;
+
+export const zChangePasswordDto = z.object({
+    password: z.string().register(z.globalRegistry, {
+        description: 'The password of the user'
+    })
+});
+
+export type ChangePasswordDtoZodType = z.infer<typeof zChangePasswordDto>;
 
 export const zConsentDto = z.object({
     consent: z.enum(['yes', 'no']).register(z.globalRegistry, {
@@ -2756,6 +2781,26 @@ export const zOidcInteractionControllerShowInteractionData = z.object({
 });
 
 export type OidcInteractionControllerShowInteractionDataZodType = z.infer<typeof zOidcInteractionControllerShowInteractionData>;
+
+export const zOidcInteractionControllerShowChangePasswordInteractionData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        uid: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+export type OidcInteractionControllerShowChangePasswordInteractionDataZodType = z.infer<typeof zOidcInteractionControllerShowChangePasswordInteractionData>;
+
+export const zOidcInteractionControllerSubmitChangePasswordData = z.object({
+    body: zChangePasswordDto,
+    path: z.object({
+        uid: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+export type OidcInteractionControllerSubmitChangePasswordDataZodType = z.infer<typeof zOidcInteractionControllerSubmitChangePasswordData>;
 
 export const zOidcInteractionControllerLoginData = z.object({
     body: zLoginDto,

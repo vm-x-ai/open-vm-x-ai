@@ -15,7 +15,7 @@ import {
 } from 'material-react-table';
 import Link from 'next/link';
 import { useMemo, useState, useEffect } from 'react';
-import { UserEntity } from '@/clients/api';
+import { UserEntity, UserState } from '@/clients/api';
 import { getUsersOptions } from '@/clients/api/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import ConfirmDeleteUserDialog from './ConfirmDeleteDialog';
@@ -32,6 +32,12 @@ function stringAvatar(name: string) {
     children: `${name.split(' ')[0][0]}${name.split(' ')?.[1]?.[0] ?? ''}`,
   };
 }
+
+const userStateMap = {
+  [UserState.ACTIVE]: 'Active',
+  [UserState.INACTIVE]: 'Inactive',
+  [UserState.CHANGE_PASSWORD]: 'Require password change on next login',
+};
 
 export default function UserTable() {
   const { data: session } = useSession();
@@ -96,6 +102,13 @@ export default function UserTable() {
       {
         accessorKey: 'providerType',
         header: 'Authentication Provider',
+      },
+      {
+        accessorKey: 'state',
+        header: 'State',
+        Cell: ({ row: { original: row } }) => (
+          <Typography variant="inherit">{userStateMap[row.state]}</Typography>
+        ),
       },
       {
         accessorKey: 'createdAt',

@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { OidcProviderService } from './oidc-provider.service';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { InteractionResults } from 'oidc-provider';
+import { Interaction, InteractionResults } from 'oidc-provider';
 import { AuthService } from '../auth.service';
 import { FederatedLoginService } from '../federated-login/federated-login.service';
 import { ConfigService } from '@nestjs/config';
@@ -23,6 +23,13 @@ import { ConsentDto } from './dto/consent.dto';
 import { Public } from '../auth.guard';
 import { RESOURCE_INDICATOR } from './consts';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  PublicProviderType,
+  PublicUserState,
+} from '../../storage/entities.generated';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UsersService } from '../../users/users.service';
+import { FullUserEntity } from '../../users/entities/user.entity';
 
 @Public()
 @ApiTags('OIDC Interaction')
@@ -34,9 +41,10 @@ export class OidcInteractionController {
     private readonly federatedLoginService: FederatedLoginService,
     private readonly oidc: OidcProviderService,
     private readonly authService: AuthService,
+    private readonly usersService: UsersService,
     private readonly configService: ConfigService
   ) {
-    this.basePath = this.configService.getOrThrow<string>('BASE_PATH')
+    this.basePath = this.configService.getOrThrow<string>('BASE_PATH');
   }
 
   // Step 1: render (or return data for) login/consent
@@ -82,12 +90,40 @@ export class OidcInteractionController {
         scopes: details.prompt.details?.missingOIDCScope || [],
         basePath: this.basePath,
       });
+    } else if (details.prompt.name === 'change-password') {
+      return res.view('change-password.ejs', {
+        uid,
+        clientId: details.params.client_id,
+        basePath: this.basePath,
+      });
     } else {
       res.status(400).send(`Unknown prompt: ${details.prompt.name}`);
     }
   }
 
-  // Step 2: handle login submission
+  // Step 2: Show change password if the user is in the CHANGE_PASSWORD state
+  @Get(':uid/change-password')
+  @ApiOkResponse({
+    description: 'Show Change Password Interaction HTML page',
+  })
+  async showChangePasswordInteraction(
+    @Param('uid') uid: string,
+    @Req() req: FastifyRequest,
+    @Res() res: FastifyReply
+  ) {
+    const details = await this.oidc.provider.interactionDetails(
+      req.raw,
+      res.raw
+    );
+
+    return res.view('change-password.ejs', {
+      uid,
+      clientId: details.params.client_id,
+      basePath: this.basePath,
+    });
+  }
+
+  // Step 3: handle login submission
   @Post(':uid/login')
   @ApiOkResponse({
     description: 'Handle login submission',
@@ -105,41 +141,34 @@ export class OidcInteractionController {
     const authUser = await this.authService.validateUser(
       body.username,
       body.password
-    );    
+    );
     if (authUser) {
-      const result: InteractionResults = {
-        login: { accountId: authUser.id },
-      };
+      const result: InteractionResults = {};
+      if (authUser.state === PublicUserState.ACTIVE) {
+        result.login = { accountId: authUser.id };
+      }
 
-      const autoConsentClientIds = this.configService
-        .getOrThrow<string>('OIDC_PROVIDER_AUTO_CONSENT_CLIENT_IDS')
-        .split(',');
-
-      if (
-        autoConsentClientIds.includes(
-          interactionDetails.params.client_id as string
-        )
-      ) {
-        const grant = new this.oidc.provider.Grant({
-          accountId: authUser.id,
-          clientId: interactionDetails.params.client_id as string,
-        });
-
-        grant.addOIDCScope(interactionDetails.params.scope as string);
-        grant.addResourceScope(
-          RESOURCE_INDICATOR,
-          interactionDetails.params.scope as string
+      if (authUser.state === PublicUserState.CHANGE_PASSWORD) {
+        interactionDetails.params.changePasswordAccountId = authUser.id;
+        interactionDetails.prompt.name = 'change-password';
+        await interactionDetails.persist();
+        return res.redirect(
+          `${this.basePath}/interaction/${uid}`,
+          HttpStatus.FOUND
         );
-
-        const grantId = await grant.save();
-        result.consent = {
-          grantId,
-        };
+      } else {
+        const grantId = await this.autoGrant(interactionDetails, authUser);
+        if (grantId) {
+          result.consent = {
+            grantId,
+          };
+        }
       }
 
       await this.oidc.provider.interactionFinished(req.raw, res.raw, result, {
-        mergeWithLastSubmission: false,
+        mergeWithLastSubmission: true,
       });
+
       return;
     }
 
@@ -147,6 +176,63 @@ export class OidcInteractionController {
       `${this.basePath}/interaction/${uid}?error=invalid_credentials`,
       HttpStatus.FOUND
     );
+  }
+
+  // Step 3: Handle change password submission
+  @Post(':uid/change-password')
+  @ApiOkResponse({
+    description: 'Handle change password submission',
+  })
+  async submitChangePassword(
+    @Param('uid') uid: string,
+    @Body() body: ChangePasswordDto,
+    @Req() req: FastifyRequest,
+    @Res() res: FastifyReply
+  ) {
+    const interactionDetails = await this.oidc.provider.interactionDetails(
+      req.raw,
+      res.raw
+    );
+
+    const accountId = interactionDetails.params
+      .changePasswordAccountId as string;
+    if (!accountId) {
+      return res.redirect(
+        `${this.basePath}/interaction/${uid}?error=invalid_account`,
+        HttpStatus.FOUND
+      );
+    }
+    const user = await this.usersService.getById(accountId, false);
+    // If the user is not found or the provider type is not local, redirect to the login page
+    if (!user || user.providerType !== PublicProviderType.LOCAL) {
+      return res.redirect(
+        `${this.basePath}/interaction/${uid}?error=invalid_account`,
+        HttpStatus.FOUND
+      );
+    }
+
+    // Update the user's password
+    await this.usersService.update(
+      accountId,
+      {
+        password: body.password,
+        state: PublicUserState.ACTIVE,
+      },
+      user
+    );
+    const grantId = await this.autoGrant(interactionDetails, user);
+    const result: InteractionResults = {
+      login: { accountId: accountId },
+      content: grantId
+        ? {
+            grantId: grantId,
+          }
+        : undefined,
+    };
+
+    await this.oidc.provider.interactionFinished(req.raw, res.raw, result, {
+      mergeWithLastSubmission: true,
+    });
   }
 
   // Add consent handler
@@ -208,7 +294,7 @@ export class OidcInteractionController {
       };
 
       await this.oidc.provider.interactionFinished(req.raw, res.raw, result, {
-        mergeWithLastSubmission: false,
+        mergeWithLastSubmission: true,
       });
       return;
     } else {
@@ -236,7 +322,9 @@ export class OidcInteractionController {
     @Query('state') state: string | undefined
   ) {
     return {
-      url: `${this.basePath}/interaction/${state}/federated?${new URLSearchParams(
+      url: `${
+        this.basePath
+      }/interaction/${state}/federated?${new URLSearchParams(
         req.query as Record<string, string>
       ).toString()}`,
       statusCode: HttpStatus.FOUND,
@@ -268,30 +356,45 @@ export class OidcInteractionController {
       login: { accountId: user.id },
     };
 
-    const autoConsentClientIds = this.configService
-      .getOrThrow<string>('OIDC_PROVIDER_AUTO_CONSENT_CLIENT_IDS')
-      .split(',');
-
-    if (autoConsentClientIds.includes(details.params.client_id as string)) {
-      const grant = new this.oidc.provider.Grant({
-        accountId: user.id,
-        clientId: details.params.client_id as string,
-      });
-
-      grant.addOIDCScope(details.params.scope as string);
-      grant.addResourceScope(
-        RESOURCE_INDICATOR,
-        details.params.scope as string
-      );
-
-      const grantId = await grant.save();
+    const grantId = await this.autoGrant(details, user);
+    if (grantId) {
       result.consent = {
         grantId,
       };
     }
 
     await this.oidc.provider.interactionFinished(req.raw, res.raw, result, {
-      mergeWithLastSubmission: false,
+      mergeWithLastSubmission: true,
     });
+  }
+
+  private async autoGrant(
+    interactionDetails: Interaction,
+    authUser: FullUserEntity
+  ): Promise<string | undefined> {
+    const autoConsentClientIds = this.configService
+      .getOrThrow<string>('OIDC_PROVIDER_AUTO_CONSENT_CLIENT_IDS')
+      .split(',');
+
+    if (
+      autoConsentClientIds.includes(
+        interactionDetails.params.client_id as string
+      )
+    ) {
+      const grant = new this.oidc.provider.Grant({
+        accountId: authUser.id,
+        clientId: interactionDetails.params.client_id as string,
+      });
+
+      grant.addOIDCScope(interactionDetails.params.scope as string);
+      grant.addResourceScope(
+        RESOURCE_INDICATOR,
+        interactionDetails.params.scope as string
+      );
+      const grantId = await grant.save();
+      return grantId;
+    }
+
+    return undefined;
   }
 }

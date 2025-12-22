@@ -150,6 +150,7 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
           'email',
           'emailVerified',
           'pictureUrl',
+          'state',
           'providerType',
           'providerId',
           'providerMetadata',

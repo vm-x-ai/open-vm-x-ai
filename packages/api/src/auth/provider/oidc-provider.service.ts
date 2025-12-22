@@ -122,16 +122,6 @@ export class OidcProviderService implements OnModuleInit {
           grant_types: ['refresh_token', 'authorization_code'],
           scope: 'openid profile email offline_access',
         },
-        {
-          client_id: 'm2m',
-          client_name: 'Machine to Machine',
-          client_secret: 'm2m-secret',
-          grant_types: ['client_credentials'],
-          response_types: [],
-          token_endpoint_auth_method: 'client_secret_post',
-          redirect_uris: [],
-          scope: 'openid profile email',
-        },
       ],
       routes: {
         authorization: '/authorize',

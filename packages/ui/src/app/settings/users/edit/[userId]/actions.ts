@@ -1,6 +1,6 @@
 'use server';
 
-import { updateUser } from '@/clients/api';
+import { updateUser, UserState } from '@/clients/api';
 import {
   type FormSchema,
   type FormAction,
@@ -28,6 +28,7 @@ export async function submitForm(
     },
     body: {
       ...payload,
+      state: payload.state as UserState,
       password:
         payload.password && payload.password.trim() !== ''
           ? payload.password

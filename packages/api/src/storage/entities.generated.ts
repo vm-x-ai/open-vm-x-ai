@@ -29,6 +29,12 @@ export enum PublicProviderType {
   OIDC = "OIDC",
 }
 
+export enum PublicUserState {
+  ACTIVE = "ACTIVE",
+  CHANGE_PASSWORD = "CHANGE_PASSWORD",
+  INACTIVE = "INACTIVE",
+}
+
 export enum PublicWorkspaceUserRole {
   MEMBER = "MEMBER",
   OWNER = "OWNER",
@@ -258,6 +264,7 @@ export interface User {
   providerId: string;
   providerMetadata: Json | null;
   providerType: PublicProviderType;
+  state: PublicUserState;
   updatedAt: Generated<Timestamp>;
   updatedBy: string | null;
   username: string;

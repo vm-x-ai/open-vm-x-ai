@@ -23,7 +23,10 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { UserEntity } from '@/clients/api';
+import { UserEntity, UserState } from '@/clients/api';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 export type EditUserFormProps = {
   user: UserEntity;
@@ -58,8 +61,6 @@ export default function EditUserForm({
     resolver: zodResolver(schema),
     defaultValues: {
       ...user,
-      password: '',
-      confirmPassword: '',
     },
   });
 
@@ -154,10 +155,13 @@ export default function EditUserForm({
               </Grid>
               <Grid container size={12}>
                 <Grid size={12}>
-                  <Typography variant="subtitle2">Authentication (Local Only)</Typography>
+                  <Typography variant="subtitle2">
+                    Authentication (Local Only)
+                  </Typography>
                   <Divider />
                   <Typography variant="caption">
-                    Enter the email and password for the user. This is only available for local users.
+                    Enter the email and password for the user. This is only
+                    available for local users.
                   </Typography>
                 </Grid>
                 <Grid container size={12}>
@@ -196,7 +200,10 @@ export default function EditUserForm({
                             fullWidth
                             label="Password"
                             error={!!form.formState.errors.password?.message}
-                            helperText={form.formState.errors.password?.message ?? 'Leave blank to keep the current password.'}
+                            helperText={
+                              form.formState.errors.password?.message ??
+                              'Leave blank to keep the current password.'
+                            }
                             slotProps={{
                               input: {
                                 endAdornment: (
@@ -266,6 +273,35 @@ export default function EditUserForm({
                         )}
                       />
                     </Grid>
+                  </Grid>
+                </Grid>
+                <Grid container size={12}>
+                  <Grid size={12}>
+                    <Controller
+                      name="state"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormGroup>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={
+                                  field.value === UserState.CHANGE_PASSWORD
+                                }
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.checked
+                                      ? UserState.CHANGE_PASSWORD
+                                      : UserState.ACTIVE
+                                  )
+                                }
+                              />
+                            }
+                            label="Require password change on next login"
+                          />
+                        </FormGroup>
+                      )}
+                    />
                   </Grid>
                 </Grid>
               </Grid>

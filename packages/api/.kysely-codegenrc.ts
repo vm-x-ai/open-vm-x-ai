@@ -2,6 +2,7 @@ import { type Config } from 'kysely-codegen';
 
 export default {
   outFile: 'src/storage/entities.generated.ts',
+  url: `postgresql://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DATABASE_DB_NAME}`,
   camelCase: true,
   runtimeEnums: true,
   defaultSchemas: ['vmxai'],

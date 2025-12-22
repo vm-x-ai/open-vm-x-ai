@@ -1,11 +1,12 @@
 import { Kysely, Migration, sql } from 'kysely';
 import { PasswordService } from '../auth/password.service';
-import { DB, PublicProviderType } from '../storage/entities.generated';
+import { DB, PublicProviderType, PublicUserState } from '../storage/entities.generated';
 
 export const migration = (passwordService: PasswordService): Migration => ({
   async up(db: Kysely<DB>): Promise<void> {
     // Create ProviderType enum type first
     await sql`CREATE TYPE PROVIDER_TYPE AS ENUM ('LOCAL', 'OIDC')`.execute(db);
+    await sql`CREATE TYPE USER_STATE AS ENUM ('ACTIVE', 'INACTIVE', 'CHANGE_PASSWORD')`.execute(db);
 
     await db.schema
       .createTable('users')
@@ -21,6 +22,7 @@ export const migration = (passwordService: PasswordService): Migration => ({
         col.notNull().defaultTo(false)
       )
       .addColumn('picture_url', 'text')
+      .addColumn('state', sql`USER_STATE`, (col) => col.notNull())
       .addColumn('provider_type', sql`PROVIDER_TYPE`, (col) => col.notNull())
       .addColumn('provider_id', 'text', (col) => col.notNull())
       .addColumn('provider_metadata', 'jsonb')
@@ -97,6 +99,7 @@ export const migration = (passwordService: PasswordService): Migration => ({
         username: 'admin',
         email: 'admin@example.com',
         providerType: PublicProviderType.LOCAL,
+        state: PublicUserState.CHANGE_PASSWORD,
         providerId: 'local',
         emailVerified: true,
         passwordHash: await passwordService.hash('admin'),
@@ -114,5 +117,6 @@ export const migration = (passwordService: PasswordService): Migration => ({
     await db.schema.dropIndex('idx_users_provider_id').execute();
     await db.schema.dropTable('users').execute();
     await sql`DROP TYPE IF EXISTS PROVIDER_TYPE`.execute(db);
+    await sql`DROP TYPE IF EXISTS USER_STATE`.execute(db);
   },
 });

@@ -24,6 +24,10 @@ import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import RoleSelector from './RoleSelector';
+import { UserState } from '@/clients/api';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 export type CreateUserFormProps = {
   submitAction: (
@@ -61,6 +65,7 @@ export default function CreateUserForm({ submitAction }: CreateUserFormProps) {
       password: '',
       confirmPassword: '',
       roleIds: [],
+      state: UserState.CHANGE_PASSWORD,
     },
   });
 
@@ -193,7 +198,11 @@ export default function CreateUserForm({ submitAction }: CreateUserFormProps) {
                             margin="normal"
                             type={showPassword ? 'text' : 'password'}
                             fullWidth
-                            label="Password"
+                            label={
+                              form.watch('state') === UserState.CHANGE_PASSWORD
+                                ? 'Initial Password'
+                                : 'Password'
+                            }
                             error={!!form.formState.errors.password?.message}
                             helperText={form.formState.errors.password?.message}
                             slotProps={{
@@ -230,7 +239,7 @@ export default function CreateUserForm({ submitAction }: CreateUserFormProps) {
                             margin="normal"
                             type={showPassword ? 'text' : 'password'}
                             fullWidth
-                            label="Confirm Password"
+                            label={form.watch('state') === UserState.CHANGE_PASSWORD ? "Confirm Initial Password" : "Confirm Password"}
                             error={
                               !!form.formState.errors.confirmPassword?.message
                             }
@@ -263,6 +272,35 @@ export default function CreateUserForm({ submitAction }: CreateUserFormProps) {
                       />
                     </Grid>
                   </Grid>
+                </Grid>
+              </Grid>
+              <Grid container size={12}>
+                <Grid size={12}>
+                  <Controller
+                    name="state"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormGroup>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={
+                                field.value === UserState.CHANGE_PASSWORD
+                              }
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.checked
+                                    ? UserState.CHANGE_PASSWORD
+                                    : UserState.ACTIVE
+                                )
+                              }
+                            />
+                          }
+                          label="Require password change on next login"
+                        />
+                      </FormGroup>
+                    )}
+                  />
                 </Grid>
               </Grid>
               <Grid container size={12} spacing={3}>

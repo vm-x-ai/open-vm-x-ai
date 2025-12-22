@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PublicProviderType } from '../../storage/entities.generated';
+import { PublicProviderType, PublicUserState } from '../../storage/entities.generated';
 import {
   IsBoolean,
   IsDateString,
@@ -80,6 +80,16 @@ export class UserEntity {
   @IsString()
   @IsOptional()
   pictureUrl?: string | null;
+
+  @ApiProperty({
+    description: 'The state of the user',
+    enum: PublicUserState,
+    example: PublicUserState.CHANGE_PASSWORD,
+    enumName: 'UserState',
+  })
+  @IsEnum(PublicUserState)
+  @IsNotEmpty()
+  state: PublicUserState;
 
   @ApiProperty({
     description: 'The type of provider used by the user',

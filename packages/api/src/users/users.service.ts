@@ -4,7 +4,11 @@ import { FullUserEntity, UserEntity } from './entities/user.entity';
 import * as oidcClient from 'openid-client';
 import { OperandExpression, sql, SqlBool, UpdateObject } from 'kysely';
 import { throwServiceError } from '../error';
-import { DB, PublicProviderType } from '../storage/entities.generated';
+import {
+  DB,
+  PublicProviderType,
+  PublicUserState,
+} from '../storage/entities.generated';
 import { ErrorCode } from '../error-code';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -237,6 +241,7 @@ export class UsersService {
             lastName: familyName,
             username: email,
             email,
+            state: PublicUserState.ACTIVE,
             pictureUrl: picture,
             providerId,
             providerType: PublicProviderType.OIDC,

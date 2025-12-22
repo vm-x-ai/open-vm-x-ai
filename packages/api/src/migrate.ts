@@ -1,7 +1,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { NestFactory } from '@nestjs/core';
-import { Module } from '@nestjs/common';
+import { INestApplicationContext, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { configSchema } from './config/schema';
 import { MigrationsModule } from './migrations/migrations.module';
@@ -13,23 +13,40 @@ import { AWSTimestreamMigrationsModule } from './completion/usage/aws-timestream
 import { AWSTimestreamMigrationsService } from './completion/usage/aws-timestream/migrations/migrations.service';
 import { BaseMigrationsService } from './migrations/base';
 
+const baseImports = [
+  ConfigModule.forRoot({
+    isGlobal: true,
+    validationSchema: configSchema,
+  }),
+  AppLoggerModule,
+  MigrationsModule,
+]
+
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      validationSchema: configSchema,
-    }),
-    AppLoggerModule,
-    MigrationsModule,
+    ...baseImports,
+  ],
+})
+class DBMigrationModule {}
+
+@Module({
+  imports: [
+    ...baseImports,
     QuestDBMigrationsModule,
+  ],
+})
+class QuestDBMigrationModule {}
+
+@Module({
+  imports: [
+    ...baseImports,
     AWSTimestreamMigrationsModule,
   ],
 })
-class MigrationModule {}
+class AWSTimestreamMigrationModule {}
 
 async function runMigration() {
-  const app = await NestFactory.createApplicationContext(MigrationModule);
-
+  let app: INestApplicationContext;
   const argv = await yargs(hideBin(process.argv))
     .option('reset', {
       type: 'boolean',
@@ -49,15 +66,25 @@ async function runMigration() {
 
   let migrator: BaseMigrationsService;
   switch (argv.type) {
-    case 'app':
+    case 'app': {
+      app = await NestFactory.createApplicationContext(DBMigrationModule);
       migrator = app.get(MigrationsService);
       break;
-    case 'questdb':
+    }
+    case 'questdb': {
+      app = await NestFactory.createApplicationContext(
+        QuestDBMigrationModule
+      );
       migrator = app.get(QuestDBMigrationsService);
       break;
-    case 'aws-timestream':
+    }
+    case 'aws-timestream': {
+      app = await NestFactory.createApplicationContext(
+        AWSTimestreamMigrationModule
+      );
       migrator = app.get(AWSTimestreamMigrationsService);
       break;
+    }
     default:
       throw new Error(`Invalid migration type: ${argv.type}`);
   }

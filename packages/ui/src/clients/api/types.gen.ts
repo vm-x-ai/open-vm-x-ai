@@ -63,6 +63,15 @@ export type ServiceError = {
     };
 };
 
+/**
+ * The state of the user
+ */
+export enum UserState {
+    ACTIVE = 'ACTIVE',
+    CHANGE_PASSWORD = 'CHANGE_PASSWORD',
+    INACTIVE = 'INACTIVE'
+}
+
 export type UserEntity = {
     /**
      * The unique identifier for the user (UUID)
@@ -96,6 +105,10 @@ export type UserEntity = {
      * The URL of the user's profile picture
      */
     pictureUrl?: string | null;
+    /**
+     * The state of the user
+     */
+    state: UserState;
     /**
      * The type of provider used by the user
      */
@@ -153,6 +166,10 @@ export type CreateUserDto = {
      * The password of the user
      */
     password: string;
+    /**
+     * The state of the user
+     */
+    state: UserState;
 };
 
 export type UpdateUserDto = {
@@ -180,6 +197,10 @@ export type UpdateUserDto = {
      * The password of the user
      */
     password?: string;
+    /**
+     * The state of the user
+     */
+    state?: UserState;
 };
 
 export type ModulePermissionsDto = {
@@ -241,6 +262,10 @@ export type UserRelationDto = {
      * The URL of the user's profile picture
      */
     pictureUrl?: string | null;
+    /**
+     * The state of the user
+     */
+    state: UserState;
     /**
      * The type of provider used by the user
      */
@@ -477,6 +502,13 @@ export type LoginDto = {
      * The username or email address of the user
      */
     username: string;
+    /**
+     * The password of the user
+     */
+    password: string;
+};
+
+export type ChangePasswordDto = {
     /**
      * The password of the user
      */
@@ -3073,6 +3105,38 @@ export type OidcInteractionControllerShowInteractionData = {
 export type OidcInteractionControllerShowInteractionResponses = {
     /**
      * Show Login/Consent Interaction HTML page
+     */
+    200: unknown;
+};
+
+export type OidcInteractionControllerShowChangePasswordInteractionData = {
+    body?: never;
+    path: {
+        uid: string;
+    };
+    query?: never;
+    url: '/interaction/{uid}/change-password';
+};
+
+export type OidcInteractionControllerShowChangePasswordInteractionResponses = {
+    /**
+     * Show Change Password Interaction HTML page
+     */
+    200: unknown;
+};
+
+export type OidcInteractionControllerSubmitChangePasswordData = {
+    body: ChangePasswordDto;
+    path: {
+        uid: string;
+    };
+    query?: never;
+    url: '/interaction/{uid}/change-password';
+};
+
+export type OidcInteractionControllerSubmitChangePasswordResponses = {
+    /**
+     * Handle change password submission
      */
     200: unknown;
 };
