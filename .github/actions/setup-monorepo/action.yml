@@ -1,6 +1,13 @@
 name: Set Up Monorepo
 description: Set up nx monorepo for CI workflows
 
+inputs:
+  install-python:
+    description: 'Enable Python'
+    required: true
+    default: false
+    type: boolean
+
 runs:
   using: 'composite'
   steps:
@@ -15,16 +22,23 @@ runs:
 
     - name: Set up Python 3.11
       uses: actions/setup-python@v4
+      if: ${{ inputs.install-python == 'true' }}
       with:
         python-version: 3.11
 
     - name: Install the latest version of uv
       uses: astral-sh/setup-uv@v7
+      if: ${{ inputs.install-python == 'true' }}
       with:
         version: 0.8.10
 
     - name: Install Node.js Dependencies
       shell: bash
       run: pnpm install
+
+    - name: Install Python Dependencies
+      shell: bash
+      if: ${{ inputs.install-python == 'true' }}
+      run: uv sync
 
     - uses: nrwl/nx-set-shas@v4

@@ -15,6 +15,8 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-monorepo
+        with:
+          install-python: true
 
       - name: Run Format Check
         run: pnpm nx format:check
