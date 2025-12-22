@@ -62,7 +62,7 @@ jobs:
           pnpm nx release --yes --verbose
           git push --follow-tags
         env:
-          GITHUB_TOKEN: ${{ steps.setup_release.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       # By default, Nx release only releases the version tag (e.g. 1.0.0)
       # It does not add the "latest" tag to the Docker image.
