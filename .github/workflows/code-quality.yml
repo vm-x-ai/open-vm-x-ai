@@ -16,6 +16,9 @@ jobs:
 
       - uses: ./.github/actions/setup-monorepo
 
+      - name: Run Format Check
+        run: pnpm nx format:check
+
       - name: Run code quality
         run: |
           pnpm nx affected -t lint test build
