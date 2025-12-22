@@ -1,3 +1,13 @@
+## 1.1.0 (2025-12-22)
+
+### 🚀 Features
+
+- add change password oidc page ([8cff557](https://github.com/vm-x-ai/vm-x-ai/commit/8cff557))
+
+### ❤️ Thank You
+
+- Lucas Vieira @lucasvieirasilva
+
 # 1.0.0 (2025-12-22)
 
 ### 🚀 Features
